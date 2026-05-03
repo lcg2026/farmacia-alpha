@@ -95,7 +95,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
       <div id="fpreview" style="margin-top:12px"></div>
       <div id="fmeta" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
     </div>
-    <button class="btn btnp" id="btnCalc" style="display:none;margin-bottom:16px" onclick="calcFoto()">&#9881; Calcular preço</button>
+    <div style="display:flex;gap:8px;margin-bottom:16px"><button class="btn btnp" id="btnCalc" style="display:none" onclick="calcFoto()">&#9881; Calcular preço</button><button class="btn" id="btnLimpar" style="display:none;border-color:#FFCDD2;color:#C62828" onclick="limpar()">✕ Limpar</button></div>
     <div id="rfoto"></div>
   </div>
 
@@ -183,35 +183,61 @@ var _D = 'W3sibiI6IkNJTUlDSUZVR0EiLCJrIjoiY2ltaWNpZnVnYSIsInAiOjAuMDk0LCJzIjpbIl
 
 // ── Equivalências ──────────────────────────────────────────
 var EQUIV = {
+  // CoQ10
   'coq10':'cavaq10','cava q10':'cavaq10','cavaq10':'cavaq10',
+  // Taurina
   'l-taurina':'taurina','ltaurina':'taurina',
-  'n-acetil cisteina':'n acetil l cisteina','n acetil cisteina':'n acetil l cisteina','nac':'n acetil l cisteina','acetil cisteina':'n acetil l cisteina',
+  // N-Acetil Cisteína
+  'n-acetil cisteina':'n acetil l cisteina','n acetil cisteina':'n acetil l cisteina',
+  'nac':'n acetil l cisteina','acetil cisteina':'n acetil l cisteina',
+  // Arginina
   'l-arginina':'l arginina cloridrato','l arginina':'l arginina cloridrato','arginina':'l arginina cloridrato',
+  // Glutamina
   'l-glutamina':'l-glutamina','glutamina':'l-glutamina','l glutamina':'l-glutamina',
+  // Vitaminas C/D/E
   'vitamina c':'vit c','vit c':'vit c','acido ascorbico':'vit c',
   'vitamina d':'colecalciferol','vit d':'colecalciferol','vitamina d3':'colecalciferol','vit d3':'colecalciferol',
+  'vitamina e':'vit e acetato','vit e':'vit e acetato','tocoferol':'vit e acetato',
+  // Vitaminas B
   'vitamina b1':'vit b1','tiamina':'vit b1',
   'vitamina b2':'vit b2','riboflavina':'vit b2',
   'vitamina b3':'nicotinamida','niacina':'nicotinamida','vit b3':'nicotinamida',
   'vitamina b6':'vit b6 hcl','piridoxina':'vit b6 hcl','vit b6':'vit b6 hcl',
   'vitamina b9':'metilfolato','acido folico':'metilfolato','folato':'metilfolato',
-  'vitamina b12':'vit b12','cianocobalamina':'vit b12','metilcobalamina':'vit b12',
-  'vitamina e':'vit e acetato','vit e':'vit e acetato','tocoferol':'vit e acetato',
-  'vitamina b7':'biotina 5mg','vitamina h':'biotina 5mg','vit b7':'biotina 5mg','biotina':'biotina 5mg','asebiol':'biotina 5mg',
+  'vitamina b12':'vit b12','cianocobalamina':'vit b12','vit b12':'vit b12',
+  'metilcobalamina':'metilcobalamina','metlcobalamina':'metilcobalamina',
+  'vitamina b7':'biotina 5mg','vitamina h':'biotina 5mg','biotina':'biotina 5mg','asebiol':'biotina 5mg',
+  // Minerais
   'zinco quelado':'zinco quel taste free','zinco quelato':'zinco quel taste free','zinco':'zinco quel taste free',
   'magnesio quelado':'magnesio quelato','magnesio bisglicinato':'magnesio quelato','magnesio':'magnesio quelato',
-  'ferro quelado':'quelato ferro','ferro quelato':'quelato ferro','ferro bisglicinato':'quelato ferro','ferrochel':'quelato ferro','ferro':'quelato ferro',
-  'omega 3':'oleo de peixe','omega-3':'oleo de peixe',
+  'magnesio inositol':'magnesio inositol',
+  'ferro quelado':'quelato ferro','ferro quelato':'quelato ferro','ferro bisglicinato':'quelato ferro','ferro':'quelato ferro',
   'selenio':'selenio quelado','selenium':'selenio quelado',
   'cobre quelado':'cobre quelado','cobre':'cobre quelado',
   'calcio quelado':'calcio quelado','calcio':'calcio quelado',
+  // Aminoácidos
   'l-cisteina':'l cisteina','l cisteina':'l cisteina','cisteina':'l cisteina',
+  'cistina':'l-cistina','l-cistina':'l-cistina',
+  'l-triptofano':'triptofano l','l triptofano':'triptofano l','triptofano':'triptofano l',
+  // 5-HTP
+  '5-htp':'5-hidroxi l triptofano','5htp':'5-hidroxi l triptofano',
+  '5 hidroxi triptofano':'5-hidroxi l triptofano','5 hidroxitriptofano':'5-hidroxi l triptofano',
+  // Hormônios/Bases
   'pentravan':'pentravan','base pentravan':'pentravan',
   'transcutol':'transcutol p',
   'testosterona micronizada':'testosterona base',
+  'progesterona micronizada':'progesterona base',
+  // Outros
+  'omega 3':'oleo de peixe','omega-3':'oleo de peixe',
   'glisodin':'superoxido dismutase','glysodin':'superoxido dismutase',
   'pantotenato de calcio':'pantotenato calcio','acido pantotenico':'pantotenato calcio',
-  'cistina':'l-cistina'
+  'ashwagandha':'ashwaganda','ashwaganda':'ashwaganda',
+  'niagen':'niagen',
+  'metformina':'metformina','cloridrato de metformina':'metformina',
+  'biointestil':'biointestil','bioingestil':'biointestil',
+  'cindura':'cindura',
+  'ln2 in':'ln2 in',
+  'inositol':'inositol'
 };
 
 // ── Tabelas progressivas ───────────────────────────────────
@@ -392,6 +418,32 @@ function calcRec(rec) {
     var vol = qtd;
     var seg = Math.ceil(vol/30);
     var totalVol = vol + seg;
+    // Buscar base (Pentravan, Transcutol, etc) nos ativos
+    var baseEncontrada = false;
+    (rec.ativos||[]).forEach(function(a) {
+      var nn = normStr(a.nome||'');
+      if(/pentravan|transcutol|carbopol|base gel|base creme/.test(nn)) baseEncontrada = true;
+    });
+    // Se não tem base declarada, adicionar Pentravan como qsp
+    if(!baseEncontrada) {
+      var insBase = busIns('pentravan');
+      if(insBase && insBase.p > 0) {
+        var gBase = totalVol - (rec.ativos||[]).reduce(function(s,a){
+          var u=(a.unidade||'mg').toLowerCase();
+          return s+(u==='g'?a.dose:u==='mcg'?a.dose/1000000:a.dose/1000);
+        },0) * qtd / qtd;
+        // Pentravan qsp = volume total - ativos
+        var dosePorDose = (rec.ativos||[]).reduce(function(s,a){
+          var u=(a.unidade||'mg').toLowerCase();
+          return s+(u==='g'?a.dose:u==='mcg'?a.dose/1000000:a.dose/1000);
+        },0);
+        var pentravanG = totalVol - (dosePorDose * (totalVol/vol));
+        if(pentravanG < 0) pentravanG = totalVol * 0.95;
+        var cBase = pentravanG * insBase.p;
+        custo += cBase;
+        itens.push({n:'PENTRAVAN qsp ('+totalVol.toFixed(0)+'g)', dose:'', c:cBase});
+      }
+    }
     var air = AIRLESS[AIRLESS.length-1];
     for(var ai=0;ai<AIRLESS.length;ai++){if(AIRLESS[ai].ml>=vol){air=AIRLESS[ai];break;}}
     custo += air.p;
@@ -516,6 +568,16 @@ function savH() {
 }
 
 // ── Foto/PDF ───────────────────────────────────────────────
+function limpar() {
+  arq = null; last = null; qtdsFixadas = []; simAtual = {qtd:0,pv:0};
+  document.getElementById('fpreview').innerHTML = '';
+  document.getElementById('fmeta').textContent = '';
+  document.getElementById('rfoto').innerHTML = '';
+  document.getElementById('btnCalc').style.display = 'none';
+  document.getElementById('btnLimpar').style.display = 'none';
+  document.getElementById('finp').value = '';
+}
+
 function handleFile(file) {
   if(!file) return;
   arq = file;
@@ -532,6 +594,7 @@ function handleFile(file) {
     prev.innerHTML = '<div style="font-size:32px">📄</div>';
   }
   document.getElementById('btnCalc').style.display = 'inline-flex';
+  document.getElementById('btnLimpar').style.display = 'inline-flex';
   document.getElementById('rfoto').innerHTML = '';
 }
 
