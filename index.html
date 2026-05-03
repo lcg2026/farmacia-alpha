@@ -190,11 +190,10 @@ var EQUIV = {
   // N-Acetil Cisteína
   'n-acetil cisteina':'n acetil l cisteina','n acetil cisteina':'n acetil l cisteina',
   'nac':'n acetil l cisteina','acetil cisteina':'n acetil l cisteina',
-  // Arginina
+  // Arginina/Glutamina
   'l-arginina':'l arginina cloridrato','l arginina':'l arginina cloridrato','arginina':'l arginina cloridrato',
-  // Glutamina
   'l-glutamina':'l-glutamina','glutamina':'l-glutamina','l glutamina':'l-glutamina',
-  // Vitaminas C/D/E
+  // Vitamina C/D/E
   'vitamina c':'vit c','vit c':'vit c','acido ascorbico':'vit c',
   'vitamina d':'colecalciferol','vit d':'colecalciferol','vitamina d3':'colecalciferol','vit d3':'colecalciferol',
   'vitamina e':'vit e acetato','vit e':'vit e acetato','tocoferol':'vit e acetato',
@@ -204,24 +203,30 @@ var EQUIV = {
   'vitamina b3':'nicotinamida','niacina':'nicotinamida','vit b3':'nicotinamida',
   'vitamina b6':'vit b6 hcl','piridoxina':'vit b6 hcl','vit b6':'vit b6 hcl',
   'vitamina b9':'metilfolato','acido folico':'metilfolato','folato':'metilfolato',
-  'vitamina b12':'vit b12','cianocobalamina':'vit b12','vit b12':'vit b12',
+  'vitamina b12':'vit b12','cianocobalamina':'vit b12',
   'metilcobalamina':'metilcobalamina','metlcobalamina':'metilcobalamina',
   'vitamina b7':'biotina 5mg','vitamina h':'biotina 5mg','biotina':'biotina 5mg','asebiol':'biotina 5mg',
   // Minerais
-  'zinco quelado':'zinco quel taste free','zinco quelato':'zinco quel taste free','zinco':'zinco quel taste free',
-  'magnesio quelado':'magnesio quelato','magnesio bisglicinato':'magnesio quelato','magnesio':'magnesio quelato',
+  'zinco quelado':'zinco quel taste free','zinco quelato':'zinco quel taste free',
+  'zinco':'zinco quel taste free',
+  'magnesio quelado':'magnesio quelato','magnesio bisglicinato':'magnesio quelato',
+  'magnesio taurato':'taurato de magnesio','taurato de magnesio':'taurato de magnesio',
   'magnesio inositol':'magnesio inositol',
+  'magnesio':'magnesio quelato',
   'ferro quelado':'quelato ferro','ferro quelato':'quelato ferro','ferro bisglicinato':'quelato ferro','ferro':'quelato ferro',
   'selenio':'selenio quelado','selenium':'selenio quelado',
   'cobre quelado':'cobre quelado','cobre':'cobre quelado',
   'calcio quelado':'calcio quelado','calcio':'calcio quelado',
+  'picolinato de cromo':'picolinato cromo','picolinato cromo':'picolinato cromo','cromo picolinato':'picolinato cromo',
   // Aminoácidos
   'l-cisteina':'l cisteina','l cisteina':'l cisteina','cisteina':'l cisteina',
   'cistina':'l-cistina','l-cistina':'l-cistina',
   'l-triptofano':'triptofano l','l triptofano':'triptofano l','triptofano':'triptofano l',
-  // 5-HTP
+  // 5-HTP e Teanina
   '5-htp':'5-hidroxi l triptofano','5htp':'5-hidroxi l triptofano',
-  '5 hidroxi triptofano':'5-hidroxi l triptofano','5 hidroxitriptofano':'5-hidroxi l triptofano',
+  '5 htp':'5-hidroxi l triptofano','5-hidroxitriptofano':'5-hidroxi l triptofano',
+  'l-teanina':'l theanina','l teanina':'l theanina','teanina':'l theanina',
+  'l theanina':'l theanina','l-theanina':'l theanina','theanina':'l theanina',
   // Hormônios/Bases
   'pentravan':'pentravan','base pentravan':'pentravan',
   'transcutol':'transcutol p',
@@ -231,13 +236,20 @@ var EQUIV = {
   'omega 3':'oleo de peixe','omega-3':'oleo de peixe',
   'glisodin':'superoxido dismutase','glysodin':'superoxido dismutase',
   'pantotenato de calcio':'pantotenato calcio','acido pantotenico':'pantotenato calcio',
-  'ashwagandha':'ashwaganda','ashwaganda':'ashwaganda',
+  'ashwagandha':'ashwaganda','ashwaganda':'ashwaganda','withania somnifera':'ashwaganda',
   'niagen':'niagen',
   'metformina':'metformina','cloridrato de metformina':'metformina',
   'biointestil':'biointestil','bioingestil':'biointestil',
-  'cindura':'cindura',
-  'ln2 in':'ln2 in',
-  'inositol':'inositol'
+  'cindura':'cindura','ln2 in':'ln2 in',
+  'inositol':'inositol',
+  'calmaline':'drieline','calmatine':'drieline',
+  'd-pantenol':'d-pantenol','pantenol':'pantenol','d pantenol':'d-pantenol',
+  'alfa bisabolol':'alfa bisabolol','bisabolol':'alfa bisabolol',
+  'aveia coloidal':'aveia coloidal',
+  'creatina':'creatina mono','creatina monoidratada':'creatina mono',
+  'ivermectina':'ivermectina',
+  'locao base':'locao base hidratante','locao qsp':'locao base hidratante',
+  'gel qsp':'gel de aristoflex','gel base':'gel de aristoflex'
 };
 
 // ── Tabelas progressivas ───────────────────────────────────
@@ -544,6 +556,21 @@ function renderQtdsFixadas() {
 
 function remQtd(i) { qtdsFixadas.splice(i,1); renderQtdsFixadas(); }
 
+function calcFormulas() {
+  var parsed = window._parsedRec;
+  if(!parsed) return;
+  var container = document.getElementById('resultados-formulas');
+  container.innerHTML = '';
+  parsed.formulas.forEach(function(f, i) {
+    var chk = document.getElementById('fcheck'+i);
+    if(!chk || !chk.checked) return;
+    var r = calcRec({paciente:parsed.paciente, forma:f.forma, qtd:f.qtd, ativos:f.ativos});
+    var div = document.createElement('div');
+    renderResult(r, div);
+    container.appendChild(div);
+  });
+}
+
 function envWA() {
   if(!last) return;
   var msg;
@@ -637,14 +664,16 @@ function calcFoto() {
       try {
         var parsed = JSON.parse(clean);
         var container = document.getElementById('rfoto');
-        container.innerHTML = '<p style="font-size:13px;color:var(--text2);margin-bottom:12px"><strong>Paciente:</strong> '+parsed.paciente+'<br><span style="color:var(--text3)">'+parsed.formulas.length+' fórmula(s) encontrada(s):</span><br>'+
-          parsed.formulas.map(function(f,i){return (i+1)+') '+f.forma+' - '+f.qtd+' doses - '+f.ativos.map(function(a){return a.nome+' '+a.dose+a.unidade;}).join(', ');}).join('<br>')+'</p>';
-        parsed.formulas.forEach(function(f) {
-          var r = calcRec({paciente:parsed.paciente, forma:f.forma, qtd:f.qtd, ativos:f.ativos});
-          var div = document.createElement('div');
-          renderResult(r, div);
-          container.appendChild(div);
-        });
+        // Mostrar seleção de fórmulas
+        var formulaList = parsed.formulas.map(function(f,i){
+          return (i+1)+') '+f.forma+' - '+f.qtd+' doses - '+f.ativos.map(function(a){return a.nome+' '+a.dose+a.unidade;}).join(', ');
+        }).join('<br>');
+        var checkboxes = parsed.formulas.map(function(f,i){
+          return '<label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked id="fcheck'+i+'" style="margin-top:2px"> <span><strong>'+(i+1)+')</strong> '+f.forma+' - '+f.qtd+' doses<br><span style="color:var(--text3);font-size:12px">'+f.ativos.map(function(a){return a.nome+' '+a.dose+a.unidade;}).join(', ')+'</span></span></label>';
+        }).join('');
+        container.innerHTML = '<div class="card" style="margin-bottom:16px"><p style="font-size:13px;font-weight:600;margin-bottom:10px">Paciente: '+parsed.paciente+'</p><p style="font-size:12px;color:var(--text3);margin-bottom:12px">Selecione as fórmulas para calcular:</p>'+checkboxes+'<button class="btn btnp" onclick="calcFormulas()" style="margin-top:8px">Calcular selecionadas</button></div><div id="resultados-formulas"></div>';
+        // Guardar dados
+        window._parsedRec = parsed;
       } catch(e) { alert('Erro ao interpretar receita: ' + e.message); }
     })
     .catch(function(e){ btn.disabled=false; btn.textContent='⚙ Calcular preço'; alert('Erro: '+e.message); });
