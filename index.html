@@ -207,24 +207,23 @@ var EQUIV = {
   'metilcobalamina':'metilcobalamina','metlcobalamina':'metilcobalamina',
   'vitamina b7':'biotina 5mg','vitamina h':'biotina 5mg','biotina':'biotina 5mg','asebiol':'biotina 5mg',
   // Minerais
-  'zinco quelado':'zinco quel taste free','zinco quelato':'zinco quel taste free',
-  'zinco':'zinco quel taste free',
+  'zinco quelado':'zinco quel taste free','zinco quelato':'zinco quel taste free','zinco':'zinco quel taste free',
   'magnesio quelado':'magnesio quelato','magnesio bisglicinato':'magnesio quelato',
   'magnesio taurato':'taurato de magnesio','taurato de magnesio':'taurato de magnesio',
   'magnesio inositol':'magnesio inositol',
   'magnesio':'magnesio quelato',
   'ferro quelado':'quelato ferro','ferro quelato':'quelato ferro','ferro bisglicinato':'quelato ferro','ferro':'quelato ferro',
   'selenio':'selenio quelado','selenium':'selenio quelado',
+  'selenio metionina':'exselen','l selenio metionina':'exselen','seleniometionina':'exselen',
+  'selenio organico':'exselen','selenio quelado':'selenio quelado',
   'cobre quelado':'cobre quelado','cobre':'cobre quelado',
   'calcio quelado':'calcio quelado','calcio':'calcio quelado',
-  'picolinato de cromo':'picolinato cromo','picolinato cromo':'picolinato cromo','cromo picolinato':'picolinato cromo',
+  'picolinato de cromo':'picolinato cromo','picolinato cromo':'picolinato cromo',
   // Aminoácidos
   'l-cisteina':'l cisteina','l cisteina':'l cisteina','cisteina':'l cisteina',
   'cistina':'l-cistina','l-cistina':'l-cistina',
   'l-triptofano':'triptofano l','l triptofano':'triptofano l','triptofano':'triptofano l',
-  // 5-HTP e Teanina
-  '5-htp':'5-hidroxi l triptofano','5htp':'5-hidroxi l triptofano',
-  '5 htp':'5-hidroxi l triptofano','5-hidroxitriptofano':'5-hidroxi l triptofano',
+  '5-htp':'5-hidroxi l triptofano','5htp':'5-hidroxi l triptofano','5 htp':'5-hidroxi l triptofano',
   'l-teanina':'l theanina','l teanina':'l theanina','teanina':'l theanina',
   'l theanina':'l theanina','l-theanina':'l theanina','theanina':'l theanina',
   // Hormônios/Bases
@@ -232,11 +231,16 @@ var EQUIV = {
   'transcutol':'transcutol p',
   'testosterona micronizada':'testosterona base',
   'progesterona micronizada':'progesterona base',
+  // Loção/Gel/Bases
+  'locao base':'locao base hidratante','locao qsp':'locao base hidratante',
+  'locao hidratante':'locao base hidratante','locao hidrat':'locao base hidratante',
+  'gel qsp':'gel de aristoflex','gel base':'gel de aristoflex',
+  'gel aristoflex':'gel de aristoflex',
   // Outros
   'omega 3':'oleo de peixe','omega-3':'oleo de peixe',
   'glisodin':'superoxido dismutase','glysodin':'superoxido dismutase',
   'pantotenato de calcio':'pantotenato calcio','acido pantotenico':'pantotenato calcio',
-  'ashwagandha':'ashwaganda','ashwaganda':'ashwaganda','withania somnifera':'ashwaganda',
+  'ashwagandha':'ashwaganda','ashwaganda':'ashwaganda',
   'niagen':'niagen',
   'metformina':'metformina','cloridrato de metformina':'metformina',
   'biointestil':'biointestil','bioingestil':'biointestil',
@@ -246,10 +250,9 @@ var EQUIV = {
   'd-pantenol':'d-pantenol','pantenol':'pantenol','d pantenol':'d-pantenol',
   'alfa bisabolol':'alfa bisabolol','bisabolol':'alfa bisabolol',
   'aveia coloidal':'aveia coloidal',
-  'creatina':'creatina mono','creatina monoidratada':'creatina mono',
+  'creatina':'creatina monohidratada','creatina mono':'creatina monohidratada',
   'ivermectina':'ivermectina',
-  'locao base':'locao base hidratante','locao qsp':'locao base hidratante',
-  'gel qsp':'gel de aristoflex','gel base':'gel de aristoflex'
+  'cavaq10':'cavaq10'
 };
 
 // ── Tabelas progressivas ───────────────────────────────────
@@ -639,7 +642,7 @@ function calcFoto() {
     var isPDF = arq.type === 'application/pdf';
     var mediaType = isPDF ? 'application/pdf' : arq.type;
 
-    var prompt = 'Leia esta receita de farmacia de manipulacao. Extraia SOMENTE formulas manipuladas com ativos e doses. IGNORE medicamentos industrializados, produtos com nome de marca/laboratorio (ex: Pielus, Mantecorp, Therapsor, Rivotril, Dupixent) e orientacoes medicas. Para forma use: Capsulas, Sache, Creme, Hormonio, Locao, Shampoo, Pomada, Xarope. Use Hormonio quando houver testosterona/estradiol/progesterona com base topica (pentravan/transcutol/creme). Responda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":60,"descricao":"descricao","ativos":[{"nome":"nome exato da receita","dose":10,"unidade":"mg"}]}]}';
+    var prompt = 'Voce e um farmaceutico especialista em farmacia de manipulacao. Leia esta receita e extraia SOMENTE as formulas magistrais manipuladas. IGNORE completamente: medicamentos industrializados com nome comercial (Rivotril, Dupixent, Pielus, Pantogar, Neutrofer, Combiron etc), medicamentos genericos industriais, instrucoes de uso e posologia. INCLUA: formulas com lista de ativos e doses prescritas para manipulacao. Para cada formula extraia todos os ativos com dose e unidade exatas da receita. Para a base/veiculo (locao qsp, gel qsp, creme qsp) inclua como ativo com dose em gramas ou ml. Para forma farmaceutica use: Capsulas (uso oral solido), Sache (po para diluir, dose total acima de 2g por dose), Creme (uso topico pastoso), Hormonio (testosterona/estradiol/progesterona/dhea em base topica como pentravan/transcutol/creme/gel), Locao (liquido topico hidratante ou capilar), Shampoo, Pomada, Xarope. Quando a receita tiver multiplas formulas, extraia TODAS em formulas separadas. Responda APENAS em JSON valido sem markdown: {"paciente":"nome completo","prescritor":"nome e CRM","formulas":[{"forma":"Capsulas","qtd":60,"descricao":"descricao curta","ativos":[{"nome":"nome do ativo exato","dose":10,"unidade":"mg"}]}]}';
 
     var body = {
       model: 'claude-haiku-4-5',
