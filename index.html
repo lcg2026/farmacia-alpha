@@ -339,59 +339,265 @@ function normStr(s) {
     .replace(/\s+/g,' ').trim();
 }
 
+// Remove sufixos UE (uso externo) / UI (uso interno) do final da string.
+// Útil para casar receitas que dizem 'Acido hialuronico' com banco
+// que tem 'Acido hialuronico UI' / 'AC HIALURONICO UE'.
+function stripUEUI(s) {
+  if(!s) return '';
+  return s.replace(/\s+(ue|ui)\s*$/i, '').trim();
+}
+
+// Aplica abreviações farmacêuticas comuns para casar com o banco.
+// Recebe string já normalizada (pelo normStr) e retorna versão abreviada.
+// Regras curtas e seguras — qualquer melhoria deve preservar conformidade
+// com o banco existente.
+function normAbrev(s) {
+  if(!s) return '';
+  return s
+    .replace(/\bacido\b/g, 'ac')
+    .replace(/\bcloridrato\b/g, 'clor')
+    .replace(/\btintura\b/g, 'tint')
+    .replace(/\bextrato\s+glicolico\b/g, 'ext glicol')
+    .replace(/\bextrato\s+seco\b/g, 'ext seco')
+    .replace(/\bextrato\s+fluido\b/g, 'ext fluido')
+    .replace(/\bextrato\b/g, 'ext')
+    .replace(/\bvitamina\b/g, 'vit')
+    .replace(/\boleo\b/g, 'ol')
+    .replace(/\bcomprimido\b/g, 'comp')
+    .replace(/\s+(ue|ui)\s*$/g, '')
+    .replace(/\s+/g, ' ').trim();
+}
+
+// Versão "expandida": pega abreviações no banco e expande para nome completo
+// Útil quando a receita já vem com nome completo mas o banco tem abreviado
+function normExpand(s) {
+  if(!s) return '';
+  return s
+    .replace(/\bac\b/g, 'acido')
+    .replace(/\bclor\b/g, 'cloridrato')
+    .replace(/\btint\b/g, 'tintura')
+    .replace(/\bext\s+glicol\b/g, 'extrato glicolico')
+    .replace(/\bext\s+seco\b/g, 'extrato seco')
+    .replace(/\bext\s+fluido\b/g, 'extrato fluido')
+    .replace(/\bext\b/g, 'extrato')
+    .replace(/\bvit\b/g, 'vitamina')
+    .replace(/\bol\b/g, 'oleo')
+    .replace(/\bcomp\b/g, 'comprimido')
+    .replace(/\s+(ue|ui)\s*$/g, '')
+    .replace(/\s+/g, ' ').trim();
+}
+
+// Gera lista de variantes a tentar para uma query.
+// Retorna array com a query original normalizada + abreviada + expandida (sem duplicatas)
+function genVariants(s) {
+  var nl = normStr(s);
+  var ab = normAbrev(nl);
+  var ex = normExpand(nl);
+  var seen = {};
+  var out = [];
+  [nl, ab, ex].forEach(function(v) {
+    if(v && !seen[v]) { seen[v] = true; out.push(v); }
+  });
+  return out;
+}
+
 // ── Busca de insumo ────────────────────────────────────────
 function busIns(nome, formaCtx) {
   if(!nome) return null;
-  var nl = normStr(nome);
-  // Aplicar equivalências
-  for(var eq in EQUIV) {
-    var eqn = normStr(eq);
-    if(nl === eqn || nl.indexOf(eqn) === 0) { nl = EQUIV[eq]; break; }
+  
+  // Gerar todas as variantes da query: normalizada, abreviada (acido→ac, etc.),
+  // expandida (ac→acido, etc.). Cada variante já vem sem sufixo UE/UI.
+  var variants = genVariants(nome);
+  
+  // Aplicar dicionário de equivalências (EQUIV) — adiciona mais variantes
+  var allVariants = variants.slice();
+  for(var v=0; v<variants.length; v++) {
+    for(var eq in EQUIV) {
+      var eqn = normStr(eq);
+      if(variants[v] === eqn || variants[v].indexOf(eqn) === 0) {
+        if(allVariants.indexOf(EQUIV[eq]) < 0) allVariants.push(EQUIV[eq]);
+      }
+    }
+  }
+  variants = allVariants;
+  
+  // Helper: testa se k (do banco) bate com q (da query)
+  // Também tenta sem sufixo UE/UI tanto na query quanto no banco
+  function _matches(kBank, q) {
+    if(kBank === q) return true;
+    var kStripped = stripUEUI(kBank);
+    var qStripped = stripUEUI(q);
+    return kStripped === qStripped;
   }
   
   // ── PRIORIDADE 1: Match EXATO no nome principal (k)
-  var exactName = [];
-  for(var i=0;i<INS.length;i++) {
-    if(INS[i] && INS[i].k === nl) exactName.push(INS[i]);
+  for(var v=0; v<variants.length; v++) {
+    var matches = [];
+    for(var i=0; i<INS.length; i++) {
+      if(INS[i] && _matches(INS[i].k, variants[v])) matches.push(INS[i]);
+    }
+    if(matches.length > 0) return _pickBest(matches, formaCtx);
   }
-  if(exactName.length > 0) return _pickBest(exactName, formaCtx);
   
   // ── PRIORIDADE 2: Match EXATO em qualquer sinônimo (sk)
-  var exactSyn = [];
-  for(var i=0;i<INS.length;i++) {
-    if(!INS[i] || !INS[i].sk) continue;
-    for(var j=0;j<INS[i].sk.length;j++) {
-      if(INS[i].sk[j] === nl) { exactSyn.push(INS[i]); break; }
+  for(var v=0; v<variants.length; v++) {
+    var matches = [];
+    for(var i=0; i<INS.length; i++) {
+      if(!INS[i] || !INS[i].sk) continue;
+      for(var j=0; j<INS[i].sk.length; j++) {
+        if(_matches(INS[i].sk[j], variants[v])) { matches.push(INS[i]); break; }
+      }
     }
+    if(matches.length > 0) return _pickBest(matches, formaCtx);
   }
-  if(exactSyn.length > 0) return _pickBest(exactSyn, formaCtx);
   
   // ── PRIORIDADE 3: Stripped query (sem dose) — re-tenta sem números
-  var stripped = nl.replace(/\s*\d+([.,]\d+)?\s*(mg|g|mcg|ui|ml|%)?\s*$/gi, '').trim();
-  if(stripped !== nl && stripped.length >= 3) {
-    for(var i=0;i<INS.length;i++) {
-      if(INS[i] && INS[i].k === stripped) return INS[i];
+  for(var v=0; v<variants.length; v++) {
+    var stripped = variants[v].replace(/\s*\d+([.,]\d+)?\s*(mg|g|mcg|ui|ml|%)?\s*$/gi, '').trim();
+    if(stripped !== variants[v] && stripped.length >= 3) {
+      var matches = [];
+      for(var i=0; i<INS.length; i++) {
+        if(INS[i] && _matches(INS[i].k, stripped)) matches.push(INS[i]);
+      }
+      if(matches.length === 0) {
+        for(var i=0; i<INS.length; i++) {
+          if(!INS[i] || !INS[i].sk) continue;
+          for(var j=0; j<INS[i].sk.length; j++) {
+            if(_matches(INS[i].sk[j], stripped)) { matches.push(INS[i]); break; }
+          }
+        }
+      }
+      if(matches.length > 0) return _pickBest(matches, formaCtx);
     }
-    for(var i=0;i<INS.length;i++) {
+  }
+  
+  // ── PRIORIDADE 3.5: Marca/produto entre parênteses (ex: "...(Verisol®)" → tentar "verisol")
+  var paren = (normStr(nome)).match(/\(([^)]+)\)/);
+  if(paren) {
+    var inside = normStr(paren[1]).trim();
+    for(var i=0; i<INS.length; i++) {
+      if(INS[i] && _matches(INS[i].k, inside)) return INS[i];
+    }
+    for(var i=0; i<INS.length; i++) {
+      if(INS[i] && INS[i].k && INS[i].k.indexOf(inside) === 0) return INS[i];
+    }
+    for(var i=0; i<INS.length; i++) {
       if(!INS[i] || !INS[i].sk) continue;
-      for(var j=0;j<INS[i].sk.length;j++) {
-        if(INS[i].sk[j] === stripped) return INS[i];
+      for(var j=0; j<INS[i].sk.length; j++) {
+        if(_matches(INS[i].sk[j], inside)) return INS[i];
       }
     }
   }
   
-  // ── PRIORIDADE 4: k começa com nl (busca parcial)
-  var startsWith = [];
-  for(var i=0;i<INS.length;i++) {
-    if(INS[i] && INS[i].k && INS[i].k.indexOf(nl) === 0) startsWith.push(INS[i]);
+  // ── PRIORIDADE 4: k começa com a query (busca parcial)
+  for(var v=0; v<variants.length; v++) {
+    var q = variants[v];
+    var matches = [];
+    for(var i=0; i<INS.length; i++) {
+      if(INS[i] && INS[i].k && (INS[i].k.indexOf(q) === 0 || stripUEUI(INS[i].k).indexOf(q) === 0)) {
+        matches.push(INS[i]);
+      }
+    }
+    if(matches.length > 0) return _pickBest(matches, formaCtx);
   }
-  if(startsWith.length > 0) return _pickBest(startsWith, formaCtx);
   
-  // ── PRIORIDADE 5: k contém nl (último recurso)
-  for(var i=0;i<INS.length;i++) {
-    if(INS[i] && INS[i].k && INS[i].k.indexOf(nl) >= 0) return INS[i];
+  // ── PRIORIDADE 5: k contém a query (último recurso)
+  for(var v=0; v<variants.length; v++) {
+    var q = variants[v];
+    for(var i=0; i<INS.length; i++) {
+      if(INS[i] && INS[i].k && INS[i].k.indexOf(q) >= 0) return INS[i];
+    }
   }
+  
   return null;
+}
+
+// Escolhe o melhor insumo de uma lista, considerando a forma farmacêutica
+function _pickBest(candidates, formaCtx) {
+  if(candidates.length === 1) return candidates[0];
+  
+  var formNorm = (formaCtx || '').toLowerCase();
+  var isCapsula = /cap/.test(formNorm);
+  // Uso interno (UI): cápsulas, sachês, xaropes, soluções, gotas
+  var isUI = isCapsula || /sache|envel|xarope|solucao|solução|gota|sublingual|orotab/.test(formNorm);
+  // Uso externo (UE): cremes, loções, géis, pomadas, shampoos, hormônios
+  var isUE = /creme|locao|loção|gel|pomada|shampoo|xampu|locao|locão|hormonio|hormônio/.test(formNorm) && !isUI;
+  
+  // Helper: detecta se um insumo tem marcador "UI" no nome ou sinônimos
+  function hasMarker(c, marker) {
+    var rgx = new RegExp('\\\\b' + marker + '\\\\b\\\\s*$', 'i');
+    if(rgx.test(c.n)) return true;
+    if(c.s) {
+      for(var i=0; i<c.s.length; i++) {
+        if(rgx.test(c.s[i])) return true;
+      }
+    }
+    return false;
+  }
+  
+  // Anotar candidatos com flags
+  for(var i=0;i<candidates.length;i++) {
+    var c = candidates[i];
+    var nl = c.n.toUpperCase();
+    
+    // Rejeitar Taste Free para cápsulas
+    if(isCapsula && /TASTE FREE|TASTE-FREE/.test(nl)) {
+      c._reject = true;
+    }
+    // Preferir Taste Free para soluções (xarope, gotas, etc.)
+    if(isUI && !isCapsula && /TASTE FREE|TASTE-FREE/.test(nl)) {
+      c._prefer = true;
+    }
+    
+    // UE/UI scoring
+    if(isUI && hasMarker(c, 'UI')) c._uiMatch = true;
+    if(isUE && hasMarker(c, 'UE')) c._ueMatch = true;
+    // Mismatch (penalize): UE quando precisa UI, ou UI quando precisa UE
+    if(isUI && hasMarker(c, 'UE')) c._mismatch = true;
+    if(isUE && hasMarker(c, 'UI')) c._mismatch = true;
+  }
+  
+  // Filtrar
+  var preferred = candidates.filter(function(c){return c._prefer;});
+  if(preferred.length === 1) {
+    _clearFlags(candidates);
+    return preferred[0];
+  }
+  
+  // Filtro 1: nada que tenha mismatch grave
+  var pool = candidates.filter(function(c){return !c._reject && !c._mismatch;});
+  if(pool.length === 0) pool = candidates.filter(function(c){return !c._reject;});
+  if(pool.length === 0) pool = candidates;
+  
+  // Preferir os que casam com forma (UE/UI match)
+  var matched = pool.filter(function(c){return c._uiMatch || c._ueMatch;});
+  if(matched.length >= 1) pool = matched;
+  
+  if(pool.length === 1) {
+    _clearFlags(candidates);
+    return pool[0];
+  }
+  
+  // Desempate: preferir o de MENOR preço (geralmente o "padrão")
+  var withPrice = pool.filter(function(c){return c.p > 0;});
+  if(withPrice.length > 0) {
+    withPrice.sort(function(a,b){return a.p - b.p;});
+    _clearFlags(candidates);
+    return withPrice[0];
+  }
+  _clearFlags(candidates);
+  return pool[0];
+}
+
+function _clearFlags(candidates) {
+  for(var i=0;i<candidates.length;i++) {
+    var c = candidates[i];
+    delete c._reject;
+    delete c._prefer;
+    delete c._uiMatch;
+    delete c._ueMatch;
+    delete c._mismatch;
+  }
 }
 
 // Escolhe o melhor insumo de uma lista, considerando a forma farmacêutica
