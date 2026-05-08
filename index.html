@@ -340,7 +340,7 @@ function normStr(s) {
 }
 
 // ── Busca de insumo ────────────────────────────────────────
-function busIns(nome) {
+function busIns(nome, formaCtx) {
   if(!nome) return null;
   var nl = normStr(nome);
   // Aplicar equivalências
@@ -348,18 +348,90 @@ function busIns(nome) {
     var eqn = normStr(eq);
     if(nl === eqn || nl.indexOf(eqn) === 0) { nl = EQUIV[eq]; break; }
   }
-  // Busca 1: k exato
-  for(var i=0;i<INS.length;i++) { if(INS[i] && INS[i].k === nl) return INS[i]; }
-  // Busca 2: k começa com nl
-  for(var i=0;i<INS.length;i++) { if(INS[i] && INS[i].k && INS[i].k.indexOf(nl) === 0) return INS[i]; }
-  // Busca 3: sk exato
+  
+  // ── PRIORIDADE 1: Match EXATO no nome principal (k)
+  var exactName = [];
   for(var i=0;i<INS.length;i++) {
-    if(!INS[i]||!INS[i].sk) continue;
-    for(var j=0;j<INS[i].sk.length;j++) { if(INS[i].sk[j] === nl) return INS[i]; }
+    if(INS[i] && INS[i].k === nl) exactName.push(INS[i]);
   }
-  // Busca 4: k contém nl
-  for(var i=0;i<INS.length;i++) { if(INS[i] && INS[i].k && INS[i].k.indexOf(nl) >= 0) return INS[i]; }
+  if(exactName.length > 0) return _pickBest(exactName, formaCtx);
+  
+  // ── PRIORIDADE 2: Match EXATO em qualquer sinônimo (sk)
+  var exactSyn = [];
+  for(var i=0;i<INS.length;i++) {
+    if(!INS[i] || !INS[i].sk) continue;
+    for(var j=0;j<INS[i].sk.length;j++) {
+      if(INS[i].sk[j] === nl) { exactSyn.push(INS[i]); break; }
+    }
+  }
+  if(exactSyn.length > 0) return _pickBest(exactSyn, formaCtx);
+  
+  // ── PRIORIDADE 3: Stripped query (sem dose) — re-tenta sem números
+  var stripped = nl.replace(/\s*\d+([.,]\d+)?\s*(mg|g|mcg|ui|ml|%)?\s*$/gi, '').trim();
+  if(stripped !== nl && stripped.length >= 3) {
+    for(var i=0;i<INS.length;i++) {
+      if(INS[i] && INS[i].k === stripped) return INS[i];
+    }
+    for(var i=0;i<INS.length;i++) {
+      if(!INS[i] || !INS[i].sk) continue;
+      for(var j=0;j<INS[i].sk.length;j++) {
+        if(INS[i].sk[j] === stripped) return INS[i];
+      }
+    }
+  }
+  
+  // ── PRIORIDADE 4: k começa com nl (busca parcial)
+  var startsWith = [];
+  for(var i=0;i<INS.length;i++) {
+    if(INS[i] && INS[i].k && INS[i].k.indexOf(nl) === 0) startsWith.push(INS[i]);
+  }
+  if(startsWith.length > 0) return _pickBest(startsWith, formaCtx);
+  
+  // ── PRIORIDADE 5: k contém nl (último recurso)
+  for(var i=0;i<INS.length;i++) {
+    if(INS[i] && INS[i].k && INS[i].k.indexOf(nl) >= 0) return INS[i];
+  }
   return null;
+}
+
+// Escolhe o melhor insumo de uma lista, considerando a forma farmacêutica
+function _pickBest(candidates, formaCtx) {
+  if(candidates.length === 1) return candidates[0];
+  
+  var formNorm = (formaCtx || '').toLowerCase();
+  var isCapsula = /cap/.test(formNorm);
+  var isLiquido = /sache|envel|xarope|solucao|solução|gota/.test(formNorm);
+  
+  // Filtros por forma
+  for(var i=0;i<candidates.length;i++) {
+    var nl = candidates[i].n.toUpperCase();
+    
+    // Para CÁPSULAS: rejeitar Taste Free e Albion (a menos que receita peça)
+    if(isCapsula && /TASTE FREE|TASTE-FREE/.test(nl)) {
+      candidates[i]._reject = true;
+    }
+    // Para SOLUÇÕES: preferir Taste Free
+    if(isLiquido && /TASTE FREE|TASTE-FREE/.test(nl)) {
+      candidates[i]._prefer = true;
+    }
+  }
+  
+  var preferred = candidates.filter(function(c){return c._prefer;});
+  var nonRejected = candidates.filter(function(c){return !c._reject;});
+  
+  if(preferred.length === 1) return preferred[0];
+  if(nonRejected.length === 1) return nonRejected[0];
+  
+  var pool = nonRejected.length > 0 ? nonRejected : candidates;
+  
+  // Desempate final: preferir o de MENOR preço (geralmente o "padrão")
+  // Mas só se preço > 0
+  var withPrice = pool.filter(function(c){return c.p > 0;});
+  if(withPrice.length > 0) {
+    withPrice.sort(function(a,b){return a.p - b.p;});
+    return withPrice[0];
+  }
+  return pool[0];
 }
 
 // ── MKP ───────────────────────────────────────────────────
@@ -398,7 +470,7 @@ function calcRec(rec) {
 
   // Calcular ativos
   (rec.ativos||[]).forEach(function(a) {
-    var ins = busIns(a.nome);
+    var ins = busIns(a.nome, fml);
     if(!ins) { avs.push('Não encontrado: ' + a.nome); return; }
     if(ins.p === 0) { avs.push('Sem preço: ' + ins.n); return; }
     var u = (a.unidade||'mg').toLowerCase();
@@ -657,7 +729,7 @@ function calcFoto() {
 
     var body = {
       model: 'claude-haiku-4-5',
-      max_tokens: 1000,
+      max_tokens: 4000,
       messages: [{role:'user', content:[
         {type: isPDF ? 'document' : 'image', source:{type:'base64',media_type:mediaType,data:b64}},
         {type:'text', text:prompt}
@@ -675,8 +747,34 @@ function calcFoto() {
       if(!data.content||!data.content[0]) { alert('Erro na API'); return; }
       var txt = data.content[0].text;
       var clean = txt.replace(/```json|```/g,'').trim();
+      // Tentar reparar JSON truncado (receita muito longa)
+      function tryRepairJSON(s) {
+        // Se terminou em meio a uma string ou objeto, tentar fechar
+        var openBraces = (s.match(/\{/g) || []).length;
+        var closeBraces = (s.match(/\}/g) || []).length;
+        var openBrackets = (s.match(/\[/g) || []).length;
+        var closeBrackets = (s.match(/\]/g) || []).length;
+        // Se tem chaves abertas sem fechar, fechar
+        var diffB = openBraces - closeBraces;
+        var diffS = openBrackets - closeBrackets;
+        // Se terminou em vírgula, remover
+        s = s.replace(/,\s*$/, '');
+        // Se terminou em aspas abertas, fechar
+        var quotes = (s.match(/"/g) || []).length;
+        if(quotes % 2 !== 0) s += '"';
+        // Adicionar fechamentos
+        for(var i=0;i<diffS;i++) s += ']';
+        for(var i=0;i<diffB;i++) s += '}';
+        return s;
+      }
       try {
-        var parsed = JSON.parse(clean);
+        var parsed;
+        try { parsed = JSON.parse(clean); }
+        catch(e1) {
+          console.warn('JSON inválido, tentando reparar:', e1.message);
+          parsed = JSON.parse(tryRepairJSON(clean));
+          console.warn('JSON reparado com sucesso');
+        }
         var container = document.getElementById('rfoto');
         // Mostrar seleção de fórmulas
         var formulaList = parsed.formulas.map(function(f,i){
@@ -688,7 +786,16 @@ function calcFoto() {
         container.innerHTML = '<div class="card" style="margin-bottom:16px"><p style="font-size:13px;font-weight:600;margin-bottom:10px">Paciente: '+parsed.paciente+'</p><p style="font-size:12px;color:var(--text3);margin-bottom:12px">Selecione as fórmulas para calcular:</p>'+checkboxes+'<button class="btn btnp" onclick="calcFormulas()" style="margin-top:8px">Calcular selecionadas</button></div><div id="resultados-formulas"></div>';
         // Guardar dados
         window._parsedRec = parsed;
-      } catch(e) { alert('Erro ao interpretar receita: ' + e.message); }
+      } catch(e) { 
+        // Try to recover: if JSON looks truncated, show user-friendly message
+        var msg = 'Erro ao interpretar receita: ' + e.message;
+        if(e.message && e.message.indexOf('position') >= 0) {
+          msg += '\n\nA resposta da IA pode ter sido cortada (receita muito longa). Tente novamente ou divida a receita.';
+        }
+        // Log raw response for debugging
+        console.error('JSON malformado recebido da API:', clean);
+        alert(msg);
+      }
     })
     .catch(function(e){ btn.disabled=false; btn.textContent='⚙ Calcular preço'; alert('Erro: '+e.message); });
   };
