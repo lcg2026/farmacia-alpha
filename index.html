@@ -255,7 +255,68 @@ var EQUIV = {
   'creatina':'creatina mono','creatina monoidratada':'creatina mono',
   'ivermectina':'ivermectina',
   'locao base':'locao base hidratante','locao qsp':'locao base hidratante',
-  'gel qsp':'gel de aristoflex','gel base':'gel de aristoflex'
+  'gel qsp':'gel de aristoflex','gel base':'gel de aristoflex',
+  // Hormônios — formas com qualificadores que a receita pode omitir
+  'testosterona base':'testosterona base','estradiol base':'estradiol base',
+  'estradiol micronizado':'estradiol base','estradiol micronizada':'estradiol base',
+  'progesterona base':'progesterona base',
+  'estriol base':'estriol base','estriol micronizado':'estriol base',
+  // Vitamina K
+  'vitamina k2':'menaquinona','vit k2':'menaquinona','mk7':'menaquinona','mk-7':'menaquinona',
+  'vitamina k':'fitomenadiona','vit k':'fitomenadiona',
+  // Magnésio — formas variadas
+  'magnesio dimalato':'magnesio dimalato','dimalato de magnesio':'magnesio dimalato',
+  'magnesio treonato':'magnesio l treonato','l-treonato de magnesio':'magnesio l treonato',
+  'magnesio glicina':'magnesio bisglicinato','magnesio bisglicinato':'magnesio quelato',
+  // Minerais adicionais
+  'manganes quelado':'manganes quelado','manganes':'manganes quelado',
+  'molibdenio quelado':'molibdenio quelado','molibdenio':'molibdenio quelado',
+  'iodo':'iodeto de potassio','iodeto':'iodeto de potassio',
+  'boro quelado':'boro quelado','boro':'boro quelado',
+  'vanadio quelado':'vanadio quelado','vanadio':'vanadio quelado',
+  // Aminoácidos comuns
+  'l-leucina':'l leucina','leucina':'l leucina',
+  'l-isoleucina':'l isoleucina','isoleucina':'l isoleucina',
+  'l-valina':'l valina','valina':'l valina',
+  'l-lisina':'l lisina cloridrato','lisina':'l lisina cloridrato','l-lisina hcl':'l lisina cloridrato',
+  'l-prolina':'l prolina','prolina':'l prolina',
+  'l-glicina':'glicina','glicina':'glicina',
+  'l-arginina hcl':'l arginina cloridrato',
+  'l-ornitina':'l ornitina cloridrato','ornitina':'l ornitina cloridrato',
+  'l-metionina':'l metionina','metionina':'l metionina',
+  'l-fenilalanina':'l fenilalanina','fenilalanina':'l fenilalanina',
+  'l-tirosina':'l tirosina','tirosina':'l tirosina',
+  'l-serina':'l serina','serina':'l serina',
+  'l-treonina':'l treonina','treonina':'l treonina',
+  'l-histidina':'l histidina cloridrato','histidina':'l histidina cloridrato',
+  'taurina':'taurina',
+  // Extratos populares em prescrições
+  'extrato de acai':'acai ext seco','acai':'acai ext seco',
+  'extrato de maca':'maca ext seco','maca peruana':'maca ext seco','maca':'maca ext seco',
+  'extrato de curcuma':'curcuma ext seco','curcumina':'curcuma ext seco','curcuma':'curcuma ext seco',
+  'extrato de romero':'alecrim ext seco','alecrim':'alecrim ext seco',
+  'resveratrol':'resveratrol','trans-resveratrol':'resveratrol',
+  'quercetina':'quercetina','quercetin':'quercetina',
+  'berberina':'berberina cloridrato',
+  // Colágenos
+  'colageno hidrolisado':'colageno hidrolisado','colageno':'colageno hidrolisado',
+  'verisol':'colageno verisol','colageno verisol':'colageno verisol',
+  'peptan':'colageno hidrolisado',
+  // Bases farmacêuticas adicionais
+  'pentravan plus':'pentravan plus','base pentravan plus':'pentravan plus',
+  'lipoderm':'lipoderm base','base lipoderm':'lipoderm base',
+  'creme base':'creme base','base creme':'creme base',
+  'pomada base':'pomada base','base pomada':'pomada base',
+  // Probióticos
+  'lactobacillus':'lactobacillus sp','lactobacilos':'lactobacillus sp',
+  'bifidobacterium':'bifidobacterium sp',
+  // Outros frequentes
+  'alfa lipoico':'acido alfa lipoico','acido alfa lipoico':'acido alfa lipoico','ala':'acido alfa lipoico',
+  'dhea':'dhea','desidroepiandrosterona':'dhea',
+  'melatonina':'melatonina',
+  'picolinato de zinco':'picolinato zinco','zinco picolinato':'picolinato zinco',
+  'acido ursodesoxicolico':'acido ursodesoxicolico','udca':'acido ursodesoxicolico',
+  'ubiquinol':'ubiquinol','ubiquinona':'ubiquinona'
 };
 
 // ── Tabelas progressivas ───────────────────────────────────
@@ -356,6 +417,7 @@ function normAbrev(s) {
   return s
     .replace(/\bacido\b/g, 'ac')
     .replace(/\bcloridrato\b/g, 'clor')
+    .replace(/\bhcl\b/g, 'clor')
     .replace(/\btintura\b/g, 'tint')
     .replace(/\bextrato\s+glicolico\b/g, 'ext glicol')
     .replace(/\bextrato\s+seco\b/g, 'ext seco')
@@ -364,6 +426,16 @@ function normAbrev(s) {
     .replace(/\bvitamina\b/g, 'vit')
     .replace(/\boleo\b/g, 'ol')
     .replace(/\bcomprimido\b/g, 'comp')
+    .replace(/\bsulfato\b/g, 'sulf')
+    .replace(/\bfosfato\b/g, 'fosf')
+    .replace(/\bpropionato\b/g, 'prop')
+    .replace(/\bsuccinato\b/g, 'succ')
+    .replace(/\btartarato\b/g, 'tart')
+    .replace(/\bgluconato\b/g, 'gluc')
+    .replace(/\bgluconato\b/g, 'gluc')
+    .replace(/\bcitrato\b/g, 'citr')
+    .replace(/\btocoferol\b/g, 'tocof')
+    .replace(/\bcarbonato\b/g, 'carbon')
     .replace(/\s+(ue|ui)\s*$/g, '')
     .replace(/\s+/g, ' ').trim();
 }
@@ -383,6 +455,15 @@ function normExpand(s) {
     .replace(/\bvit\b/g, 'vitamina')
     .replace(/\bol\b/g, 'oleo')
     .replace(/\bcomp\b/g, 'comprimido')
+    .replace(/\bsulf\b/g, 'sulfato')
+    .replace(/\bfosf\b/g, 'fosfato')
+    .replace(/\bprop\b/g, 'propionato')
+    .replace(/\bsucc\b/g, 'succinato')
+    .replace(/\btart\b/g, 'tartarato')
+    .replace(/\bgluc\b/g, 'gluconato')
+    .replace(/\bcitr\b/g, 'citrato')
+    .replace(/\btocof\b/g, 'tocoferol')
+    .replace(/\bcarbon\b/g, 'carbonato')
     .replace(/\s+(ue|ui)\s*$/g, '')
     .replace(/\s+/g, ' ').trim();
 }
@@ -401,10 +482,23 @@ function genVariants(s) {
   return out;
 }
 
+// Remove qualificadores técnicos que aparecem no banco mas não na receita (ou vice-versa).
+function stripQualifiers(s) {
+  if(!s) return s;
+  return s
+    .replace(/\b(usp|ep|bp|nf|ph\.?\s*eur\.?|anvisa)\b/gi, '')
+    .replace(/\banidro\b/gi, '')
+    .replace(/\bmonoidratad[oa]\b/gi, '').replace(/\bmonohidratad[oa]\b/gi, '')
+    .replace(/\bmicronizad[oa]s?\b/gi, '')
+    .replace(/\bnano\s*encapsulad[oa]\b/gi, '')
+    .replace(/\s+/g, ' ').trim();
+}
+
 // ── Busca de insumo ────────────────────────────────────────
 function busIns(nome, formaCtx) {
   if(!nome) return null;
-  
+  nome = stripQualifiers(nome);
+
   // Gerar todas as variantes da query: normalizada, abreviada (acido→ac, etc.),
   // expandida (ac→acido, etc.). Cada variante já vem sem sufixo UE/UI.
   var variants = genVariants(nome);
@@ -489,6 +583,29 @@ function busIns(nome, formaCtx) {
     }
   }
   
+  // ── PRIORIDADE 3.8: todos os tokens da query presentes no banco (qualquer ordem)
+  // Resolve casos como "Zinco Quelado" vs "Quelado de Zinco", "Extrato de Romã" vs "Roma Ext Seco"
+  for(var v=0; v<variants.length; v++) {
+    var q38 = variants[v];
+    var tokens = q38.split(' ').filter(function(t){ return t.length > 2; });
+    if(tokens.length < 2) continue;
+    var matches = [];
+    for(var i=0; i<INS.length; i++) {
+      if(!INS[i]) continue;
+      var kb = INS[i].k || '';
+      var kb2 = stripUEUI(kb);
+      var allTok = tokens.every(function(t){ return kb.indexOf(t) >= 0 || kb2.indexOf(t) >= 0; });
+      if(allTok) { matches.push(INS[i]); continue; }
+      if(INS[i].sk) {
+        for(var j=0; j<INS[i].sk.length; j++) {
+          var skb = INS[i].sk[j];
+          if(tokens.every(function(t){ return skb.indexOf(t) >= 0; })) { matches.push(INS[i]); break; }
+        }
+      }
+    }
+    if(matches.length > 0) return _pickBest(matches, formaCtx);
+  }
+
   // ── PRIORIDADE 4: k começa com a query (busca parcial)
   for(var v=0; v<variants.length; v++) {
     var q = variants[v];
@@ -500,13 +617,15 @@ function busIns(nome, formaCtx) {
     }
     if(matches.length > 0) return _pickBest(matches, formaCtx);
   }
-  
+
   // ── PRIORIDADE 5: k contém a query (último recurso)
   for(var v=0; v<variants.length; v++) {
     var q = variants[v];
+    var matches = [];
     for(var i=0; i<INS.length; i++) {
-      if(INS[i] && INS[i].k && INS[i].k.indexOf(q) >= 0) return INS[i];
+      if(INS[i] && INS[i].k && INS[i].k.indexOf(q) >= 0) matches.push(INS[i]);
     }
+    if(matches.length > 0) return _pickBest(matches, formaCtx);
   }
   
   return null;
@@ -525,7 +644,7 @@ function _pickBest(candidates, formaCtx) {
   
   // Helper: detecta se um insumo tem marcador "UI" no nome ou sinônimos
   function hasMarker(c, marker) {
-    var rgx = new RegExp('\\\\b' + marker + '\\\\b\\\\s*$', 'i');
+    var rgx = new RegExp('\\b' + marker + '\\b\\s*$', 'i');
     if(rgx.test(c.n)) return true;
     if(c.s) {
       for(var i=0; i<c.s.length; i++) {
