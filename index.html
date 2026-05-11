@@ -95,9 +95,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
       <div class="drop-area" id="dropz" onclick="document.getElementById('finp').click()">
         <div style="font-size:32px">📷</div>
         <strong style="font-size:14px">Arraste ou clique para selecionar</strong>
-        <p>JPG, PNG, PDF</p>
+        <p>JPG, PNG, PDF — várias páginas: selecione múltiplos arquivos</p>
       </div>
-      <input type="file" id="finp" accept="image/*,.pdf" style="display:none">
+      <input type="file" id="finp" accept="image/*,.pdf" style="display:none" multiple>
       <div id="fpreview" style="margin-top:12px"></div>
       <div id="fmeta" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
     </div>
@@ -212,22 +212,24 @@ var EQUIV = {
   'vitamina b12':'vit b12','cianocobalamina':'vit b12',
   'metilcobalamina':'metilcobalamina','metlcobalamina':'metilcobalamina',
   'vitamina b7':'biotina 5mg','vitamina h':'biotina 5mg','biotina':'biotina 5mg','asebiol':'biotina 5mg',
-  // Minerais
-  'zinco quelado':'zinco quel taste free','zinco quelato':'zinco quel taste free',
-  'zinco':'zinco quel taste free',
+  // Minerais — Taste Free: para líquidos (xarope/gotas); _pickBest aplica preferência/rejeição por forma
+  'zinco quelado':'zinco quelado','zinco quelato':'zinco quelado',
+  'zinco bisglicinato':'zinco quelado','zinco':'zinco quelado',
   'magnesio quelado':'magnesio quelato','magnesio bisglicinato':'magnesio quelato',
   'magnesio taurato':'taurato de magnesio','taurato de magnesio':'taurato de magnesio',
   'magnesio inositol':'magnesio inositol',
   'magnesio':'magnesio quelato',
-  'ferro quelado':'quelato ferro','ferro quelato':'quelato ferro','ferro bisglicinato':'quelato ferro','ferro':'quelato ferro',
+  'ferro quelado':'quelato ferro','ferro bisglicinato':'quelato ferro','ferro':'quelato ferro',
   'selenio':'selenio quelado','selenium':'selenio quelado',
   'cobre quelado':'cobre quelado','cobre':'cobre quelado',
   'calcio quelado':'calcio quelado','calcio':'calcio quelado',
   'picolinato de cromo':'picolinato cromo','picolinato cromo':'picolinato cromo','cromo picolinato':'picolinato cromo',
-  // Aminoácidos
+  // Aminoácidos — itens frequentes em receitas
   'l-cisteina':'l cisteina','l cisteina':'l cisteina','cisteina':'l cisteina',
   'cistina':'l-cistina','l-cistina':'l-cistina',
   'l-triptofano':'triptofano l','l triptofano':'triptofano l','triptofano':'triptofano l',
+  'acetil l carnitina':'acetil l carnitina','acetil l-carnitina':'acetil l carnitina','alcar':'acetil l carnitina',
+  'l carnosina':'l carnosina','l-carnosina':'l carnosina','carnosina':'l carnosina',
   // 5-HTP e Teanina
   '5-htp':'5-hidroxi l triptofano','5htp':'5-hidroxi l triptofano',
   '5 htp':'5-hidroxi l triptofano','5-hidroxitriptofano':'5-hidroxi l triptofano',
@@ -245,6 +247,16 @@ var EQUIV = {
   'ashwagandha':'ashwaganda','ashwaganda':'ashwaganda','withania somnifera':'ashwaganda',
   'niagen':'niagen',
   'metformina':'metformina','cloridrato de metformina':'metformina',
+  'naltrexona':'naltrexona','naftexona':'naltrexona','naltrexone':'naltrexona',
+  'tadalafila':'tadalafila','tadalafil':'tadalafila',
+  'sildenafile':'sildenafile','sildenafil':'sildenafile',
+  'lactobacillus acidophilus':'lactobacillus acidophilus','l acidophilus':'lactobacillus acidophilus',
+  'lactobacillus rhamnosus':'lactobacillus rhamnosus','l rhamnosus':'lactobacillus rhamnosus',
+  'lactobacillus curvatus':'lactobacillus curvatus','l curvatus':'lactobacillus curvatus',
+  'lactobacillus plantarum':'lactobacillus plantarum','l plantarum':'lactobacillus plantarum',
+  'bifidobacterium longum':'bifidobacterium longum','b longum':'bifidobacterium longum',
+  'bifidobacterium lactis':'bifidobacterium lactis','b lactis':'bifidobacterium lactis',
+  'streptococcus thermophilus':'streptococcus thermophilus','s thermophilus':'streptococcus thermophilus',
   'biointestil':'biointestil','bioingestil':'biointestil',
   'cindura':'cindura','ln2 in':'ln2 in',
   'inositol':'inositol',
@@ -368,11 +380,18 @@ window.onload = function() {
   var dz = document.getElementById('dropz');
   dz.ondragover = function(e) { e.preventDefault(); dz.classList.add('drag'); };
   dz.ondragleave = function() { dz.classList.remove('drag'); };
-  dz.ondrop = function(e) { e.preventDefault(); dz.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); };
+  dz.ondrop = function(e) {
+    e.preventDefault(); dz.classList.remove('drag');
+    var files = e.dataTransfer.files;
+    if(files.length > 1) handleMultiFile(files);
+    else if(files.length === 1) handleFile(files[0]);
+  };
 
-  // File input
+  // File input — suporta múltiplos arquivos (várias páginas da receita)
   document.getElementById('finp').onchange = function(e) {
-    if(e.target.files[0]) handleFile(e.target.files[0]);
+    var files = e.target.files;
+    if(files.length > 1) handleMultiFile(files);
+    else if(files.length === 1) handleFile(files[0]);
   };
 };
 
@@ -397,6 +416,7 @@ function normStr(s) {
     .replace(/[íìîï]/g,'i').replace(/[óòõôö]/g,'o')
     .replace(/[úùûü]/g,'u').replace(/[ç]/g,'c')
     .replace(/[ñ]/g,'n').replace(/[®©™°]/g,'')
+    .replace(/-/g,' ')
     .replace(/\s+/g,' ').trim();
 }
 
@@ -503,12 +523,13 @@ function busIns(nome, formaCtx) {
   // expandida (ac→acido, etc.). Cada variante já vem sem sufixo UE/UI.
   var variants = genVariants(nome);
   
-  // Aplicar dicionário de equivalências (EQUIV) — adiciona mais variantes
+  // Aplicar dicionário de equivalências (EQUIV) — usa match EXATO para evitar
+  // que termos genéricos (ex: 'magnesio') contaminem buscas específicas (ex: 'magnesio treonato')
   var allVariants = variants.slice();
   for(var v=0; v<variants.length; v++) {
     for(var eq in EQUIV) {
       var eqn = normStr(eq);
-      if(variants[v] === eqn || variants[v].indexOf(eqn) === 0) {
+      if(variants[v] === eqn) {
         if(allVariants.indexOf(EQUIV[eq]) < 0) allVariants.push(EQUIV[eq]);
       }
     }
@@ -720,37 +741,41 @@ function _clearFlags(candidates) {
 }
 
 // Escolhe o melhor insumo de uma lista, considerando a forma farmacêutica
+// Não faz early-return para candidato único: aplica sempre o filtro Taste Free
 function _pickBest(candidates, formaCtx) {
-  if(candidates.length === 1) return candidates[0];
-  
   var formNorm = (formaCtx || '').toLowerCase();
   var isCapsula = /cap/.test(formNorm);
-  var isLiquido = /sache|envel|xarope|solucao|solução|gota/.test(formNorm);
-  
-  // Filtros por forma
-  for(var i=0;i<candidates.length;i++) {
+  var isLiquido = /sache|envel|xarope|solucao|solu.ao|gota/.test(formNorm);
+
+  // Marcar candidatos com flags de preferência/rejeição por forma
+  for(var i=0; i<candidates.length; i++) {
     var nl = candidates[i].n.toUpperCase();
-    
-    // Para CÁPSULAS: rejeitar Taste Free e Albion (a menos que receita peça)
+    // Para CÁPSULAS: rejeitar Taste Free (minerais Taste Free são para líquidos)
     if(isCapsula && /TASTE FREE|TASTE-FREE/.test(nl)) {
       candidates[i]._reject = true;
     }
-    // Para SOLUÇÕES: preferir Taste Free
+    // Para LÍQUIDOS: preferir Taste Free
     if(isLiquido && /TASTE FREE|TASTE-FREE/.test(nl)) {
       candidates[i]._prefer = true;
     }
   }
-  
+
   var preferred = candidates.filter(function(c){return c._prefer;});
   var nonRejected = candidates.filter(function(c){return !c._reject;});
-  
-  if(preferred.length === 1) return preferred[0];
-  if(nonRejected.length === 1) return nonRejected[0];
-  
+
+  // Preferred tem prioridade máxima
+  if(preferred.length >= 1) {
+    if(preferred.length === 1) return preferred[0];
+    var pool2 = preferred;
+    var wp2 = pool2.filter(function(c){return c.p > 0;});
+    if(wp2.length > 0) { wp2.sort(function(a,b){return a.p-b.p;}); return wp2[0]; }
+    return pool2[0];
+  }
+
+  // nonRejected: sem taste free para cápsulas
   var pool = nonRejected.length > 0 ? nonRejected : candidates;
-  
-  // Desempate final: preferir o de MENOR preço (geralmente o "padrão")
-  // Mas só se preço > 0
+
+  // Desempate final: menor preço (produto padrão)
   var withPrice = pool.filter(function(c){return c.p > 0;});
   if(withPrice.length > 0) {
     withPrice.sort(function(a,b){return a.p - b.p;});
@@ -786,24 +811,85 @@ function calcRec(rec) {
   var nomesAtivos = (rec.ativos||[]).map(function(a){return normStr(a.nome||'');}).join(' ');
   if(/testosteron|estradiol|progesteron|estriol|dhea/.test(nomesAtivos) && (fml==='locao'||fml==='creme'||fml==='gel')) fml='hormonio';
 
-  // Auto-detectar sachê por dose total > 5g
-  var totalGCheck = (rec.ativos||[]).reduce(function(s,a){
-    var u=(a.unidade||'mg').toLowerCase();
-    return s+(u==='g'?a.dose:u==='mcg'?a.dose/1000000:a.dose/1000);
-  },0);
-  if(totalGCheck > 5 && fml === 'capsulas') fml = 'sache';
+  // Conversor de dose → gramas, levando em conta unidade e produto
+  function doseToG(dose, unidade, insNome) {
+    var u = (unidade||'mg').toLowerCase();
+    if(u === 'g') return dose;
+    if(u === 'mcg') return dose / 1000000;
+    if(u === 'ui' || u === 'iu') {
+      // Vitamina D3 / Colecalciferol: 40.000.000 UI/g
+      var nm = normStr(insNome||'');
+      if(/colecalciferol|vit\s*d3?|vitamina\s*d3?|cholecalciferol/.test(nm))
+        return dose / 40000000;
+      // Vitamina A: ~3.333.333 UI/g
+      if(/vitamina\s*a\b|retinol|palmitato.*retinol|acetato.*retinol/.test(nm))
+        return dose / 3333333;
+      // Vitamina E: ~1.000 UI/g (dl-alfa-tocoferol acetato)
+      if(/tocoferol|vitamina\s*e\b/.test(nm))
+        return dose / 1000;
+      // Padrão para outros produtos com UI
+      return dose / 1000000;
+    }
+    if(u === '%') return dose / 100; // percentual: converter depois com volume total
+    return dose / 1000; // mg → g (padrão)
+  }
 
-  // Calcular ativos
-  (rec.ativos||[]).forEach(function(a) {
+  // Auto-detectar sachê por dose total > 10g (threshold aumentado para evitar falsos positivos)
+  var totalGCheck = (rec.ativos||[]).reduce(function(s,a){
+    return s + doseToG(a.dose, a.unidade, a.nome);
+  },0);
+  if(totalGCheck > 10 && fml === 'capsulas') fml = 'sache';
+
+  // Identificar ativo base/qsp para formas externas (Loção, Creme, Gel, Pomada, Shampoo)
+  // O prescrito "Loção qsp 30g" = base faz o volume chegar a 30g; base = 30 - soma dos demais
+  var isExternalForm = /locao|loção|creme|gel|pomada|shampoo|xampu/.test(fml);
+  var qspAtivoIdx = -1, qspTotal = 0;
+  if(isExternalForm) {
+    (rec.ativos||[]).forEach(function(a, idx) {
+      var nn = normStr(a.nome||'');
+      // Produto é base/veículo (locao, creme, gel, pomada, base, shampoo)
+      var isBase = /\b(locao|loção|creme|gel|pomada|base|shampoo|xampu)\b/.test(nn);
+      var u = (a.unidade||'').toLowerCase();
+      if(isBase && (u === 'g' || u === 'ml') && a.dose >= 5 && qspAtivoIdx < 0) {
+        qspAtivoIdx = idx; qspTotal = a.dose;
+      }
+    });
+  }
+
+  // Calcular ativos (pular qsp — será calculado depois como complemento)
+  var sumOthersG = 0;
+  (rec.ativos||[]).forEach(function(a, idx) {
+    if(isExternalForm && idx === qspAtivoIdx) return; // pular base qsp
     var ins = busIns(a.nome, fml);
     if(!ins) { avs.push('Não encontrado: ' + a.nome); return; }
     if(ins.p === 0) { avs.push('Sem preço: ' + ins.n); return; }
     var u = (a.unidade||'mg').toLowerCase();
-    var g = u==='g' ? a.dose : u==='mcg' ? a.dose/1000000 : a.dose/1000;
+    var g;
+    if(u === '%' && qspTotal > 0) {
+      g = (a.dose / 100) * qspTotal; // percentual do volume total (ex: 3% de 30g = 0.9g)
+    } else {
+      g = doseToG(a.dose, a.unidade, ins.n);
+    }
+    sumOthersG += g;
     var c = g * qtd * ins.p;
     custo += c;
     itens.push({n:ins.n, dose:a.dose+' '+(a.unidade||'mg'), c:c});
   });
+
+  // Adicionar base qsp como complemento: base = total_qsp - soma_demais
+  if(isExternalForm && qspAtivoIdx >= 0) {
+    var qspAtivo = rec.ativos[qspAtivoIdx];
+    var insBase = busIns(qspAtivo.nome, fml);
+    if(insBase && insBase.p > 0) {
+      var baseG = qspTotal - sumOthersG;
+      if(baseG <= 0) { baseG = qspTotal * 0.6; avs.push('Aviso: soma dos ativos excede qsp ' + qspTotal + 'g; base ajustada.'); }
+      var cBase = baseG * qtd * insBase.p;
+      custo += cBase;
+      itens.push({n:insBase.n+' qsp', dose:baseG.toFixed(2)+'g (qsp '+qspTotal+'g)', c:cBase});
+    } else if(!insBase) {
+      avs.push('Não encontrado (base qsp): ' + qspAtivo.nome);
+    }
+  }
 
   // Embalagens por forma
   if(fml.indexOf('cap') >= 0) {
@@ -931,6 +1017,7 @@ function renderResult(r, container) {
     '<div class="ract">' +
       '<button class="btn" style="background:#25D366;color:#fff;border-color:#25D366" onclick="envWA()">📱 WhatsApp</button>' +
       '<button class="btn" onclick="savH()">💾 Salvar</button>' +
+      '<button class="btn" style="background:#1565C0;color:#fff;border-color:#1565C0" onclick="confirmarOrcamento()">✅ CONFIRMADA</button>' +
     '</div>' +
   '</div>';
 
@@ -1000,9 +1087,28 @@ function envWA() {
 
 function savH() {
   if(!last) return;
-  hist.unshift({pac:last.pac, fm:last.fm, qtd:last.qtd, pv:last.pv, ts:Date.now()});
+  hist.unshift({pac:last.pac, fm:last.fm, qtd:last.qtd, pv:last.pv, ts:Date.now(), confirmado:false});
   saveHist();
   alert('Salvo no histórico!');
+}
+
+function confirmarOrcamento() {
+  if(!last) return;
+  // Marca o orçamento mais recente deste paciente como confirmado
+  var found = false;
+  for(var i=0; i<hist.length; i++) {
+    if(hist[i].pac === last.pac && hist[i].fm === last.fm && hist[i].pv === last.pv) {
+      hist[i].confirmado = true;
+      found = true;
+      break;
+    }
+  }
+  if(!found) {
+    hist.unshift({pac:last.pac, fm:last.fm, qtd:last.qtd, pv:last.pv, ts:Date.now(), confirmado:true});
+  }
+  saveHist();
+  alert('✅ Orçamento de ' + last.pac + ' marcado como CONFIRMADO!');
+  if(document.getElementById('p2').classList.contains('on')) renderHist();
 }
 
 // ── Foto/PDF ───────────────────────────────────────────────
@@ -1016,8 +1122,27 @@ function limpar() {
   document.getElementById('finp').value = '';
 }
 
+// Múltiplos arquivos: processa cada um e acumula as fórmulas encontradas
+function handleMultiFile(files) {
+  var arr = Array.prototype.slice.call(files);
+  var prev = document.getElementById('fpreview');
+  var meta = document.getElementById('fmeta');
+  prev.innerHTML = arr.map(function(f){
+    return f.type.indexOf('image')>=0
+      ? '<img src="'+URL.createObjectURL(f)+'" style="max-width:200px;max-height:140px;border-radius:var(--r);border:1px solid var(--border);margin:4px">'
+      : '<span style="font-size:12px;color:var(--text2);margin:4px;display:inline-block">📄 '+f.name+'</span>';
+  }).join('');
+  meta.textContent = arr.length + ' arquivo(s) selecionado(s)';
+  document.getElementById('btnCalc').style.display = 'inline-flex';
+  document.getElementById('btnLimpar').style.display = 'inline-flex';
+  // Guarda lista de arquivos para calcFoto processar em sequência
+  window._arqList = arr;
+  arq = arr[0]; // compatibilidade com limpar()
+}
+
 function handleFile(file) {
   if(!file) return;
+  window._arqList = null; // reset multi-file
   arq = file;
   var prev = document.getElementById('fpreview');
   var meta = document.getElementById('fmeta');
@@ -1039,26 +1164,39 @@ function handleFile(file) {
 function calcFoto() {
   var k = localStorage.getItem('cak');
   if(!k) { alert('Configure a chave de API em Configurações!'); go(4); return; }
-  if(!arq) return;
+  if(!arq && !window._arqList) return;
 
   var btn = document.getElementById('btnCalc');
   btn.disabled = true; btn.textContent = '⏳ Lendo receita...';
 
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var b64 = e.target.result.split(',')[1];
-    var isPDF = arq.type === 'application/pdf';
-    var mediaType = isPDF ? 'application/pdf' : arq.type;
+  // Suporte a múltiplos arquivos: envia todas as imagens em uma única requisição
+  var fileList = window._arqList || [arq];
 
-    var prompt = 'Leia esta receita de farmacia de manipulacao. Extraia SOMENTE formulas manipuladas com ativos e doses. IGNORE medicamentos industrializados, produtos com nome de marca/laboratorio (ex: Pielus, Mantecorp, Therapsor, Rivotril, Dupixent) e orientacoes medicas. Para forma use: Capsulas, Sache, Creme, Hormonio, Locao, Shampoo, Pomada, Xarope. Use Hormonio quando houver testosterona/estradiol/progesterona com base topica (pentravan/transcutol/creme). Responda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":60,"descricao":"descricao","ativos":[{"nome":"nome exato da receita","dose":10,"unidade":"mg"}]}]}';
+  function readAllFiles(files, cb) {
+    var results = [], pending = files.length;
+    files.forEach(function(f, i) {
+      var r = new FileReader();
+      r.onload = function(e) {
+        results[i] = {b64: e.target.result.split(',')[1], isPDF: f.type === 'application/pdf', mediaType: f.type === 'application/pdf' ? 'application/pdf' : f.type};
+        if(--pending === 0) cb(results);
+      };
+      r.readAsDataURL(f);
+    });
+  }
+
+  readAllFiles(fileList, function(fileData) {
+    var prompt ='Leia esta receita de farmacia de manipulacao. Extraia SOMENTE formulas manipuladas com ativos e doses. IGNORE medicamentos industrializados e orientacoes medicas. REGRAS DE FORMA: use Capsulas para capsulas/doses solidas (inclusive progesterona em capsulas); use Hormonio APENAS quando houver testosterona/estradiol/progesterona/estriol COM base topica explicita (pentravan/transcutol/lipoderm/creme) E forma for creme/locao/gel; use Sache para saches/envelopes; use Locao para locoes; use Creme para cremes/géis; use Shampoo para shampoos; use Pomada para pomadas; use Xarope para xaropes/suspensoes. REGRA DOSE mg/ml: quando a dose for escrita como Xmg/ml com Y dias, interpretar como dose_por_dose=X mg (1ml por dose), qtd=Y. REGRA QSP: quando um componente for indicado como "qsp Xg/ml" represente-o com dose=X e unidade="g" (ou "ml"). Ignore hifens, acentos e caracteres especiais ao interpretar nomes. Responda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":60,"descricao":"descricao","ativos":[{"nome":"nome exato da receita","dose":10,"unidade":"mg"}]}]}';
+
+    // Construir conteúdo com todas as imagens/PDFs recebidos
+    var contentBlocks = fileData.map(function(fd) {
+      return {type: fd.isPDF ? 'document' : 'image', source:{type:'base64',media_type:fd.mediaType,data:fd.b64}};
+    });
+    contentBlocks.push({type:'text', text:prompt});
 
     var body = {
       model: 'claude-haiku-4-5',
       max_tokens: 4000,
-      messages: [{role:'user', content:[
-        {type: isPDF ? 'document' : 'image', source:{type:'base64',media_type:mediaType,data:b64}},
-        {type:'text', text:prompt}
-      ]}]
+      messages: [{role:'user', content: contentBlocks}]
     };
 
     fetch('https://api.anthropic.com/v1/messages', {
@@ -1123,8 +1261,7 @@ function calcFoto() {
       }
     })
     .catch(function(e){ btn.disabled=false; btn.textContent='⚙ Calcular preço'; alert('Erro: '+e.message); });
-  };
-  reader.readAsDataURL(arq);
+  }); // fim readAllFiles
 }
 
 // ── Cálculo manual ─────────────────────────────────────────
@@ -1232,12 +1369,33 @@ function saveHist() {
 
 function renderHist() {
   var el = document.getElementById('histList');
-  if(!hist.length) { el.innerHTML = '<p style="color:var(--text3);font-size:13px">Nenhum orçamento hoje.</p>'; return; }
+  if(!hist.length) { el.innerHTML = '<p style="color:var(--text3);font-size:13px">Nenhum orçamento salvo.</p>'; return; }
   var hoje = new Date().toDateString();
   var filtrado = hist.filter(function(h){ return new Date(h.ts).toDateString() === hoje; });
   if(!filtrado.length) { el.innerHTML = '<p style="color:var(--text3);font-size:13px">Nenhum orçamento hoje.</p>'; return; }
-  el.innerHTML = filtrado.map(function(h){
-    return '<div class="hist-item"><strong>'+h.pac+'</strong> — '+h.fm+' '+h.qtd+' doses <span>R$ '+h.pv.toFixed(2)+'</span><br><span>'+new Date(h.ts).toLocaleTimeString('pt-BR')+'</span></div>';
+
+  // Estatísticas do dia
+  var total = filtrado.length;
+  var confirmados = filtrado.filter(function(h){ return h.confirmado; });
+  var rejeitados = filtrado.filter(function(h){ return !h.confirmado; });
+  var totalConf = confirmados.length;
+  var totalRej = rejeitados.length;
+  var valorConf = confirmados.reduce(function(s,h){ return s+h.pv; }, 0);
+  var taxaConv = total > 0 ? Math.round(totalConf/total*100) : 0;
+
+  var statsHtml = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">' +
+    '<div style="background:#E8F5E9;border-radius:6px;padding:8px;text-align:center"><div style="font-size:20px;font-weight:700;color:#2E7D32">'+total+'</div><div style="font-size:11px;color:#4A6A4A">Orçamentos</div></div>' +
+    '<div style="background:#E3F2FD;border-radius:6px;padding:8px;text-align:center"><div style="font-size:20px;font-weight:700;color:#1565C0">'+totalConf+'</div><div style="font-size:11px;color:#1565C0">Confirmados</div></div>' +
+    '<div style="background:#FFF3E0;border-radius:6px;padding:8px;text-align:center"><div style="font-size:20px;font-weight:700;color:#E65100">'+totalRej+'</div><div style="font-size:11px;color:#E65100">Pendentes</div></div>' +
+    '<div style="background:#F3E5F5;border-radius:6px;padding:8px;text-align:center"><div style="font-size:20px;font-weight:700;color:#6A1B9A">'+taxaConv+'%</div><div style="font-size:11px;color:#6A1B9A">Conversão</div></div>' +
+    '</div>' +
+    (totalConf > 0 ? '<div style="font-size:12px;color:#2E7D32;margin-bottom:10px;font-weight:600">💰 Valor confirmado hoje: R$ '+valorConf.toFixed(2)+'</div>' : '');
+
+  el.innerHTML = statsHtml + filtrado.map(function(h){
+    var status = h.confirmado
+      ? '<span style="font-size:11px;background:#E3F2FD;color:#1565C0;border-radius:4px;padding:2px 6px;font-weight:600">✅ CONFIRMADO</span>'
+      : '<span style="font-size:11px;background:#FFF3E0;color:#E65100;border-radius:4px;padding:2px 6px">pendente</span>';
+    return '<div class="hist-item" style="display:flex;justify-content:space-between;align-items:flex-start"><div><strong>'+h.pac+'</strong> — '+h.fm+' '+h.qtd+' doses<br><span style="font-size:11px;color:var(--text3)">'+new Date(h.ts).toLocaleTimeString('pt-BR')+'</span></div><div style="text-align:right"><span style="font-weight:600">R$ '+h.pv.toFixed(2)+'</span><br>'+status+'</div></div>';
   }).join('');
 }
 
