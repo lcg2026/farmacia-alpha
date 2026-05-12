@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.0</title>
+<title>Farmácia Alpha v4.1</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -73,10 +73,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </style>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.0 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.1 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.0</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.1</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -876,7 +876,6 @@ function pickEmb(vol, tabela) {
 // ── Cálculo de receita ─────────────────────────────────────
 function calcRec(rec) {
   var qtd = parseInt(rec.qtd) || 60;
-  if(qtd > 120) qtd = 120;
   var fm = (rec.forma || 'Capsulas');
   var fml = fm.toLowerCase();
   var custo = 0, itens = [], avs = [];
@@ -913,6 +912,9 @@ function calcRec(rec) {
   }
 
   // ── 3. Auto-detectar sachê (dose total > 10g em cápsula) ──
+  // Cap de qtd: máx 120 para cápsulas/sachês; sem cap para formas tópicas (volume mL)
+  var isTopicForm = /locao|loção|creme|gel|pomada|shampoo|xampu|hormonio|xarope|solucao/.test(fml);
+  if(!isTopicForm && qtd > 120) qtd = 120;
   var totalGCheck = (rec.ativos||[]).reduce(function(s,a){
     return s + doseToG(a.dose, a.unidade, a.nome);
   },0);
@@ -930,8 +932,10 @@ function calcRec(rec) {
       var nn = normStr(a.nome||'');
       var isBase = /\b(locao|loção|creme|gel|pomada|base|shampoo|xampu|pentravan|inderm|versapro)\b/.test(nn);
       var u = (a.unidade||'').toLowerCase();
-      if(isBase && (u==='g'||u==='ml'||u==='qsp') && a.dose >= 1 && qspAtivoIdx < 0) {
-        qspAtivoIdx = idx; qspTotal = a.dose;
+      if(isBase && (u==='g'||u==='ml'||u==='qsp') && qspAtivoIdx < 0) {
+        qspAtivoIdx = idx;
+        // Se dose é 0 ou 1 (AI colocou placeholder), usar qtd como volume real
+        qspTotal = (a.dose > 1) ? a.dose : qtd;
       }
     });
   }
@@ -948,8 +952,12 @@ function calcRec(rec) {
     if(ins.p === 0) { avs.push('Sem preço: ' + ins.n); return; }
     var u = (a.unidade||'mg').toLowerCase();
     var g;
-    if(u === '%' && qspTotal > 0) {
-      g = (a.dose / 100) * qspTotal;
+    if(u === '%') {
+      // Porcentagem: calcular sobre qspTotal (declarado) ou qtd (volume total da forma tópica)
+      var volRef = qspTotal > 0 ? qspTotal : (isTopico ? qtd : 0);
+      g = volRef > 0 ? (a.dose / 100) * volRef : (a.dose / 100);
+    } else if(u === 'qsp') {
+      g = 0; // base qsp é tratada separadamente
     } else {
       g = doseToG(a.dose, a.unidade, ins.n);
     }
@@ -1482,7 +1490,7 @@ function calcFoto() {
   }
 
   readAllFiles(fileList, function(fileData) {
-    var prompt ='Leia esta receita de farmacia de manipulacao. Extraia SOMENTE formulas manipuladas com ativos e doses. IGNORE completamente: (1) medicamentos com fabricante/marca comercial (Myralis, Marjan, Central Nutrition, Besins, Pharma, Sandoz, etc.); (2) itens com unidades totais industriais como "(12un)", "(90un)", "(180un)"; (3) codigos CID (ex: CID N95, CID F32); (4) orientacoes de uso.\n\nREGRAS DE FORMA:\n- Presenca de Pentravan/Transcutol/Lipoderm como ingrediente (qsp ou com dose) + hormonio (estradiol/testosterona/estriol) = forma HORMONIO\n- Progesterona pode ser Capsulas (oral/sublingual) OU Hormonio (com Pentravan/base) — leia o contexto\n- Capsulas/comprimido = Capsulas | Sache = Sache | Locao/Creme/Gel/Pomada = forma correspondente\n\nQUANTIDADE: "uso continuo" ou sem duracao = qtd 30. Capsulas: qtd=numero de unidades, dose=por unidade.\n\nATIVOS: copie CADA ativo EXATAMENTE como escrito na receita. Inclua TODOS. Inclua bases qsp (Pentravan, Transcutol, Locao base, etc.) como ativos quando escritas na receita. NUNCA invente ou substitua nomes — se nao reconhecer, copie o que esta escrito.\n\nEXEMPLO hormonal: "Estradiol 0.5mg / Pentravan qsp" → {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Estradiol","dose":0.5,"unidade":"mg"},{"nome":"Pentravan","dose":1,"unidade":"qsp"}]}\nEXEMPLO capsulas: "Progesterona micronizada 100mg / Comprimido q.s.p." → {"forma":"Capsulas","qtd":30,"ativos":[{"nome":"Progesterona micronizada","dose":100,"unidade":"mg"}]}\n\nResponda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":30,"descricao":"","ativos":[{"nome":"nome","dose":0,"unidade":"mg"}]}]}';
+    var prompt ='Leia esta receita de farmacia de manipulacao. Extraia SOMENTE formulas manipuladas com ativos e doses. IGNORE completamente: (1) medicamentos com fabricante/marca comercial (Myralis, Marjan, Central Nutrition, Besins, Pharma, Sandoz, etc.); (2) itens com unidades totais industriais como "(12un)", "(90un)", "(180un)"; (3) codigos CID (ex: CID N95, CID F32); (4) orientacoes de uso.\n\nREGRAS DE FORMA:\n- Presenca de Pentravan/Transcutol/Lipoderm/INDERM/Versapro como ingrediente (qsp ou com dose) + hormonio (estradiol/testosterona/estriol) = forma HORMONIO\n- Progesterona pode ser Capsulas (oral/sublingual) OU Hormonio (com Pentravan/base topica) — leia o contexto\n- Capsulas/comprimido = Capsulas | Sache/Envelope = Sache | Locao = Locao | Creme = Creme | Gel = Gel | Pomada = Pomada | Shampoo/Xampu = Shampoo | Xarope/Solucao = Xarope | Sublingual/Orotab = Sublingual\n\nREGRA DE QUANTIDADE (campo qtd):\n- Capsulas/Saches/Sublingual: qtd = NUMERO DE UNIDADES (ex: 60 capsulas, 30 saches)\n- Locao/Creme/Gel/Pomada/Hormonio/Shampoo/Xarope: qtd = VOLUME OU PESO TOTAL DA FORMULA em mL ou g (ex: "Locao base qsp 100ml" → qtd=100; "Creme qsp 30g" → qtd=30)\n- Sem duracao informada = 30 para capsulas; manter volume prescrito para topicos\n\nATIVOS: copie CADA ativo EXATAMENTE como escrito na receita. Inclua TODOS. Para formas topicas, inclua a base/veiculo como ativo qsp com unidade "qsp" e dose = volume total (ex: Locao base hidratante qsp 100ml → dose:100, unidade:"qsp"). NUNCA invente ou substitua nomes — se nao reconhecer, copie exatamente.\n\nEXEMPLO locao: "PUREGENE PDRN 0,2% / Locao base hidratante qsp 100ml" → {"forma":"Locao","qtd":100,"ativos":[{"nome":"PUREGENE PDRN","dose":0.2,"unidade":"%"},{"nome":"Locao base hidratante","dose":100,"unidade":"qsp"}]}\nEXEMPLO hormonal: "Estradiol 0.5mg / Pentravan qsp 30g" → {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Estradiol","dose":0.5,"unidade":"mg"},{"nome":"Pentravan","dose":30,"unidade":"qsp"}]}\nEXEMPLO capsulas: "Progesterona micronizada 100mg / Comprimido q.s.p. 30 capsulas" → {"forma":"Capsulas","qtd":30,"ativos":[{"nome":"Progesterona micronizada","dose":100,"unidade":"mg"}]}\n\nResponda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":30,"descricao":"","ativos":[{"nome":"nome","dose":0,"unidade":"mg"}]}]}';
 
     // Construir conteúdo com todas as imagens/PDFs recebidos
     var contentBlocks = fileData.map(function(fd) {
