@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v2.9</title>
+<title>Farmácia Alpha v3.0</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -73,10 +73,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </style>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#C62828;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v2.9 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v3.0 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v2.9</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v3.0</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -345,7 +345,16 @@ var EQUIV = {
   'cobre bisglicrinato':'cobre quelado','cobre bisglicinato':'cobre quelado',
   'ferro bisglicrinato':'quelato ferro','ferro bisglicinato':'quelato ferro',
   'bisglicinato de cobre':'cobre quelado','bisglicrinato de cobre':'cobre quelado',
-  'bisglicinato de ferro':'quelato ferro','bisglicrinato de ferro':'quelato ferro'
+  'bisglicinato de ferro':'quelato ferro','bisglicrinato de ferro':'quelato ferro',
+  // Correções OCR / variantes de leitura
+  'matrixil':'matrixyl','matrixil synthe':'matrixyl synthe 6000','matrixil morphomics':'matrixyl morphomics',
+  'piridinanato de zinco':'piritionato de zinco','piritionato zinco':'piritionato de zinco','piritionato de zn':'piritionato de zinco',
+  'nano dutasterida':'dutasterida','nanodutasterida':'dutasterida',
+  'cmag q10':'cavaq10','cmagq10':'cavaq10','cmag q 10':'cavaq10',
+  'curcol':'cureit','curcumin cureit':'cureit',
+  'pantetonato de calcio':'pantotenato calcio','pantetonato calcio':'pantotenato calcio',
+  'siliciumex':'siliciumax','siliciumex bio arct':'siliciumax','bio arct':'siliciumax',
+  'trichosol base':'trichosol','base trichosol':'trichosol'
 };
 
 // Insumos disponíveis apenas em forma líquida — não usar em fórmulas de cápsulas
@@ -841,10 +850,12 @@ function calcRec(rec) {
   // Auto-detectar hormônio
   var nomesAtivos = (rec.ativos||[]).map(function(a){return normStr(a.nome||'');}).join(' ');
   var hasTopicBase = /pentravan|transcutol|lipoderm/.test(nomesAtivos);
-  // Estradiol e testosterona em doses baixas são SEMPRE tópicos manipulados
+  // Estradiol ≤5mg e testosterona ≤50mg em manipulação = SEMPRE tópico
   var hasEstradiol = /estradiol/.test(nomesAtivos) && (rec.ativos||[]).some(function(a){ return /estradiol/.test(normStr(a.nome||'')) && (a.dose||0) <= 5; });
   var hasTestosteron = /testosteron/.test(nomesAtivos) && (rec.ativos||[]).some(function(a){ return /testosteron/.test(normStr(a.nome||'')) && (a.dose||0) <= 50; });
-  if((hasEstradiol || hasTestosteron || hasTopicBase || /estriol/.test(nomesAtivos)) || (/progesteron/.test(nomesAtivos) && hasTopicBase)) {
+  // Progesterona/estriol: só hormônio se tiver base tópica real na lista de ativos
+  var hasProgTopico = (/progesteron|estriol/.test(nomesAtivos)) && hasTopicBase;
+  if(hasEstradiol || hasTestosteron || hasProgTopico) {
     if(fml==='capsulas'||fml==='locao'||fml==='creme'||fml==='gel') fml='hormonio';
   }
 
@@ -959,6 +970,19 @@ function calcRec(rec) {
     for(var pi=0;pi<POTES.length;pi++){if((POTES[pi][1][cap[1]]||0)>=qtd){pt=POTES[pi];break;}}
     custo += cc + pt[2];
     itens.push({n:'Cápsulas n'+cap[1]+' ('+qtd+')+Pote '+pt[0]+'ml', dose:'', c:cc+pt[2]});
+    // Excipiente para completar volume da cápsula (Celulose Micr PH101)
+    var jaTemExcipiente = /celulose|lactose|amido|avicel|excipiente/.test(nomesAtivos);
+    if(!jaTemExcipiente) {
+      var capMaxMg = cap[0]; // capacidade da cápsula em mg
+      var ativosMg = totalGCheck * 1000;
+      var excipMg = capMaxMg - ativosMg;
+      if(excipMg > 10) { // só adiciona se diferença > 10mg
+        var excipG = excipMg / 1000;
+        var cExcip = excipG * 0.026 * qtd; // celulose micr ph101 R$0,026/g
+        custo += cExcip;
+        itens.push({n:'Celulose Micr PH101 (excipiente '+excipMg.toFixed(0)+'mg/cáp)', dose:'', c:cExcip});
+      }
+    }
   }
 
   if(fml.indexOf('sach')>=0||fml.indexOf('envel')>=0) {
@@ -1243,7 +1267,7 @@ function calcFoto() {
   }
 
   readAllFiles(fileList, function(fileData) {
-    var prompt ='Leia esta receita de farmacia de manipulacao. Extraia SOMENTE formulas manipuladas com ativos e doses. IGNORE completamente: (1) qualquer item com nome de fabricante/marca comercial como Myralis, Marjan, Central Nutrition, Besins, Pharma; (2) itens com quantidade total de unidades industriais como "(12un)", "(90un)", "(180un)", "(18un)"; (3) codigos CID; (4) orientacoes medicas.\n\nREGRAS DE FORMA:\n- "Pentravan qsp" ou "Transcutol qsp" junto com estradiol/testosterona/progesterona/estriol = forma HORMONIO. Inclua a base como ativo: {nome:"Pentravan",dose:1,unidade:"qsp"}\n- Capsulas/comprimido sem base topica = Capsulas\n- Sache/envelope = Sache | Locao = Locao | Creme = Creme | Gel = Gel | Pomada = Pomada\n\nQUANTIDADE: "uso continuo" ou sem duracao = qtd 30. Capsulas: qtd=numero de unidades, dose=por unidade.\n\nATIVOS: leia e copie CADA ativo EXATAMENTE como escrito. Inclua TODOS sem excecao. NUNCA substitua nomes desconhecidos por similares conhecidos — se nao conseguir ler, escreva o que ve. NUNCA invente ativos.\n\nEXEMPLO — formula hormonal:\nReceita: "Estradiol 0.5mg / Pentravan qsp / Aplicar 1 pump"\nJSON: {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Estradiol","dose":0.5,"unidade":"mg"},{"nome":"Pentravan","dose":1,"unidade":"qsp"}]}\n\nResponda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":30,"descricao":"","ativos":[{"nome":"nome","dose":0,"unidade":"mg"}]}]}';
+    var prompt ='Leia esta receita de farmacia de manipulacao. Extraia SOMENTE formulas manipuladas com ativos e doses. IGNORE completamente: (1) medicamentos com fabricante/marca comercial (Myralis, Marjan, Central Nutrition, Besins, Pharma, Sandoz, etc.); (2) itens com unidades totais industriais como "(12un)", "(90un)", "(180un)"; (3) codigos CID (ex: CID N95, CID F32); (4) orientacoes de uso.\n\nREGRAS DE FORMA:\n- Presenca de Pentravan/Transcutol/Lipoderm como ingrediente (qsp ou com dose) + hormonio (estradiol/testosterona/estriol) = forma HORMONIO\n- Progesterona pode ser Capsulas (oral/sublingual) OU Hormonio (com Pentravan/base) — leia o contexto\n- Capsulas/comprimido = Capsulas | Sache = Sache | Locao/Creme/Gel/Pomada = forma correspondente\n\nQUANTIDADE: "uso continuo" ou sem duracao = qtd 30. Capsulas: qtd=numero de unidades, dose=por unidade.\n\nATIVOS: copie CADA ativo EXATAMENTE como escrito na receita. Inclua TODOS. Inclua bases qsp (Pentravan, Transcutol, Locao base, etc.) como ativos quando escritas na receita. NUNCA invente ou substitua nomes — se nao reconhecer, copie o que esta escrito.\n\nEXEMPLO hormonal: "Estradiol 0.5mg / Pentravan qsp" → {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Estradiol","dose":0.5,"unidade":"mg"},{"nome":"Pentravan","dose":1,"unidade":"qsp"}]}\nEXEMPLO capsulas: "Progesterona micronizada 100mg / Comprimido q.s.p." → {"forma":"Capsulas","qtd":30,"ativos":[{"nome":"Progesterona micronizada","dose":100,"unidade":"mg"}]}\n\nResponda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":30,"descricao":"","ativos":[{"nome":"nome","dose":0,"unidade":"mg"}]}]}';
 
     // Construir conteúdo com todas as imagens/PDFs recebidos
     var contentBlocks = fileData.map(function(fd) {
