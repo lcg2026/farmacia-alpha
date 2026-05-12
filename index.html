@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v3.0</title>
+<title>Farmácia Alpha v3.1</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -73,10 +73,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </style>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v3.0 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v3.1 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v3.0</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v3.1</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -196,6 +196,7 @@ var EQUIV = {
   // CoQ10 / CAVA Q10
   'coq10':'cavaq10','cava q10':'cavaq10','cavaq10':'cavaq10','cava q 10':'cavaq10','coq 10':'cavaq10',
   'coenzima q10':'cavaq10','coenzima q 10':'cavaq10','ubiquinol q10':'cavaq10','ubiquinona q10':'cavaq10',
+  'coa q10':'cavaq10','coaq10':'cavaq10','co a q10':'cavaq10','coa q 10':'cavaq10',
   // Taurina
   'l-taurina':'taurina','ltaurina':'taurina',
   // N-Acetil Cisteína
@@ -1276,7 +1277,7 @@ function calcFoto() {
     contentBlocks.push({type:'text', text:prompt});
 
     var body = {
-      model: 'claude-haiku-4-5',
+      model: 'claude-sonnet-4-5',
       max_tokens: 4000,
       messages: [{role:'user', content: contentBlocks}]
     };
