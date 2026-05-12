@@ -9,7 +9,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Farmácia Alpha</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Farmácia Alpha v2.9</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -70,9 +73,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </style>
 </head>
 <body>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#C62828;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v2.9 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha</h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v2.9</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -189,8 +193,9 @@ var _D = 'W3sibiI6IkNJTUlDSUZVR0EiLCJrIjoiY2ltaWNpZnVnYSIsInAiOjAuMDk0LCJzIjpbIl
 
 // ── Equivalências ──────────────────────────────────────────
 var EQUIV = {
-  // CoQ10
-  'coq10':'cavaq10','cava q10':'cavaq10','cavaq10':'cavaq10',
+  // CoQ10 / CAVA Q10
+  'coq10':'cavaq10','cava q10':'cavaq10','cavaq10':'cavaq10','cava q 10':'cavaq10','coq 10':'cavaq10',
+  'coenzima q10':'cavaq10','coenzima q 10':'cavaq10','ubiquinol q10':'cavaq10','ubiquinona q10':'cavaq10',
   // Taurina
   'l-taurina':'taurina','ltaurina':'taurina',
   // N-Acetil Cisteína
@@ -224,6 +229,7 @@ var EQUIV = {
   'cobre quelado':'cobre quelado','cobre':'cobre quelado',
   'calcio quelado':'calcio quelado','calcio':'calcio quelado',
   'picolinato de cromo':'picolinato cromo','picolinato cromo':'picolinato cromo','cromo picolinato':'picolinato cromo',
+  'cromo gtf':'picolinato cromo','gtf cromo':'picolinato cromo','cromo fator tolerancia':'picolinato cromo',
   // Aminoácidos — itens frequentes em receitas
   'l-cisteina':'l cisteina','l cisteina':'l cisteina','cisteina':'l cisteina',
   'cistina':'l-cistina','l-cistina':'l-cistina',
@@ -273,8 +279,9 @@ var EQUIV = {
   'estradiol micronizado':'estradiol base','estradiol micronizada':'estradiol base',
   'progesterona base':'progesterona base',
   'estriol base':'estriol base','estriol micronizado':'estriol base',
-  // Vitamina K
-  'vitamina k2':'menaquinona','vit k2':'menaquinona','mk7':'menaquinona','mk-7':'menaquinona',
+  // Vitamina K — INS usa chave 'vitamina k2'
+  'vitamina k2':'vitamina k2','vit k2':'vitamina k2','mk7':'vitamina k2','mk-7':'vitamina k2',
+  'k2mk7':'vitamina k2','k2 mk7':'vitamina k2','k2mk-7':'vitamina k2','mk 7':'vitamina k2',
   'vitamina k':'fitomenadiona','vit k':'fitomenadiona',
   // Magnésio — formas variadas
   'magnesio dimalato':'magnesio dimalato','dimalato de magnesio':'magnesio dimalato',
@@ -306,6 +313,7 @@ var EQUIV = {
   'extrato de acai':'acai ext seco','acai':'acai ext seco',
   'extrato de maca':'maca ext seco','maca peruana':'maca ext seco','maca':'maca ext seco',
   'extrato de curcuma':'curcuma ext seco','curcumina':'curcuma ext seco','curcuma':'curcuma ext seco',
+  'cureit':'cureit','curculi':'cureit','curcumin c3':'cureit',
   'extrato de romero':'alecrim ext seco','alecrim':'alecrim ext seco',
   'resveratrol':'resveratrol','trans-resveratrol':'resveratrol',
   'quercetina':'quercetina','quercetin':'quercetina',
@@ -328,8 +336,20 @@ var EQUIV = {
   'melatonina':'melatonina',
   'picolinato de zinco':'picolinato zinco','zinco picolinato':'picolinato zinco',
   'acido ursodesoxicolico':'acido ursodesoxicolico','udca':'acido ursodesoxicolico',
-  'ubiquinol':'ubiquinol','ubiquinona':'ubiquinona'
+  'ubiquinol':'ubiquinol','ubiquinona':'ubiquinona',
+  // Correções de leitura OCR / IA
+  'exynutriment':'exsynutriment',
+  'acido panmtotenido':'pantotenato calcio','acido panmtotenico':'pantotenato calcio',
+  'acido pantomtotenido':'pantotenato calcio','panmtotenido':'pantotenato calcio',
+  // bisglicr-i-nato (com r extra) → bisglicinato
+  'cobre bisglicrinato':'cobre quelado','cobre bisglicinato':'cobre quelado',
+  'ferro bisglicrinato':'quelato ferro','ferro bisglicinato':'quelato ferro',
+  'bisglicinato de cobre':'cobre quelado','bisglicrinato de cobre':'cobre quelado',
+  'bisglicinato de ferro':'quelato ferro','bisglicrinato de ferro':'quelato ferro'
 };
+
+// Insumos disponíveis apenas em forma líquida — não usar em fórmulas de cápsulas
+var LIQUID_KEYS = {'ac hialuronico':1,'acetona pa':1,'aldavine 5x':1,'argireline':1,'base esmalte':1,'bio restore f':1,'bioskinup contour':1,'buriti essencia':1,'calda de avela':1,'cb2':1,'citrolumine 8':1,'cloreto de k 3m s.elet':1,'cloroformio pa':1,'colageno':1,'edelweiss gc':1,'epifactor':1,'erythrulose':1,'essencia cha verde':1,'essencia chemoderm':1,'essencia green foam':1,'essencia maca':1,'essencia madeira bouqu':1,'essencia mel':1,'ext glicol  menta piperita':1,'ext glicol centella':1,'ext glicol cha branco':1,'ext glicol de aroeira':1,'extr fluido erva baleeira':1,'extr glicol de barbatimao':1,'extrato glicol orquidea':1,'eye 3d':1,'folicusan':1,'garra do diabo tintura':1,'gps':1,'herbin':1,'hipoclorito de na 2%':1,'idp2 peptideo':1,'lauril sul trietanolam':1,'linefactor':1,'lipo algowhite':1,'matrixyl morphomics':1,'nutrosa':1,'ol ess alecrim':1,'ol semente maracuja':1,'oleo de aveia':1,'oligominerals':1,'pca-na':1,'pro-lipo neo':1,'procapil':1,'progeline':1,'psodermax':1,'psoralight':1,'pumpkin enzyme':1,'raffermine':1,'regu stretsh':1,'renew zyme':1,'seacode tm':1,'siliciumax liquido':1,'silicone dc 9120':1,'surfax mea':1,'syn-coll':1,'tint  cardo mariano':1,'tint coentro':1,'tint erva santa maria':1,'tint guaco':1,'tint passiflora alata':1,'tint pata vaca':1,'tint saw palmeto':1,'tint sucupira':1,'tnt laranja amarga ui':1,'vinagre maca':1,'whitonyl':1,'wonderlight':1};
 
 // ── Tabelas progressivas ───────────────────────────────────
 var CF = 37.5, PM = 62;
@@ -737,6 +757,7 @@ function _clearFlags(candidates) {
     delete c._uiMatch;
     delete c._ueMatch;
     delete c._mismatch;
+    delete c._liquid;
   }
 }
 
@@ -744,14 +765,19 @@ function _clearFlags(candidates) {
 // Não faz early-return para candidato único: aplica sempre o filtro Taste Free
 function _pickBest(candidates, formaCtx) {
   var formNorm = (formaCtx || '').toLowerCase();
-  var isCapsula = /cap/.test(formNorm);
-  var isLiquido = /sache|envel|xarope|solucao|solu.ao|gota/.test(formNorm);
+  var isCapsula = /cap|sache/.test(formNorm);
+  var isLiquido = /envel|xarope|solucao|solu.ao|gota/.test(formNorm);
 
   // Marcar candidatos com flags de preferência/rejeição por forma
   for(var i=0; i<candidates.length; i++) {
     var nl = candidates[i].n.toUpperCase();
-    // Para CÁPSULAS: rejeitar Taste Free (minerais Taste Free são para líquidos)
+    var ck = candidates[i].k || '';
+    // Para CÁPSULAS: rejeitar Taste Free e insumos líquidos/tinturas
     if(isCapsula && /TASTE FREE|TASTE-FREE/.test(nl)) {
+      candidates[i]._reject = true;
+    }
+    if(isCapsula && (LIQUID_KEYS[ck] || /^tint\s/.test(ck))) {
+      candidates[i]._liquid = true;
       candidates[i]._reject = true;
     }
     // Para LÍQUIDOS: preferir Taste Free
@@ -773,6 +799,11 @@ function _pickBest(candidates, formaCtx) {
   }
 
   // nonRejected: sem taste free para cápsulas
+  // Para cápsulas: se todos os candidatos foram rejeitados por serem líquidos/tinturas, retornar null
+  if(nonRejected.length === 0 && isCapsula) {
+    var allLiquid = candidates.every(function(c){return c._liquid;});
+    if(allLiquid) return null;
+  }
   var pool = nonRejected.length > 0 ? nonRejected : candidates;
 
   // Desempate final: menor preço (produto padrão)
@@ -809,7 +840,13 @@ function calcRec(rec) {
 
   // Auto-detectar hormônio
   var nomesAtivos = (rec.ativos||[]).map(function(a){return normStr(a.nome||'');}).join(' ');
-  if(/testosteron|estradiol|progesteron|estriol|dhea/.test(nomesAtivos) && (fml==='locao'||fml==='creme'||fml==='gel')) fml='hormonio';
+  var hasTopicBase = /pentravan|transcutol|lipoderm/.test(nomesAtivos);
+  // Estradiol e testosterona em doses baixas são SEMPRE tópicos manipulados
+  var hasEstradiol = /estradiol/.test(nomesAtivos) && (rec.ativos||[]).some(function(a){ return /estradiol/.test(normStr(a.nome||'')) && (a.dose||0) <= 5; });
+  var hasTestosteron = /testosteron/.test(nomesAtivos) && (rec.ativos||[]).some(function(a){ return /testosteron/.test(normStr(a.nome||'')) && (a.dose||0) <= 50; });
+  if((hasEstradiol || hasTestosteron || hasTopicBase || /estriol/.test(nomesAtivos)) || (/progesteron/.test(nomesAtivos) && hasTopicBase)) {
+    if(fml==='capsulas'||fml==='locao'||fml==='creme'||fml==='gel') fml='hormonio';
+  }
 
   // Conversor de dose → gramas, levando em conta unidade e produto
   function doseToG(dose, unidade, insNome) {
@@ -862,6 +899,12 @@ function calcRec(rec) {
     if(isExternalForm && idx === qspAtivoIdx) return; // pular base qsp
     var ins = busIns(a.nome, fml);
     if(!ins) { avs.push('Não encontrado: ' + a.nome); return; }
+    // Bloquear insumos líquidos em fórmulas de cápsulas/sachê
+    var isSolidForm = fml.indexOf('cap') >= 0 || fml === 'sache';
+    if(isSolidForm && (LIQUID_KEYS[ins.k||''] || /^tint\s/.test(ins.k||''))) {
+      avs.push('Insumo líquido/tintura em cápsula: ' + a.nome + ' — não disponível como pó');
+      return;
+    }
     if(ins.p === 0) { avs.push('Sem preço: ' + ins.n); return; }
     var u = (a.unidade||'mg').toLowerCase();
     var g;
@@ -871,23 +914,38 @@ function calcRec(rec) {
       g = doseToG(a.dose, a.unidade, ins.n);
     }
     sumOthersG += g;
-    var c = g * qtd * ins.p;
+    // Para formas tópicas: dose é quantidade absoluta da preparação (não multiplica por qtd)
+    var c = isExternalForm ? g * ins.p : g * qtd * ins.p;
     custo += c;
     itens.push({n:ins.n, dose:a.dose+' '+(a.unidade||'mg'), c:c});
   });
 
   // Adicionar base qsp como complemento: base = total_qsp - soma_demais
-  if(isExternalForm && qspAtivoIdx >= 0) {
-    var qspAtivo = rec.ativos[qspAtivoIdx];
-    var insBase = busIns(qspAtivo.nome, fml);
-    if(insBase && insBase.p > 0) {
-      var baseG = qspTotal - sumOthersG;
-      if(baseG <= 0) { baseG = qspTotal * 0.6; avs.push('Aviso: soma dos ativos excede qsp ' + qspTotal + 'g; base ajustada.'); }
-      var cBase = baseG * qtd * insBase.p;
-      custo += cBase;
-      itens.push({n:insBase.n+' qsp', dose:baseG.toFixed(2)+'g (qsp '+qspTotal+'g)', c:cBase});
-    } else if(!insBase) {
-      avs.push('Não encontrado (base qsp): ' + qspAtivo.nome);
+  // Regra: soma dos ativos + base = qsp total. Base preenche o restante.
+  if(isExternalForm) {
+    // Volume qsp: usa ativo declarado; senão usa qtd (pode ser o volume prescrito)
+    var qspVol = (qspAtivoIdx >= 0) ? qspTotal : qtd;
+    var baseNome = null;
+    if(qspAtivoIdx >= 0) {
+      baseNome = rec.ativos[qspAtivoIdx].nome;
+    } else if(fml.indexOf('gel') >= 0) {
+      baseNome = 'gel de aristoflex';
+    } else if(fml.indexOf('locao') >= 0) {
+      baseNome = 'locao base hidratante';
+    } else if(fml.indexOf('creme') >= 0) {
+      baseNome = 'creme base';
+    }
+    if(baseNome && qspVol > 0) {
+      var insBase = busIns(baseNome, fml);
+      if(insBase && insBase.p > 0) {
+        var baseG = qspVol - sumOthersG;
+        if(baseG <= 0) { baseG = qspVol * 0.6; avs.push('Aviso: soma dos ativos excede qsp ' + qspVol + 'g; base ajustada.'); }
+        var cBase = baseG * insBase.p;
+        custo += cBase;
+        itens.push({n:insBase.n+' qsp', dose:baseG.toFixed(2)+'g (qsp '+qspVol+'g)', c:cBase});
+      } else if(!insBase) {
+        avs.push('Não encontrado (base qsp): ' + baseNome);
+      }
     }
   }
 
@@ -1185,7 +1243,7 @@ function calcFoto() {
   }
 
   readAllFiles(fileList, function(fileData) {
-    var prompt ='Leia esta receita de farmacia de manipulacao. Extraia SOMENTE formulas manipuladas com ativos e doses. IGNORE medicamentos industrializados e orientacoes medicas. REGRAS DE FORMA: use Capsulas para capsulas/doses solidas (inclusive progesterona em capsulas); use Hormonio APENAS quando houver testosterona/estradiol/progesterona/estriol COM base topica explicita (pentravan/transcutol/lipoderm/creme) E forma for creme/locao/gel; use Sache para saches/envelopes; use Locao para locoes; use Creme para cremes/géis; use Shampoo para shampoos; use Pomada para pomadas; use Xarope para xaropes/suspensoes. REGRA DOSE mg/ml: quando a dose for escrita como Xmg/ml com Y dias, interpretar como dose_por_dose=X mg (1ml por dose), qtd=Y. REGRA QSP: quando um componente for indicado como "qsp Xg/ml" represente-o com dose=X e unidade="g" (ou "ml"). Ignore hifens, acentos e caracteres especiais ao interpretar nomes. Responda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":60,"descricao":"descricao","ativos":[{"nome":"nome exato da receita","dose":10,"unidade":"mg"}]}]}';
+    var prompt ='Leia esta receita de farmacia de manipulacao. Extraia SOMENTE formulas manipuladas com ativos e doses. IGNORE completamente: (1) qualquer item com nome de fabricante/marca comercial como Myralis, Marjan, Central Nutrition, Besins, Pharma; (2) itens com quantidade total de unidades industriais como "(12un)", "(90un)", "(180un)", "(18un)"; (3) codigos CID; (4) orientacoes medicas.\n\nREGRAS DE FORMA:\n- "Pentravan qsp" ou "Transcutol qsp" junto com estradiol/testosterona/progesterona/estriol = forma HORMONIO. Inclua a base como ativo: {nome:"Pentravan",dose:1,unidade:"qsp"}\n- Capsulas/comprimido sem base topica = Capsulas\n- Sache/envelope = Sache | Locao = Locao | Creme = Creme | Gel = Gel | Pomada = Pomada\n\nQUANTIDADE: "uso continuo" ou sem duracao = qtd 30. Capsulas: qtd=numero de unidades, dose=por unidade.\n\nATIVOS: leia e copie CADA ativo EXATAMENTE como escrito. Inclua TODOS sem excecao. NUNCA substitua nomes desconhecidos por similares conhecidos — se nao conseguir ler, escreva o que ve. NUNCA invente ativos.\n\nEXEMPLO — formula hormonal:\nReceita: "Estradiol 0.5mg / Pentravan qsp / Aplicar 1 pump"\nJSON: {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Estradiol","dose":0.5,"unidade":"mg"},{"nome":"Pentravan","dose":1,"unidade":"qsp"}]}\n\nResponda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":30,"descricao":"","ativos":[{"nome":"nome","dose":0,"unidade":"mg"}]}]}';
 
     // Construir conteúdo com todas as imagens/PDFs recebidos
     var contentBlocks = fileData.map(function(fd) {
