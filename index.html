@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v3.1</title>
+<title>Farmácia Alpha v4.0</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -73,10 +73,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </style>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v3.1 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.0 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v3.1</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.0</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -365,13 +365,39 @@ var LIQUID_KEYS = {'ac hialuronico':1,'acetona pa':1,'aldavine 5x':1,'argireline
 var CF = 37.5, PM = 62;
 var PROG = {
   Capsulas:[[5.25,6],[5.5,6],[5.75,6],[6,6],[6.25,6],[6.5,6],[6.75,6],[7,5.9],[7.25,5.9],[7.5,5.9],[7.75,5.7],[8,5.7],[8.25,5.7],[9,5.7],[9.25,5.7],[9.5,5.7],[9.75,5.7],[10,5.6],[10.25,5.6],[10.5,5.5],[10.75,5.4],[11,5],[11.25,5],[11.5,5],[11.75,4.9],[12,4.5],[12.25,4.42],[12.5,4.42],[12.75,4.42],[13,4.42],[13.25,4.42],[13.5,4.42],[13.75,4.42],[14,4.42],[14.25,4.42],[14.5,4.42],[14.75,4.42],[15,4.42],[15.25,4.42],[15.5,4.42],[15.75,4.42],[16,4.42],[16.25,4.4],[16.5,4.4],[16.75,4.4],[17,4.4],[17.25,4.4],[17.5,4.4],[17.75,4.4],[18,4.4],[18.25,4.4],[18.5,4.4],[18.75,4.4],[19,4.4],[19.25,4.4],[19.5,4.4],[19.75,4.4],[20,4.25],[25,4.25],[30,4],[33,4],[36,4],[40,3.7],[42.5,3.7],[45,3.7],[50,3.5],[55,3.5],[60,3.4],[65,3.3],[70,3.3],[75,3.2],[80,3],[90,3],[110,2.95],[150,2.95],[200,2.9],[300,2.85],[600,2.75],[5000,2.6],[10000,2.6]],
-  Hormonio:[[4,6.45],[5,6.45],[6,5.83],[7,5.23],[8,4.66],[10,4.56],[11,4.28],[15,4.28],[16,4.1],[20,3.8],[90,3.8],[100,3.5],[130,3.3],[5000,3.1]],
-  Creme:[[4.25,6],[5,6],[6,5.85],[7,5.8],[8,5],[10,4.5],[15,4],[20,4],[70,4],[80,3.8],[100,3.7],[130,3.3],[300,3],[5000,2.9]],
-  Sache:[[3.75,6.85],[4,6.8],[4.5,6.6],[5,6.4],[5.5,6.2],[6,6.1],[7,5.8],[8,5.4],[9,5.3],[10,5.2],[11,4.8],[12,4.6],[14,4.55],[15,4.5],[20,4.5],[30,4.5],[50,4],[80,4],[100,3.3],[200,3],[300,2.9],[5000,2.8]]
+  Sache:[[3.75,6.85],[4,6.8],[4.25,6.7],[4.5,6.6],[4.75,6.5],[5,6.4],[5.25,6.3],[5.5,6.2],[5.75,6.1],[6,6.1],[6.25,5.95],[6.5,5.9],[6.75,5.9],[7,5.8],[7.25,5.7],[7.5,5.6],[7.75,5.5],[8,5.4],[8.25,5.3],[8.5,5.3],[8.75,5.3],[9,5.3],[9.25,5.3],[9.5,5.3],[9.75,5.3],[10,5.2],[10.25,5.1],[10.5,5.05],[10.75,4.8],[11,4.8],[11.25,4.7],[11.5,4.7],[11.75,4.7],[12,4.6],[12.25,4.6],[12.5,4.6],[12.75,4.55],[13,4.55],[13.25,4.55],[13.5,4.55],[13.75,4.55],[14,4.55],[14.25,4.55],[14.5,4.55],[14.75,4.55],[15,4.5],[15.25,4.5],[15.5,4.5],[15.75,4.5],[16,4.5],[16.25,4.5],[16.5,4.5],[16.75,4.5],[17,4.5],[17.25,4.5],[17.5,4.5],[17.75,4.5],[18,4.5],[18.25,4.5],[18.5,4.5],[18.75,4.5],[19,4.5],[19.25,4.5],[19.5,4.5],[19.75,4.5],[20,4.5],[25,4.5],[30,4.5],[50,4],[60,4],[70,4],[80,4],[90,3.8],[100,3.3],[150,3.3],[200,3],[300,2.9],[5000,2.8]],
+  Creme:[[4.25,6],[4.5,6],[4.75,6],[5,6],[5.25,6],[5.5,5.9],[6,5.85],[6.25,5.8],[6.5,5.8],[6.75,5.75],[7,5.8],[7.25,5.7],[7.5,5.5],[7.75,5.5],[8,5],[8.25,5],[8.5,5],[8.75,5],[9,5],[9.25,5],[9.5,5],[9.75,5],[10,4.5],[10.25,4.5],[10.5,4.5],[10.75,4.5],[11,4.5],[11.25,4.5],[11.5,4.5],[11.75,4.5],[12,4.5],[12.25,4.5],[12.5,4.5],[12.75,4.5],[13,4.5],[13.25,4.5],[13.5,4.5],[13.75,4.5],[14,4.5],[14.25,4.5],[14.5,4.5],[14.75,4.5],[15,4],[15.25,4],[15.5,4],[15.75,4],[16,4],[16.25,4],[16.5,4],[16.75,4],[17,4],[17.25,4],[17.5,4],[17.75,4],[18,4],[18.25,4],[18.5,4],[18.75,4],[19,4],[19.25,4],[19.5,4],[19.75,4],[20,4],[30,4],[40,4],[50,4],[60,4],[70,4],[80,3.8],[90,3.8],[100,3.7],[120,3.5],[130,3.3],[150,3.3],[300,3],[5000,2.9]],
+  Locao:[[4,6.35],[4.25,6.235],[4.5,6.13],[4.75,6.13],[5,6.13],[5.25,6.1],[5.5,6.1],[5.75,5.96],[6,5.86],[6.25,5.75],[6.5,5.65],[6.75,5.65],[7,5.65],[7.25,5.65],[7.5,5.65],[7.75,5.65],[8,5],[8.25,5],[8.5,5],[8.75,5],[9,5],[9.25,5],[9.5,5],[9.75,5],[10,5],[10.25,5],[10.5,5],[10.75,5],[11,5],[11.25,5],[11.5,5],[11.75,5],[12,5],[12.25,5],[12.5,5],[12.75,5],[13,5],[13.25,5],[13.5,5],[13.75,5],[14,5],[14.25,5],[14.5,5],[14.75,5],[15,5],[15.25,4.5],[15.5,4.5],[15.75,4.5],[16,4.5],[16.25,4.5],[16.5,4.5],[16.75,4.5],[17,4.5],[17.25,4.5],[17.5,4.5],[17.75,4.5],[18,4.5],[18.25,4.5],[18.5,4.5],[18.75,4.5],[19,4.5],[19.25,4.5],[19.5,4.5],[19.75,4.5],[20,4.5],[30,4.5],[40,4.25],[50,4],[60,4],[70,4],[80,4],[90,4],[100,3.8],[150,3.33],[200,3.33],[300,3],[5000,3]],
+  Hormonio:[[4,6.45],[4.25,6.45],[4.75,6.45],[5,6.45],[5.25,6.45],[5.5,6.35],[5.75,6.24],[6,5.83],[6.25,5.83],[6.5,5.83],[6.75,5.66],[7,5.23],[7.25,5.23],[7.5,5.23],[7.75,5.23],[8,4.66],[8.25,4.66],[8.5,4.66],[8.75,4.66],[9,4.66],[9.25,4.66],[9.5,4.66],[9.75,4.66],[10,4.56],[10.25,4.56],[10.5,4.56],[10.75,4.28],[11,4.28],[11.25,4.28],[11.5,4.28],[11.75,4.28],[12,4.28],[12.25,4.28],[12.5,4.28],[12.75,4.28],[13,4.28],[13.25,4.28],[13.5,4.28],[13.75,4.28],[14,4.28],[14.25,4.28],[14.5,4.28],[14.75,4.28],[15,4.28],[15.25,4.28],[15.5,4.1],[15.75,4.1],[16,4.1],[16.25,4.1],[16.5,4.1],[16.75,4.1],[17,4.1],[17.25,4.1],[17.5,4.1],[17.75,4.1],[18,4.1],[18.25,4.1],[18.5,4.1],[18.75,4.1],[19,4.1],[19.25,4.1],[19.5,4.1],[19.75,4.1],[20,3.8],[30,3.8],[40,3.8],[50,3.8],[60,3.8],[70,3.8],[80,3.8],[90,3.8],[100,3.5],[120,3.3],[130,3.3],[150,3.3],[5000,3.1]],
+  Shampoo:[[4,6],[4.25,6],[4.5,6],[4.75,6],[5,6],[5.25,6],[5.5,6],[5.75,6],[6,6],[6.25,6],[6.5,6],[6.75,6],[7,6],[7.25,6],[7.5,6],[7.75,6],[8,6],[8.25,5.9],[8.5,5.9],[8.75,5.85],[9,5.8],[9.25,5.8],[9.5,5.75],[9.75,5.7],[10,5.6],[10.25,5.55],[10.5,5.45],[10.75,5.4],[11,5.3],[11.25,5.25],[11.5,5.15],[11.75,5.1],[12,5.1],[12.25,5.1],[12.5,5.1],[12.75,5.1],[13,5.1],[13.25,5.1],[13.5,5.1],[13.75,5.1],[14,5.1],[14.25,5.1],[14.5,5.1],[14.75,5.1],[15,5],[15.25,4.7],[15.5,4.7],[15.75,4.7],[16,4.7],[16.25,4.7],[16.5,4.7],[16.75,4.7],[17,4.7],[17.25,4.55],[17.5,4.55],[17.75,4.55],[18,4.55],[18.25,4.55],[18.5,4.55],[18.75,4.55],[19,4.55],[19.25,4.55],[19.5,4.55],[19.75,4.55],[20,4.55],[30,4],[40,4],[50,4],[60,4],[70,4],[80,4],[90,4],[100,3.8],[150,3.33],[200,3.33],[300,3.3],[5000,3]],
+  Pomada:[[4.25,6.45],[4.5,6.45],[4.75,6.45],[5,6.45],[5.25,6.45],[5.5,6.34],[5.75,6.326],[6,6.128],[6.25,6.02],[6.5,6.02],[6.75,5.967],[7,5.967],[7.25,5.805],[7.5,5.695],[7.75,5.695],[8,5.559],[8.25,5.536],[8.5,5.536],[8.75,5.536],[9,5.485],[9.25,5.375],[9.5,5.375],[9.75,5.375],[10,5.322],[10.25,5.267],[10.5,5.267],[10.75,5.267],[11,5.267],[11.25,5.214],[11.5,4.838],[11.75,4.838],[12,4.838],[12.25,4.838],[12.5,4.838],[12.75,4.838],[13,4.838],[13.25,4.838],[13.5,4.838],[13.75,4.838],[14,4.838],[14.25,4.838],[14.5,4.838],[14.75,4.838],[15,4.838],[15.25,4.569],[15.5,4.569],[15.75,4.569],[16,4.569],[16.25,4.569],[16.5,4.569],[16.75,4.569],[17,4.569],[17.25,4.569],[17.5,4.569],[17.75,4.462],[18,4.462],[18.25,4.462],[18.5,4.462],[18.75,4.462],[19,4.462],[19.25,4.462],[19.5,4.462],[19.75,4.462],[20,4.3],[30,4.1],[40,4.1],[50,4.1],[60,4.1],[70,4.1],[80,4.1],[90,4.1],[100,3.5],[120,3.3],[130,3.3],[150,3.3],[300,3.2],[5000,3.1]],
+  Xarope:[[4.25,6],[4.5,6],[4.75,6],[5,6],[5.25,6],[5.5,5.9],[5.75,5.8],[6,5.7],[6.25,5.6],[6.5,5.55],[6.75,5.55],[7,5.5],[7.25,5.4],[7.5,5.35],[7.75,5.3],[8,5.2],[8.25,5.2],[8.5,5.15],[8.75,5.15],[9,5.15],[9.25,5.05],[9.5,5],[9.75,5],[10,4.95],[10.25,4.9],[10.5,4.9],[10.75,4.9],[11,4.9],[11.25,4.85],[11.5,4.5],[11.75,4.5],[12,4.5],[12.25,4.5],[12.5,4.5],[12.75,4.5],[13,4.5],[13.25,4.5],[13.5,4.5],[13.75,4.5],[14,4.5],[14.25,4.5],[14.5,4.5],[14.75,4.5],[15,4.5],[15.25,4.5],[15.5,4.5],[15.75,4.5],[16,4.5],[16.25,4.5],[16.5,4.5],[16.75,4.5],[17,4.5],[17.25,4.5],[17.5,4.5],[17.75,4.5],[18,4.5],[18.25,4.5],[18.5,4.5],[18.75,4.5],[19,4.5],[19.25,4.5],[19.5,4.5],[19.75,4.5],[20,4.4],[30,4.4],[40,4.4],[50,4.4],[60,4.4],[70,4.4],[80,4.3],[90,4.2],[100,3.5],[120,3.3],[130,3.3],[150,3.3],[300,3.3],[5000,3]],
+  Sublingual:[[4,6.5],[4.25,6.45],[4.5,6.4],[4.75,6.35],[5,6.3],[5.25,6.25],[5.5,6.2],[5.75,6.16],[6,6.1],[6.25,6.05],[6.5,5.95],[6.75,5.9],[7,5.8],[7.25,5.6],[7.5,5.6],[7.75,5.55],[8,5.4],[8.25,5.3],[8.5,5.3],[8.75,5.3],[9,5.3],[9.25,5.3],[9.5,5.3],[9.75,5.3],[10,5.2],[10.25,5.1],[10.5,5.1],[10.75,5.1],[11,5.1],[11.25,5.1],[11.5,5.1],[11.75,5.1],[12,5.1],[12.25,5.1],[12.5,5.1],[12.75,5.1],[13,5.1],[13.25,5.1],[13.5,5.1],[13.75,5.1],[14,5.1],[14.25,5.1],[14.5,5.1],[14.75,5.1],[15,5.1],[15.25,5],[15.5,4.95],[15.75,4.85],[16,4.8],[16.25,4.8],[16.5,4.8],[16.75,4.8],[17,4.8],[17.25,4.8],[17.5,4.8],[17.75,4.8],[18,4.55],[18.25,4.55],[18.5,4.55],[18.75,4.55],[19,4.55],[19.25,4.55],[19.5,4.55],[19.75,4.55],[20,4],[30,4],[40,4],[50,4],[60,4],[70,4],[80,4],[90,4],[100,3.5],[120,3.3],[130,3.3],[150,3.3],[300,3],[5000,3]]
 };
-var CGEL=[[271,'3',0.0195],[371,'2',0.0195],[481,'1',0.0195],[681,'0',0.0195],[951,'00',0.03]];
-var POTES=[[60,{'3':120,'2':90,'1':50,'0':30,'00':30},2],[80,{'3':180,'2':120,'1':90,'0':60,'00':45},2],[110,{'3':240,'2':180,'1':120,'0':60,'00':60},2],[150,{'3':320,'2':270,'1':180,'0':150,'00':80},2],[230,{'3':480,'2':360,'1':270,'0':240,'00':180},2],[320,{'3':680,'2':480,'1':390,'0':300,'00':240},2],[500,{'3':1030,'2':720,'1':510,'0':480,'00':360},2.5]];
-var AIRLESS=[{ml:30,p:5.9},{ml:60,p:9.0},{ml:90,p:13.9}];
+// Cápsulas: [vol_interno_mm3, tamanho, preco_gelatinosa, preco_vegetal, preco_enterica]
+var CGEL=[[271,'3',0.0195,0.05,0.12],[371,'2',0.0195,0.05,0.12],[481,'1',0.0195,0.05,0.12],[681,'0',0.0195,0.05,0.12],[951,'00',0.03,0.06,0.125]];
+var POTES=[[60,{'3':90,'2':50,'1':30,'0':30,'00':30},2],[80,{'3':120,'2':90,'1':60,'0':45,'00':30},2],[110,{'3':180,'2':120,'1':120,'0':60,'00':60},2],[150,{'3':270,'2':180,'1':150,'0':90,'00':80},2],[230,{'3':480,'2':270,'1':240,'0':180,'00':120},2],[320,{'3':480,'2':390,'1':300,'0':240,'00':180},2],[500,{'3':720,'2':510,'1':480,'0':360,'00':270},2.5]];
+var AIRLESS=[{ml:30,p:5.9},{ml:60,p:9.0},{ml:90,p:13.9},{ml:35,p:27,topclick:true}];
+// Embalagens Loção bisnagas (semi-sólida) e frascos fluidos
+var EMB_LOCAO_BISNAGA=[[30,1.43],[60,1.48],[120,1.60],[200,2.50],[250,2.80]];
+var EMB_LOCAO_FLUIDA=[[120,1.057],[200,1.235]];
+// Embalagens Creme Facial
+var EMB_CREME_FACIAL=[[15,4.65],[30,4.2],[50,4.7],[9999,5.68]]; // 9999=acima 50g→MaxControl
+// Embalagens Creme Corporal / Anal
+var EMB_CREME_CORPORAL=[[20,1.43],[30,1.43],[60,1.48],[120,1.60],[200,2.50],[9999,2.50]];
+// Embalagens Creme por prescritor (CRM→embalagens)
+var EMB_PRESCRITOR={
+  '92265':[[15,5.395],[9999,5.395]],  // Dra. Gabriela: Face Touch 15g
+  '78980':[[30,6.516],[50,6.52],[9999,6.52]], // Dra. Cláudia: Liftpump
+  '12001':[[30,11.5],[50,9.4],[100,5],[9999,5]]  // Dra. Nancy: Frasco Derma
+};
+// Embalagens Shampoo
+var EMB_SHAMPOO=[[120,1.057],[150,1.214],[200,1.50],[250,1.51],[500,3.19],[9999,3.19]];
+// Embalagens Pomada bisnagas
+var EMB_POMADA=[[30,1.4],[60,1.48],[120,1.60],[200,2.50],[9999,2.50]];
+// Embalagens Xarope PET âmbar e vidro âmbar
+var EMB_XAROPE_PET=[[30,0.95],[60,1.64],[100,1.924],[150,3.25],[200,3.83],[250,4.18],[500,7.50],[1000,9.0],[9999,9.0]];
+var EMB_XAROPE_VIDRO=[[15,0.41],[30,0.99],[60,1.60],[100,2.99],[150,3.83],[200,4.18],[250,3.25],[500,9.0],[1000,7.5],[9999,7.5]];
 
 // ── Estado ─────────────────────────────────────────────────
 var hist = [], last = null, arq = null;
@@ -840,6 +866,13 @@ function getMKP(c, tab) {
   return tab[bestIdx][1];
 }
 
+// ── Embalagem helper ───────────────────────────────────────
+function pickEmb(vol, tabela) {
+  // tabela = [[maxVol, preco], ...] ordenada crescente; último cobre tudo
+  for(var i=0;i<tabela.length;i++){ if(vol<=tabela[i][0]) return tabela[i][1]; }
+  return tabela[tabela.length-1][1];
+}
+
 // ── Cálculo de receita ─────────────────────────────────────
 function calcRec(rec) {
   var qtd = parseInt(rec.qtd) || 60;
@@ -847,204 +880,377 @@ function calcRec(rec) {
   var fm = (rec.forma || 'Capsulas');
   var fml = fm.toLowerCase();
   var custo = 0, itens = [], avs = [];
+  var prescritor = normStr(rec.prescritor||'');
 
-  // Auto-detectar hormônio
+  // ── 1. Auto-detectar hormônio ──
   var nomesAtivos = (rec.ativos||[]).map(function(a){return normStr(a.nome||'');}).join(' ');
-  var hasTopicBase = /pentravan|transcutol|lipoderm/.test(nomesAtivos);
-  // Estradiol ≤5mg e testosterona ≤50mg em manipulação = SEMPRE tópico
-  var hasEstradiol = /estradiol/.test(nomesAtivos) && (rec.ativos||[]).some(function(a){ return /estradiol/.test(normStr(a.nome||'')) && (a.dose||0) <= 5; });
-  var hasTestosteron = /testosteron/.test(nomesAtivos) && (rec.ativos||[]).some(function(a){ return /testosteron/.test(normStr(a.nome||'')) && (a.dose||0) <= 50; });
-  // Progesterona/estriol: só hormônio se tiver base tópica real na lista de ativos
+  var hasTopicBase = /pentravan|transcutol|lipoderm|inderm|versapro/.test(nomesAtivos);
+  var hasEstradiol = /estradiol/.test(nomesAtivos) && (rec.ativos||[]).some(function(a){
+    return /estradiol/.test(normStr(a.nome||'')) && (a.dose||0) <= 5;
+  });
+  var hasTestosteron = /testosteron/.test(nomesAtivos) && (rec.ativos||[]).some(function(a){
+    return /testosteron/.test(normStr(a.nome||'')) && (a.dose||0) <= 50;
+  });
   var hasProgTopico = (/progesteron|estriol/.test(nomesAtivos)) && hasTopicBase;
   if(hasEstradiol || hasTestosteron || hasProgTopico) {
     if(fml==='capsulas'||fml==='locao'||fml==='creme'||fml==='gel') fml='hormonio';
   }
 
-  // Conversor de dose → gramas, levando em conta unidade e produto
+  // ── 2. Conversor dose → gramas ──
   function doseToG(dose, unidade, insNome) {
     var u = (unidade||'mg').toLowerCase();
     if(u === 'g') return dose;
     if(u === 'mcg') return dose / 1000000;
     if(u === 'ui' || u === 'iu') {
-      // Vitamina D3 / Colecalciferol: 40.000.000 UI/g
       var nm = normStr(insNome||'');
-      if(/colecalciferol|vit\s*d3?|vitamina\s*d3?|cholecalciferol/.test(nm))
-        return dose / 40000000;
-      // Vitamina A: ~3.333.333 UI/g
-      if(/vitamina\s*a\b|retinol|palmitato.*retinol|acetato.*retinol/.test(nm))
-        return dose / 3333333;
-      // Vitamina E: ~1.000 UI/g (dl-alfa-tocoferol acetato)
-      if(/tocoferol|vitamina\s*e\b/.test(nm))
-        return dose / 1000;
-      // Padrão para outros produtos com UI
+      if(/colecalciferol|vit\s*d3?|vitamina\s*d3?|cholecalciferol/.test(nm)) return dose / 40000000;
+      if(/vitamina\s*a\b|retinol|palmitato.*retinol|acetato.*retinol/.test(nm)) return dose / 3333333;
+      if(/tocoferol|vitamina\s*e\b/.test(nm)) return dose / 1000;
       return dose / 1000000;
     }
-    if(u === '%') return dose / 100; // percentual: converter depois com volume total
-    return dose / 1000; // mg → g (padrão)
+    if(u === '%') return dose / 100;
+    return dose / 1000; // mg (padrão)
   }
 
-  // Auto-detectar sachê por dose total > 10g (threshold aumentado para evitar falsos positivos)
+  // ── 3. Auto-detectar sachê (dose total > 10g em cápsula) ──
   var totalGCheck = (rec.ativos||[]).reduce(function(s,a){
     return s + doseToG(a.dose, a.unidade, a.nome);
   },0);
   if(totalGCheck > 10 && fml === 'capsulas') fml = 'sache';
 
-  // Identificar ativo base/qsp para formas externas (Loção, Creme, Gel, Pomada, Shampoo)
-  // O prescrito "Loção qsp 30g" = base faz o volume chegar a 30g; base = 30 - soma dos demais
-  var isExternalForm = /locao|loção|creme|gel|pomada|shampoo|xampu/.test(fml);
+  // ── 4. Calcular ativos ──
+  // Formas tópicas: NÃO multiplicar por qtd (dose = quantidade total da fórmula)
+  var isTopico = /locao|loção|creme|gel|pomada|shampoo|xampu|hormonio/.test(fml);
+  var isSolido = fml.indexOf('cap') >= 0 || fml === 'sache' || fml === 'sublingual';
+
+  // Detectar base qsp declarada na receita (para formas tópicas)
   var qspAtivoIdx = -1, qspTotal = 0;
-  if(isExternalForm) {
+  if(isTopico) {
     (rec.ativos||[]).forEach(function(a, idx) {
       var nn = normStr(a.nome||'');
-      // Produto é base/veículo (locao, creme, gel, pomada, base, shampoo)
-      var isBase = /\b(locao|loção|creme|gel|pomada|base|shampoo|xampu)\b/.test(nn);
+      var isBase = /\b(locao|loção|creme|gel|pomada|base|shampoo|xampu|pentravan|inderm|versapro)\b/.test(nn);
       var u = (a.unidade||'').toLowerCase();
-      if(isBase && (u === 'g' || u === 'ml') && a.dose >= 5 && qspAtivoIdx < 0) {
+      if(isBase && (u==='g'||u==='ml'||u==='qsp') && a.dose >= 1 && qspAtivoIdx < 0) {
         qspAtivoIdx = idx; qspTotal = a.dose;
       }
     });
   }
 
-  // Calcular ativos (pular qsp — será calculado depois como complemento)
-  var sumOthersG = 0;
+  var sumAtivosG = 0;
   (rec.ativos||[]).forEach(function(a, idx) {
-    if(isExternalForm && idx === qspAtivoIdx) return; // pular base qsp
+    if(isTopico && idx === qspAtivoIdx) return; // base qsp calculada depois
     var ins = busIns(a.nome, fml);
     if(!ins) { avs.push('Não encontrado: ' + a.nome); return; }
-    // Bloquear insumos líquidos em fórmulas de cápsulas/sachê
-    var isSolidForm = fml.indexOf('cap') >= 0 || fml === 'sache';
-    if(isSolidForm && (LIQUID_KEYS[ins.k||''] || /^tint\s/.test(ins.k||''))) {
-      avs.push('Insumo líquido/tintura em cápsula: ' + a.nome + ' — não disponível como pó');
+    if(isSolido && (LIQUID_KEYS[ins.k||''] || /^tint\s/.test(ins.k||''))) {
+      avs.push('Insumo líquido em cápsula/sachê: ' + a.nome + ' — não disponível como pó');
       return;
     }
     if(ins.p === 0) { avs.push('Sem preço: ' + ins.n); return; }
     var u = (a.unidade||'mg').toLowerCase();
     var g;
     if(u === '%' && qspTotal > 0) {
-      g = (a.dose / 100) * qspTotal; // percentual do volume total (ex: 3% de 30g = 0.9g)
+      g = (a.dose / 100) * qspTotal;
     } else {
       g = doseToG(a.dose, a.unidade, ins.n);
     }
-    sumOthersG += g;
-    // Para formas tópicas: dose é quantidade absoluta da preparação (não multiplica por qtd)
-    var c = isExternalForm ? g * ins.p : g * qtd * ins.p;
+    sumAtivosG += g;
+    var c = isTopico ? g * ins.p : g * qtd * ins.p;
     custo += c;
     itens.push({n:ins.n, dose:a.dose+' '+(a.unidade||'mg'), c:c});
   });
 
-  // Adicionar base qsp como complemento: base = total_qsp - soma_demais
-  // Regra: soma dos ativos + base = qsp total. Base preenche o restante.
-  if(isExternalForm) {
-    // Volume qsp: usa ativo declarado; senão usa qtd (pode ser o volume prescrito)
-    var qspVol = (qspAtivoIdx >= 0) ? qspTotal : qtd;
-    var baseNome = null;
-    if(qspAtivoIdx >= 0) {
-      baseNome = rec.ativos[qspAtivoIdx].nome;
-    } else if(fml.indexOf('gel') >= 0) {
-      baseNome = 'gel de aristoflex';
-    } else if(fml.indexOf('locao') >= 0) {
-      baseNome = 'locao base hidratante';
-    } else if(fml.indexOf('creme') >= 0) {
-      baseNome = 'creme base';
-    }
-    if(baseNome && qspVol > 0) {
-      var insBase = busIns(baseNome, fml);
-      if(insBase && insBase.p > 0) {
-        var baseG = qspVol - sumOthersG;
-        if(baseG <= 0) { baseG = qspVol * 0.6; avs.push('Aviso: soma dos ativos excede qsp ' + qspVol + 'g; base ajustada.'); }
-        var cBase = baseG * insBase.p;
-        custo += cBase;
-        itens.push({n:insBase.n+' qsp', dose:baseG.toFixed(2)+'g (qsp '+qspVol+'g)', c:cBase});
-      } else if(!insBase) {
-        avs.push('Não encontrado (base qsp): ' + baseNome);
-      }
-    }
-  }
+  // ── 5. EMBALAGENS E COMPLEMENTOS POR FORMA ──
 
-  // Embalagens por forma
+  // ── 5A. CÁPSULAS ──
   if(fml.indexOf('cap') >= 0) {
-    var capDose = totalGCheck > 0 ? totalGCheck*1000 : 300;
+    // Selecionar tamanho da cápsula (1mg ≈ 1mm³)
+    var capDoseMg = totalGCheck > 0 ? totalGCheck * 1000 : 300;
     var cap = CGEL[CGEL.length-1];
-    for(var ci=0;ci<CGEL.length;ci++){if(capDose<=CGEL[ci][0]){cap=CGEL[ci];break;}}
-    var cc = cap[2]*qtd;
+    for(var ci=0;ci<CGEL.length;ci++){if(capDoseMg<=CGEL[ci][0]){cap=CGEL[ci];break;}}
+
+    // Tipo de cápsula: oleosa → vegetal, entérica → entérica, padrão → gelatinosa
+    var isOleosa = /omega|oleo|oil|oleosa|vitamina e|vitamina a\b|retinol/.test(nomesAtivos);
+    var isEnterica = /enteric|enterica|gastro/.test(fml+' '+nomesAtivos);
+    var capPreco = isEnterica ? cap[4] : isOleosa ? cap[3] : cap[2];
+    var capTipo = isEnterica ? 'Entérica' : isOleosa ? 'Vegetal' : '';
+
+    var cc = capPreco * qtd;
     var pt = POTES[POTES.length-1];
     for(var pi=0;pi<POTES.length;pi++){if((POTES[pi][1][cap[1]]||0)>=qtd){pt=POTES[pi];break;}}
     custo += cc + pt[2];
-    itens.push({n:'Cápsulas n'+cap[1]+' ('+qtd+')+Pote '+pt[0]+'ml', dose:'', c:cc+pt[2]});
-    // Excipiente para completar volume da cápsula (Celulose Micr PH101)
-    var jaTemExcipiente = /celulose|lactose|amido|avicel|excipiente/.test(nomesAtivos);
+    itens.push({n:'Cápsulas n'+cap[1]+(capTipo?' '+capTipo:'')+' ('+qtd+')+Pote '+pt[0]+'ml', dose:'', c:cc+pt[2]});
+
+    // ── Excipiente ──
+    var jaTemExcipiente = /celulose|lactose|amido|avicel|excipiente|celulosix/.test(nomesAtivos);
     if(!jaTemExcipiente) {
-      var capMaxMg = cap[0]; // capacidade da cápsula em mg
-      var ativosMg = totalGCheck * 1000;
-      var excipMg = capMaxMg - ativosMg;
-      if(excipMg > 10) { // só adiciona se diferença > 10mg
+      var excipMg = cap[0] - (totalGCheck * 1000);
+      if(excipMg > 10) {
         var excipG = excipMg / 1000;
-        var cExcip = excipG * 0.026 * qtd; // celulose micr ph101 R$0,026/g
+        // Selecionar tipo de excipiente
+        var hasLactoOrBifido = /lactobacil|bifidobact/.test(nomesAtivos);
+        var hasProlongada = /acao prolongada|liberacao modificada|lib\. modif|lib mod/.test(normStr(fml+' '+rec.descricao));
+        var hasUmidade = /carnitina|acido lipoico|lipoico|acetil carnitina|colina bitartarato|bitartarato.*colina|d.ribose|biointestil|osteosil|lowat|neuravena|feminite/.test(nomesAtivos);
+
+        var excipNome, excipP;
+        if(hasLactoOrBifido) {
+          excipNome = 'Celulosix Lacto'; excipP = 0.200;
+        } else if(hasProlongada) {
+          excipNome = 'Celulosix Lib. Modificada'; excipP = 0.189;
+        } else if(hasUmidade) {
+          excipNome = 'Excipiente para Umidade'; excipP = 0.060;
+        } else {
+          excipNome = 'Excipiente Geral'; excipP = 0.066;
+        }
+        var cExcip = excipG * excipP * qtd;
         custo += cExcip;
-        itens.push({n:'Celulose Micr PH101 (excipiente '+excipMg.toFixed(0)+'mg/cáp)', dose:'', c:cExcip});
+        itens.push({n:excipNome+' ('+excipMg.toFixed(0)+'mg/cáp)', dose:'', c:cExcip});
       }
     }
   }
 
+  // ── 5B. SACHÊS ──
   if(fml.indexOf('sach')>=0||fml.indexOf('envel')>=0) {
     var isAminoacido = /arginina|carnitina|alanina/.test(nomesAtivos);
-    var hasLacto = /lactobacil|probiotico/.test(nomesAtivos);
+    var hasLactoS = /lactobacil|probiotico|bifidobact/.test(nomesAtivos);
     var hasInositol = /inositol/.test(nomesAtivos);
-    var baseP = isAminoacido ? 0.046 : 0.097;
-    var baseN = isAminoacido ? 'Base Shake Sub.Amargas 4g' : 'Base Shake Nutricao 4g';
-    var cBase = 4*qtd*baseP; custo+=cBase; itens.push({n:baseN,dose:'',c:cBase});
-    var cAroma = 0.5*qtd*0.198; custo+=cAroma; itens.push({n:'Aroma cotação pó 0,5g',dose:'',c:cAroma});
-    if(hasLacto||hasInositol){var cCel=2*qtd*0.026;custo+=cCel;itens.push({n:'Celulose Micr PH101 2g',dose:'',c:cCel});}
+
+    // Base obrigatória por ingrediente
+    var basePN = isAminoacido ? 'Base Shake Sub.Amargas 4g/sachê' : 'Base Shake Nutrição 4g/sachê';
+    var basePP = isAminoacido ? 0.046 : 0.097;
+    var cBaseS = 4 * qtd * basePP; custo += cBaseS;
+    itens.push({n:basePN, dose:'', c:cBaseS});
+
+    // Aroma obrigatório: 0,5g/sachê
+    var cAroma = 0.5 * qtd * 0.198; custo += cAroma;
+    itens.push({n:'Aroma cotação pó 0,5g/sachê', dose:'', c:cAroma});
+
+    // Celulose para Lactobacillus ou Inositol: +2g/sachê
+    if(hasLactoS || hasInositol) {
+      var cCelS = 2 * qtd * 0.026; custo += cCelS;
+      itens.push({n:'Celulose Micr PH101 2g/sachê', dose:'', c:cCelS});
+    }
+
+    // Escolher tamanho do sachê (peso total por dose = ativos + base + aroma + extras)
+    var pesoTotalDose = totalGCheck + 4 + 0.5 + (hasLactoS||hasInositol ? 2 : 0);
     var SACHES=[{n:'7x7 P',cap:4,p:0.1166},{n:'7x9 M',cap:9,p:0.1314},{n:'7x17 G',cap:20,p:0.115}];
-    var sache=SACHES[2];
-    for(var si=0;si<SACHES.length;si++){if(totalGCheck<=SACHES[si].cap){sache=SACHES[si];break;}}
-    var cSache=sache.p*qtd; custo+=cSache; itens.push({n:'Sachê '+sache.n+' ('+qtd+'un)',dose:'',c:cSache});
+    var sache = SACHES[SACHES.length-1];
+    for(var si=0;si<SACHES.length;si++){if(pesoTotalDose<=SACHES[si].cap){sache=SACHES[si];break;}}
+    var cSache = sache.p * qtd; custo += cSache;
+    itens.push({n:'Sachê '+sache.n+' ('+qtd+'un)', dose:'', c:cSache});
+
+    // ZIPLOG
     var ZIPLOGS=[{n:'ZIPLOG 100mz',cP:5,cM:3,cG:2,p:0.602},{n:'ZIPLOG 140mz',cP:20,cM:10,cG:6,p:0.84},{n:'ZIPLOG 160mz',cP:30,cM:15,cG:10,p:1.16},{n:'ZIPLOG 170mz',cP:40,cM:20,cG:15,p:1.35},{n:'ZIPLOG 190mz',cP:60,cM:30,cG:20,p:1.537},{n:'ZIPLOG 210mz',cP:90,cM:40,cG:30,p:1.3348}];
-    var capKey=sache.n.indexOf('P')>=0?'cP':sache.n.indexOf('M')>=0?'cM':'cG';
-    var ziplog=ZIPLOGS[ZIPLOGS.length-1];
-    for(var zi=0;zi<ZIPLOGS.length;zi++){if((ZIPLOGS[zi][capKey]||0)>=qtd){ziplog=ZIPLOGS[zi];break;}}
-    custo+=ziplog.p; itens.push({n:ziplog.n,dose:'',c:ziplog.p});
+    var capKeyS = sache.n.indexOf('P')>=0?'cP':sache.n.indexOf('M')>=0?'cM':'cG';
+    var ziplog = ZIPLOGS[ZIPLOGS.length-1];
+    for(var zi=0;zi<ZIPLOGS.length;zi++){if((ZIPLOGS[zi][capKeyS]||0)>=qtd){ziplog=ZIPLOGS[zi];break;}}
+    custo += ziplog.p;
+    itens.push({n:ziplog.n, dose:'', c:ziplog.p});
   }
 
+  // ── 5C. HORMÔNIO (transdérmico) ──
   if(fml==='hormonio'||fml.indexOf('horm')>=0) {
-    var vol = qtd;
-    var seg = Math.ceil(vol/30);
-    var totalVol = vol + seg;
-    // Buscar base (Pentravan, Transcutol, etc) nos ativos
-    var baseEncontrada = false;
+    var volH = qtd; // volume total em mL/g
+
+    // Determinar base hormonal declarada na receita
+    var baseHNome = 'pentravan'; // padrão
+    var baseHEncontrada = false;
     (rec.ativos||[]).forEach(function(a) {
       var nn = normStr(a.nome||'');
-      if(/pentravan|transcutol|carbopol|base gel|base creme/.test(nn)) baseEncontrada = true;
+      if(/inderm/.test(nn)) { baseHNome='inderm v'; baseHEncontrada=true; }
+      else if(/versapro/.test(nn)) { baseHNome='versapro'; baseHEncontrada=true; }
+      else if(/pentravan/.test(nn)) { baseHEncontrada=true; }
     });
-    // Se não tem base declarada, adicionar Pentravan como qsp
-    if(!baseEncontrada) {
-      var insBase = busIns('pentravan');
-      if(insBase && insBase.p > 0) {
-        var gBase = totalVol - (rec.ativos||[]).reduce(function(s,a){
-          var u=(a.unidade||'mg').toLowerCase();
-          return s+(u==='g'?a.dose:u==='mcg'?a.dose/1000000:a.dose/1000);
-        },0) * qtd / qtd;
-        // Pentravan qsp = volume total - ativos
-        var dosePorDose = (rec.ativos||[]).reduce(function(s,a){
-          var u=(a.unidade||'mg').toLowerCase();
-          return s+(u==='g'?a.dose:u==='mcg'?a.dose/1000000:a.dose/1000);
-        },0);
-        var pentravanG = totalVol - (dosePorDose * (totalVol/vol));
-        if(pentravanG < 0) pentravanG = totalVol * 0.95;
-        var cBase = pentravanG * insBase.p;
-        custo += cBase;
-        itens.push({n:'PENTRAVAN qsp ('+totalVol.toFixed(0)+'g)', dose:'', c:cBase});
+
+    // OBS 1: +1g de segurança a cada 30g
+    var segH = Math.ceil(volH / 30);
+    var totalVolH = volH + segH;
+
+    // OBS 3: SEMPRE adicionar 2% de Transcutol P (se não já presente)
+    var jaTemTranscutol = /transcutol/.test(nomesAtivos);
+    if(!jaTemTranscutol) {
+      var transcutolG = totalVolH * 0.02;
+      var insTranscutol = busIns('transcutol p');
+      var pTranscutol = (insTranscutol && insTranscutol.p > 0) ? insTranscutol.p : 0.215;
+      var cTranscutol = transcutolG * pTranscutol;
+      custo += cTranscutol;
+      itens.push({n:'Transcutol P 2% (obrigatório)', dose:transcutolG.toFixed(2)+'g', c:cTranscutol});
+      sumAtivosG += transcutolG;
+    }
+
+    // Base qsp (se não declarada)
+    if(!baseHEncontrada) {
+      var insBaseH = busIns(baseHNome);
+      if(insBaseH && insBaseH.p > 0) {
+        var baseHG = totalVolH - sumAtivosG;
+        if(baseHG < 0) baseHG = totalVolH * 0.90;
+        var cBaseH = baseHG * insBaseH.p;
+        custo += cBaseH;
+        itens.push({n:insBaseH.n+' qsp ('+totalVolH.toFixed(0)+'g)', dose:'', c:cBaseH});
       }
     }
-    var air = AIRLESS[AIRLESS.length-1];
-    for(var ai=0;ai<AIRLESS.length;ai++){if(AIRLESS[ai].ml>=vol){air=AIRLESS[ai];break;}}
-    custo += air.p;
-    itens.push({n:'Airless '+air.ml+'ml', dose:'', c:air.p});
+
+    // Embalagem airless
+    var airH = AIRLESS[AIRLESS.length-1];
+    for(var ai=0;ai<AIRLESS.length;ai++){
+      if(!AIRLESS[ai].topclick && AIRLESS[ai].ml>=volH){airH=AIRLESS[ai];break;}
+    }
+    custo += airH.p;
+    itens.push({n:'Airless '+airH.ml+'ml', dose:'', c:airH.p});
   }
 
-  var tab = PROG[fm] || (fml.indexOf('cap')>=0?PROG.Capsulas:fml.indexOf('sach')>=0?PROG.Sache:fml==='hormonio'?PROG.Hormonio:PROG.Creme);
+  // ── 5D. LOÇÃO ──
+  if(fml.indexOf('locao')>=0 || fml.indexOf('loção')>=0) {
+    var qspVolL = (qspAtivoIdx >= 0) ? qspTotal : qtd;
+    var baseNomeL = (qspAtivoIdx >= 0) ? rec.ativos[qspAtivoIdx].nome : 'locao base hidratante';
+    var insBaseL = busIns(baseNomeL, fml);
+    if(!insBaseL) insBaseL = busIns('locao base hidratante');
+    var pBaseL = (insBaseL && insBaseL.p >= 0.05) ? insBaseL.p : 0.065;
+    var baseGL = qspVolL - sumAtivosG;
+    if(baseGL < 0) { baseGL = qspVolL * 0.6; avs.push('Aviso: ativos excedem qsp; base ajustada.'); }
+    var cBaseL = baseGL * pBaseL;
+    custo += cBaseL;
+    itens.push({n:(insBaseL?insBaseL.n:'Loção Base Hidratante')+' qsp', dose:baseGL.toFixed(2)+'g', c:cBaseL});
+    // Embalagem
+    var isFluidaL = /fluida|frasco|pump/.test(fml);
+    var cEmbL;
+    if(isFluidaL) {
+      cEmbL = pickEmb(qspVolL, EMB_LOCAO_FLUIDA);
+    } else {
+      cEmbL = pickEmb(qspVolL, EMB_LOCAO_BISNAGA);
+    }
+    custo += cEmbL;
+    itens.push({n:'Embalagem Loção', dose:qspVolL+'g', c:cEmbL});
+  }
+
+  // ── 5E. CREME / GEL ──
+  if(fml.indexOf('creme')>=0 || fml.indexOf('gel')>=0) {
+    var qspVolC = (qspAtivoIdx >= 0) ? qspTotal : qtd;
+    var baseNomeC;
+    if(qspAtivoIdx >= 0) {
+      baseNomeC = rec.ativos[qspAtivoIdx].nome;
+    } else if(fml.indexOf('gel') >= 0) {
+      baseNomeC = 'gel de aristoflex';
+    } else {
+      baseNomeC = 'creme base';
+    }
+    var insBaseC = busIns(baseNomeC, fml);
+    if(insBaseC && insBaseC.p > 0) {
+      var baseGC = qspVolC - sumAtivosG;
+      if(baseGC < 0) { baseGC = qspVolC * 0.6; avs.push('Aviso: ativos excedem qsp; base ajustada.'); }
+      var cBaseC = baseGC * insBaseC.p;
+      custo += cBaseC;
+      itens.push({n:insBaseC.n+' qsp', dose:baseGC.toFixed(2)+'g', c:cBaseC});
+    } else {
+      avs.push('Base não encontrada: ' + baseNomeC);
+    }
+    // Embalagem: verificar prescritor → facial → corporal
+    var cEmbC;
+    var crmMatch = prescritor.match(/crm\s*(\d+)/);
+    var crm = crmMatch ? crmMatch[1] : '';
+    if(crm && EMB_PRESCRITOR[crm]) {
+      cEmbC = pickEmb(qspVolC, EMB_PRESCRITOR[crm]);
+      itens.push({n:'Embalagem (prescritor CRM '+crm+')', dose:qspVolC+'g', c:cEmbC});
+    } else {
+      var isFacial = /facial|olhos|periocular|contorno|rosto|face/.test(fml+' '+nomesAtivos+' '+normStr(rec.descricao||''));
+      cEmbC = isFacial ? pickEmb(qspVolC, EMB_CREME_FACIAL) : pickEmb(qspVolC, EMB_CREME_CORPORAL);
+      itens.push({n:'Embalagem Creme', dose:qspVolC+'g', c:cEmbC});
+    }
+    custo += cEmbC;
+  }
+
+  // ── 5F. POMADA ──
+  if(fml.indexOf('pomada')>=0) {
+    var qspVolP = (qspAtivoIdx >= 0) ? qspTotal : qtd;
+    var baseNomeP = (qspAtivoIdx >= 0) ? rec.ativos[qspAtivoIdx].nome : 'chemygel';
+    var insBaseP = busIns(baseNomeP, fml);
+    if(!insBaseP) insBaseP = busIns('chemygel');
+    if(insBaseP && insBaseP.p > 0) {
+      var baseGP = qspVolP - sumAtivosG;
+      if(baseGP < 0) baseGP = qspVolP * 0.6;
+      var cBaseP = baseGP * insBaseP.p;
+      custo += cBaseP;
+      itens.push({n:insBaseP.n+' qsp', dose:baseGP.toFixed(2)+'g', c:cBaseP});
+    }
+    var cEmbP = pickEmb(qspVolP, EMB_POMADA);
+    custo += cEmbP;
+    itens.push({n:'Embalagem Pomada', dose:qspVolP+'g', c:cEmbP});
+  }
+
+  // ── 5G. SHAMPOO / SABONETE LÍQUIDO ──
+  if(fml.indexOf('shampoo')>=0||fml.indexOf('xampu')>=0||fml.indexOf('sabonete')>=0) {
+    var qspVolSh = (qspAtivoIdx >= 0) ? qspTotal : qtd;
+    var baseNomeSh = (qspAtivoIdx >= 0) ? rec.ativos[qspAtivoIdx].nome : 'xampu';
+    var insBaseSh = busIns(baseNomeSh, fml);
+    if(!insBaseSh) insBaseSh = busIns('xampu de algas');
+    if(insBaseSh && insBaseSh.p > 0) {
+      var baseGSh = qspVolSh - sumAtivosG;
+      if(baseGSh < 0) baseGSh = qspVolSh * 0.6;
+      var cBaseSh = baseGSh * insBaseSh.p;
+      custo += cBaseSh;
+      itens.push({n:insBaseSh.n+' qsp', dose:baseGSh.toFixed(2)+'g', c:cBaseSh});
+    }
+    var cEmbSh = pickEmb(qspVolSh, EMB_SHAMPOO);
+    custo += cEmbSh;
+    itens.push({n:'Embalagem Shampoo', dose:qspVolSh+'ml', c:cEmbSh});
+  }
+
+  // ── 5H. XAROPE ──
+  if(fml.indexOf('xarope')>=0||fml.indexOf('solucao')>=0||fml.indexOf('solução')>=0) {
+    var qspVolX = (qspAtivoIdx >= 0) ? qspTotal : qtd;
+    if(qspAtivoIdx >= 0) {
+      var insBaseX = busIns(rec.ativos[qspAtivoIdx].nome, fml);
+      if(insBaseX && insBaseX.p > 0) {
+        var baseGX = qspVolX - sumAtivosG;
+        if(baseGX < 0) baseGX = qspVolX * 0.6;
+        custo += baseGX * insBaseX.p;
+        itens.push({n:insBaseX.n+' qsp', dose:baseGX.toFixed(2)+'g', c:baseGX*insBaseX.p});
+      }
+    }
+    // Gotas = vidro âmbar, líquido = PET
+    var isGotas = /gota|gotas/.test(fml+' '+normStr(rec.descricao||''));
+    var cEmbX = isGotas ? pickEmb(qspVolX, EMB_XAROPE_VIDRO) : pickEmb(qspVolX, EMB_XAROPE_PET);
+    custo += cEmbX;
+    itens.push({n:'Embalagem Xarope', dose:qspVolX+'ml', c:cEmbX});
+  }
+
+  // ── 5I. SUBLINGUAL / OROTAB ──
+  if(fml.indexOf('sublingual')>=0||fml.indexOf('orotab')>=0||fml.indexOf('oro')>=0) {
+    // Tamanho: orotab diet = 760mg; padrão = 200mg
+    var isOrotab = /orotab|760|orodis/.test(fml+' '+nomesAtivos);
+    var capSublMg = isOrotab ? 760 : 200;
+    var aromaMg = 50;
+    var ativosSubl = totalGCheck * 1000; // por comprimido em mg
+    var qspMg = capSublMg - ativosSubl - aromaMg;
+    if(qspMg < 0) qspMg = 0;
+    // Aroma
+    var cArSub = (aromaMg/1000) * qtd * 0.198; custo += cArSub;
+    itens.push({n:'Aroma cotação pó 50mg/comp', dose:'', c:cArSub});
+    // Excipiente orotab
+    var excipSublP = isOrotab ? 0.21 : 0.066;
+    var excipSublNome = isOrotab ? 'Orotab Diet (qsp)' : 'Excipiente Geral (qsp)';
+    var cExcSub = (qspMg/1000) * qtd * excipSublP; custo += cExcSub;
+    itens.push({n:excipSublNome, dose:'', c:cExcSub});
+    // Embalagem: caixa 30un = R$0,92
+    var nCaixas = Math.ceil(qtd / 30);
+    var cEmbSub = nCaixas * 0.92; custo += cEmbSub;
+    itens.push({n:'Caixa Papelão Orotab ('+nCaixas+'cx)', dose:'', c:cEmbSub});
+  }
+
+  // ── 6. MKP e Preço ──
+  var progKey = fml.indexOf('cap')>=0?'Capsulas':
+    fml.indexOf('sach')>=0||fml.indexOf('envel')>=0?'Sache':
+    fml==='hormonio'||fml.indexOf('horm')>=0?'Hormonio':
+    fml.indexOf('locao')>=0||fml.indexOf('loção')>=0?'Locao':
+    fml.indexOf('gel')>=0?'Creme':
+    fml.indexOf('creme')>=0?'Creme':
+    fml.indexOf('pomada')>=0?'Pomada':
+    fml.indexOf('shampoo')>=0||fml.indexOf('xampu')>=0?'Shampoo':
+    fml.indexOf('xarope')>=0?'Xarope':
+    fml.indexOf('sublingual')>=0||fml.indexOf('orotab')>=0?'Sublingual':
+    'Capsulas';
+  var tab = PROG[progKey] || PROG.Capsulas;
   var mkp = getMKP(custo, tab);
-  var pv = Math.ceil(custo * mkp + CF);
+  var pv = Math.round(custo * mkp + CF);
   if(pv < PM) pv = PM;
 
   return {fm:fm, qtd:qtd, custo:custo, mkp:mkp, pv:pv, itens:itens, avs:avs, pac:rec.paciente||''};
@@ -1054,19 +1260,27 @@ function calcRec(rec) {
 function calcSimQtd(r, q) {
   if(!r || !q || q<1 || q>120) return null;
   var custoSim = 0;
+  // Reescalar itens proporcionalmente (excluir embalagens fixas)
+  var embKeys = ['Pote','psula','Sachê','Airless','ZIPLOG','Embalagem','Caixa'];
   r.itens.forEach(function(it) {
-    if(it.c>0 && it.n.indexOf('Pote')<0 && it.n.indexOf('psula')<0 && it.n.indexOf('Sachê')<0 && it.n.indexOf('Airless')<0 && it.n.indexOf('ZIPLOG')<0)
-      custoSim += it.c/r.qtd*q;
+    var isEmb = embKeys.some(function(k){return it.n.indexOf(k)>=0;});
+    if(it.c>0 && !isEmb) custoSim += it.c/r.qtd*q;
   });
   var fml = r.fm.toLowerCase();
   if(fml.indexOf('cap')>=0) {
-    var cap=CGEL[CGEL.length-1];custoSim+=cap[2]*q;
+    var cap=CGEL[CGEL.length-1];custoSim+=cap[2]*q; // preço gelatinosa padrão
     var pt=POTES[POTES.length-1];for(var pi=0;pi<POTES.length;pi++){if((POTES[pi][1][cap[1]]||0)>=q){pt=POTES[pi];break;}}
     custoSim+=pt[2];
   }
-  var tab = PROG[r.fm] || PROG.Capsulas;
+  var fml2 = r.fm.toLowerCase();
+  var pk2 = fml2.indexOf('cap')>=0?'Capsulas':fml2.indexOf('sach')>=0?'Sache':
+    fml2==='hormonio'||fml2.indexOf('horm')>=0?'Hormonio':
+    fml2.indexOf('locao')>=0?'Locao':fml2.indexOf('gel')>=0||fml2.indexOf('creme')>=0?'Creme':
+    fml2.indexOf('pomada')>=0?'Pomada':fml2.indexOf('shampoo')>=0||fml2.indexOf('xampu')>=0?'Shampoo':
+    fml2.indexOf('xarope')>=0?'Xarope':'Capsulas';
+  var tab = PROG[pk2] || PROG.Capsulas;
   var mkp = getMKP(custoSim, tab);
-  var pv = Math.ceil(custoSim*mkp+CF);
+  var pv = Math.round(custoSim*mkp+CF);
   if(pv<PM) pv=PM;
   return pv;
 }
@@ -1145,7 +1359,7 @@ function calcFormulas() {
   parsed.formulas.forEach(function(f, i) {
     var chk = document.getElementById('fcheck'+i);
     if(!chk || !chk.checked) return;
-    var r = calcRec({paciente:parsed.paciente, forma:f.forma, qtd:f.qtd, ativos:f.ativos});
+    var r = calcRec({paciente:parsed.paciente, prescritor:parsed.prescritor||'', forma:f.forma, qtd:f.qtd, ativos:f.ativos, descricao:f.descricao||''});
     var div = document.createElement('div');
     renderResult(r, div);
     container.appendChild(div);
