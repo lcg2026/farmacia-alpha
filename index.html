@@ -1283,7 +1283,7 @@ function calcRec(rec) {
 
 // ── Simular outra quantidade ───────────────────────────────
 function calcSimQtd(r, q) {
-  if(!r || !q || q<1 || q>120) return null;
+  if(!r || !q || q<1) return null;
   var custoSim = 0;
   // Reescalar itens proporcionalmente (excluir embalagens fixas)
   var embKeys = ['Pote','psula','Sachê','Airless','ZIPLOG','Embalagem','Caixa'];
@@ -1291,18 +1291,18 @@ function calcSimQtd(r, q) {
     var isEmb = embKeys.some(function(k){return it.n.indexOf(k)>=0;});
     if(it.c>0 && !isEmb) custoSim += it.c/r.qtd*q;
   });
-  var fml = r.fm.toLowerCase();
+  var fml = normStr(r.fm||'');
   if(fml.indexOf('cap')>=0) {
     var cap=CGEL[CGEL.length-1];custoSim+=cap[2]*q; // preço gelatinosa padrão
     var pt=POTES[POTES.length-1];for(var pi=0;pi<POTES.length;pi++){if((POTES[pi][1][cap[1]]||0)>=q){pt=POTES[pi];break;}}
     custoSim+=pt[2];
   }
-  var fml2 = r.fm.toLowerCase();
-  var pk2 = fml2.indexOf('cap')>=0?'Capsulas':fml2.indexOf('sach')>=0?'Sache':
-    fml2==='hormonio'||fml2.indexOf('horm')>=0?'Hormonio':
-    fml2.indexOf('locao')>=0?'Locao':fml2.indexOf('gel')>=0||fml2.indexOf('creme')>=0?'Creme':
-    fml2.indexOf('pomada')>=0?'Pomada':fml2.indexOf('shampoo')>=0||fml2.indexOf('xampu')>=0?'Shampoo':
-    fml2.indexOf('xarope')>=0?'Xarope':'Capsulas';
+  var pk2 = fml.indexOf('cap')>=0?'Capsulas':fml.indexOf('sach')>=0?'Sache':
+    fml==='hormonio'||fml.indexOf('horm')>=0?'Hormonio':
+    fml.indexOf('locao')>=0||fml.indexOf('locão')>=0?'Locao':
+    fml.indexOf('gel')>=0||fml.indexOf('creme')>=0?'Creme':
+    fml.indexOf('pomada')>=0?'Pomada':fml.indexOf('shampoo')>=0||fml.indexOf('xampu')>=0?'Shampoo':
+    fml.indexOf('xarope')>=0?'Xarope':'Capsulas';
   var tab = PROG[pk2] || PROG.Capsulas;
   var mkp = getMKP(custoSim, tab);
   var pv = Math.round(custoSim*mkp+CF);
@@ -1316,6 +1316,11 @@ function renderResult(r, container) {
   qtdsFixadas = [];
   simAtual = {qtd:0, pv:0};
 
+  var isSolid = /cap|sach|sublingual/.test(normStr(r.fm||''));
+  var unidLabel = isSolid ? 'doses' : 'mL/g';
+  var simLbl = isSolid ? 'Simular outra quantidade:' : 'Simular outro volume (mL/g):';
+  var simPh  = isSolid ? 'Ex: 60' : 'Ex: 100';
+
   var avHtml = r.avs.map(function(a){return '<div class="warn">⚠ '+a+'</div>';}).join('');
   var rows = r.itens.map(function(it){
     return '<div class="rrow"><span class="rn">'+it.n+(it.dose?' — '+it.dose:'')+'</span><span class="rv">R$ '+it.c.toFixed(4)+'</span></div>';
@@ -1323,18 +1328,18 @@ function renderResult(r, container) {
   var minLabel = r.pv === PM ? '<span class="tag tr" style="font-size:10px">preço mínimo</span>' : '';
 
   var html = '<div class="rcard">' +
-    '<h3>' + r.fm + ' • ' + r.qtd + ' doses</h3>' +
+    '<h3>' + r.fm + ' • ' + r.qtd + ' ' + unidLabel + '</h3>' +
     avHtml + rows +
     '<div class="rtot"><span>Preço de venda ' + minLabel + '</span><span>R$ ' + r.pv.toFixed(2) + '</span></div>' +
     '<div class="sim-box">' +
-      '<label>Simular outra quantidade (máx. 120 doses):</label>' +
+      '<label>' + simLbl + '</label>' +
       '<div class="sim-row">' +
-        '<input type="number" id="sim-qtd" min="1" max="120" placeholder="Ex: 60" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;font-family:inherit">' +
-        '<button class="btn btnp" style="padding:6px 14px;font-size:12px" onclick="simQtd()">Calcular</button>' +
-        '<button class="btn" style="padding:6px 14px;font-size:12px" onclick="fixQtd()">+ Adicionar</button>' +
-        '<span id="sim-res" style="font-size:13px;color:var(--g700);font-weight:600"></span>' +
+        '<input type="number" class="_sinp" min="1" placeholder="' + simPh + '" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;font-family:inherit">' +
+        '<button class="btn btnp _scal" style="padding:6px 14px;font-size:12px">Calcular</button>' +
+        '<button class="btn _sadd" style="padding:6px 14px;font-size:12px">+ Adicionar</button>' +
+        '<span class="_sres" style="font-size:13px;color:var(--g700);font-weight:600"></span>' +
       '</div>' +
-      '<div id="qtds-fix" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>' +
+      '<div class="_slist" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>' +
     '</div>' +
     '<div class="ract">' +
       '<button class="btn" style="background:#25D366;color:#fff;border-color:#25D366" onclick="envWA()">📱 WhatsApp</button>' +
@@ -1344,37 +1349,55 @@ function renderResult(r, container) {
   '</div>';
 
   container.innerHTML = html;
-}
 
-function simQtd() {
-  if(!last) return;
-  var q = parseInt(document.getElementById('sim-qtd').value) || 0;
-  if(!q||q<1||q>120){document.getElementById('sim-res').textContent='Máx. 120!';return;}
-  var pv = calcSimQtd(last, q);
-  simAtual = {qtd:q, pv:pv};
-  document.getElementById('sim-res').textContent = q+' doses = R$ '+pv.toFixed(2);
-}
+  // ── Closures por card — cada resultado tem seu próprio estado ──
+  var inp  = container.querySelector('._sinp');
+  var res  = container.querySelector('._sres');
+  var list = container.querySelector('._slist');
+  var localFix = [];
+  var localSim = {qtd:0, pv:0};
 
-function fixQtd() {
-  if(!simAtual.qtd){alert('Calcule uma quantidade primeiro!');return;}
-  for(var i=0;i<qtdsFixadas.length;i++){if(qtdsFixadas[i].qtd===simAtual.qtd){alert('Já adicionado!');return;}}
-  qtdsFixadas.push({qtd:simAtual.qtd,pv:simAtual.pv});
-  qtdsFixadas.sort(function(a,b){return a.qtd-b.qtd;});
-  renderQtdsFixadas();
-  document.getElementById('sim-qtd').value='';
-  document.getElementById('sim-res').textContent='';
-  simAtual={qtd:0,pv:0};
-}
+  function _renderList() {
+    list.innerHTML = localFix.map(function(x,i){
+      return '<div class="qtd-tag"><strong>'+x.qtd+' '+unidLabel+': R$ '+x.pv.toFixed(2)+'</strong> <span class="rm" data-i="'+i+'">×</span></div>';
+    }).join('');
+  }
 
-function renderQtdsFixadas() {
-  var el = document.getElementById('qtds-fix');
-  if(!el) return;
-  el.innerHTML = qtdsFixadas.map(function(x,i){
-    return '<div class="qtd-tag"><strong>'+x.qtd+' doses: R$ '+x.pv.toFixed(2)+'</strong><span class="rm" onclick="remQtd('+i+')">×</span></div>';
-  }).join('');
-}
+  // Remover item fixado via delegação
+  list.addEventListener('click', function(e) {
+    if(e.target.classList.contains('rm')) {
+      localFix.splice(+e.target.getAttribute('data-i'), 1);
+      _renderList();
+      qtdsFixadas = localFix;
+    }
+  });
 
-function remQtd(i) { qtdsFixadas.splice(i,1); renderQtdsFixadas(); }
+  container.querySelector('._scal').onclick = function() {
+    // Sincronizar globals com este card ao interagir
+    last = r; qtdsFixadas = localFix; simAtual = {qtd:0,pv:0};
+    var q = parseFloat(inp.value) || 0;
+    if(!q || q < 1) { res.textContent = 'Insira uma quantidade válida'; return; }
+    var pv = calcSimQtd(r, q);
+    if(pv === null || isNaN(pv)) { res.textContent = 'Erro ao calcular'; return; }
+    localSim = {qtd:q, pv:pv};
+    simAtual = localSim;
+    res.textContent = q + ' ' + unidLabel + ' = R$ ' + pv.toFixed(2);
+  };
+
+  container.querySelector('._sadd').onclick = function() {
+    last = r; qtdsFixadas = localFix;
+    if(!localSim.qtd) { alert('Calcule uma quantidade primeiro!'); return; }
+    for(var i=0;i<localFix.length;i++) { if(localFix[i].qtd===localSim.qtd){alert('Já adicionado!');return;} }
+    localFix.push({qtd:localSim.qtd, pv:localSim.pv});
+    localFix.sort(function(a,b){return a.qtd-b.qtd;});
+    _renderList();
+    qtdsFixadas = localFix;
+    inp.value = '';
+    res.textContent = '';
+    localSim = {qtd:0, pv:0};
+    simAtual = {qtd:0, pv:0};
+  };
+}
 
 function calcFormulas() {
   var parsed = window._parsedRec;
