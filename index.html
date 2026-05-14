@@ -1572,6 +1572,7 @@ function calcFoto() {
   function compressImg(dataUrl, cb) {
     var MAX = 4.5 * 1024 * 1024; // 4.5MB decoded
     var img = new Image();
+    img.onerror = function() { cb(dataUrl.split(',')[1], 'image/jpeg'); }; // fallback sem compressão
     img.onload = function() {
       var w = img.width, h = img.height;
       var canvas = document.createElement('canvas');
@@ -1705,7 +1706,15 @@ function calcFoto() {
         alert(msg);
       }
     })
-    .catch(function(e){ btn.disabled=false; btn.textContent='⚙ Calcular preço'; alert('Erro: '+e.message); });
+    .catch(function(e){
+      btn.disabled=false; btn.textContent='⚙ Calcular preço';
+      var msg = e.message||'';
+      if(msg.indexOf('fetch')>=0||msg.indexOf('network')>=0||msg==='Failed to fetch') {
+        alert('Erro de conexão com a API Anthropic.\n\nVerifique:\n• Internet ativa\n• Extensões do browser (VPN, bloqueadores) desativadas\n• Chave API válida em Configurações\n\nDetalhe: '+msg);
+      } else {
+        alert('Erro: '+msg);
+      }
+    });
   }); // fim readAllFiles
 }
 
