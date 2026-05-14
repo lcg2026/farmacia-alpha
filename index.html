@@ -388,7 +388,9 @@ var EQUIV = {
   'cetirizina':'cetirizine dicloridrato',
   'piridoxial-5-fosfato':'piridoxal fosfato','piridoxial 5 fosfato':'piridoxal fosfato',
   'piridoxial fosfato':'piridoxal fosfato','piridoxial':'piridoxal fosfato',
-  'chlorela':'clorela'
+  'chlorela':'clorela',
+  'meloxican':'meloxicam',
+  'dmanose':'d manose','d-manose':'d manose'
 };
 
 // Insumos disponíveis apenas em forma líquida — não usar em fórmulas de cápsulas
@@ -408,7 +410,8 @@ var PROG = {
   Sublingual:[[4,6.5],[4.25,6.45],[4.5,6.4],[4.75,6.35],[5,6.3],[5.25,6.25],[5.5,6.2],[5.75,6.16],[6,6.1],[6.25,6.05],[6.5,5.95],[6.75,5.9],[7,5.8],[7.25,5.6],[7.5,5.6],[7.75,5.55],[8,5.4],[8.25,5.3],[8.5,5.3],[8.75,5.3],[9,5.3],[9.25,5.3],[9.5,5.3],[9.75,5.3],[10,5.2],[10.25,5.1],[10.5,5.1],[10.75,5.1],[11,5.1],[11.25,5.1],[11.5,5.1],[11.75,5.1],[12,5.1],[12.25,5.1],[12.5,5.1],[12.75,5.1],[13,5.1],[13.25,5.1],[13.5,5.1],[13.75,5.1],[14,5.1],[14.25,5.1],[14.5,5.1],[14.75,5.1],[15,5.1],[15.25,5],[15.5,4.95],[15.75,4.85],[16,4.8],[16.25,4.8],[16.5,4.8],[16.75,4.8],[17,4.8],[17.25,4.8],[17.5,4.8],[17.75,4.8],[18,4.55],[18.25,4.55],[18.5,4.55],[18.75,4.55],[19,4.55],[19.25,4.55],[19.5,4.55],[19.75,4.55],[20,4],[30,4],[40,4],[50,4],[60,4],[70,4],[80,4],[90,4],[100,3.5],[120,3.3],[130,3.3],[150,3.3],[300,3],[5000,3]]
 };
 // Cápsulas: [vol_interno_mm3, tamanho, preco_gelatinosa, preco_vegetal, preco_enterica]
-var CGEL=[[271,'3',0.0195,0.05,0.12],[371,'2',0.0195,0.05,0.12],[481,'1',0.0195,0.05,0.12],[681,'0',0.0195,0.05,0.12],[951,'00',0.03,0.06,0.125]];
+// [vol_interno_mm3, tamanho, preco_gel, preco_veg, preco_enter] — volumes corrigidos Ajuste9
+var CGEL=[[210,'4',0.0195,0.05,0.12],[300,'3',0.0195,0.05,0.12],[371,'2',0.0195,0.05,0.12],[481,'1',0.0195,0.05,0.12],[681,'0',0.0195,0.05,0.12],[951,'00',0.03,0.06,0.125]];
 var POTES=[[60,{'3':90,'2':50,'1':30,'0':30,'00':30},2],[80,{'3':120,'2':90,'1':60,'0':45,'00':30},2],[110,{'3':180,'2':120,'1':120,'0':60,'00':60},2],[150,{'3':270,'2':180,'1':150,'0':90,'00':80},2],[230,{'3':480,'2':270,'1':240,'0':180,'00':120},2],[320,{'3':480,'2':390,'1':300,'0':240,'00':180},2],[500,{'3':720,'2':510,'1':480,'0':360,'00':270},2.5]];
 var AIRLESS=[{ml:30,p:5.9},{ml:60,p:9.0},{ml:90,p:13.9},{ml:35,p:27,topclick:true}];
 // Embalagens Loção bisnagas (semi-sólida) e frascos fluidos
@@ -1022,7 +1025,7 @@ function calcRec(rec) {
     if(isCapSublingual) {
       // ── Cápsulas Sublinguais: TAPIOCAPS + DESCARB CAPS ──
       // Tabela TAPIOCAPS: [volumeMg, tamanho, preco]
-      var TAPIOCAPS = [[271,'3',0.245],[371,'2',0.185],[481,'1',0.168],[681,'0',0.215],[951,'00',0.215]];
+      var TAPIOCAPS = [[210,'4',0.188],[300,'3',0.245],[371,'2',0.185],[481,'1',0.168],[681,'0',0.215],[951,'00',0.215]];
       var capDoseMg = totalGCheck > 0 ? totalGCheck * 1000 : 300;
       var tapCap = TAPIOCAPS[2]; // default tamanho 1
       for(var ti=0;ti<TAPIOCAPS.length;ti++){if(capDoseMg<=TAPIOCAPS[ti][0]){tapCap=TAPIOCAPS[ti];break;}}
@@ -1343,10 +1346,23 @@ function calcSimQtd(r, q) {
     if(it.c>0 && !isEmb) custoSim += it.c/r.qtd*q;
   });
   var fml = normStr(r.fm||'');
+  // Recalcular embalagem para o novo volume simulado
   if(fml.indexOf('cap')>=0) {
-    var cap=CGEL[CGEL.length-1];custoSim+=cap[2]*q; // preço gelatinosa padrão
-    var pt=POTES[POTES.length-1];for(var pi=0;pi<POTES.length;pi++){if((POTES[pi][1][cap[1]]||0)>=q){pt=POTES[pi];break;}}
+    var capDoseSimMg = (r.itens.reduce(function(s,it){return it.n.indexOf('psula')>=0?s:s;},0)||300);
+    var capSim=CGEL[CGEL.length-1];
+    custoSim+=capSim[2]*q;
+    var pt=POTES[POTES.length-1];for(var pi=0;pi<POTES.length;pi++){if((POTES[pi][1][capSim[1]]||0)>=q){pt=POTES[pi];break;}}
     custoSim+=pt[2];
+  } else if(fml==='hormonio'||fml.indexOf('horm')>=0) {
+    var airH=AIRLESS[AIRLESS.length-1];
+    for(var ai=0;ai<AIRLESS.length;ai++){if(!AIRLESS[ai].topclick&&AIRLESS[ai].ml>=q){airH=AIRLESS[ai];break;}}
+    custoSim+=airH.p;
+  } else if(fml.indexOf('creme')>=0||fml.indexOf('gel')>=0) {
+    custoSim+=pickEmb(q,EMB_CREME_CORPORAL);
+  } else if(fml.indexOf('locao')>=0||fml.indexOf('loção')>=0) {
+    custoSim+=pickEmb(q,EMB_LOCAO_BISNAGA);
+  } else if(fml.indexOf('sach')>=0||fml.indexOf('envel')>=0) {
+    custoSim+=0.84; // ziplog padrão
   }
   var pk2 = fml.indexOf('cap')>=0?'Capsulas':fml.indexOf('sach')>=0?'Sache':
     fml==='hormonio'||fml.indexOf('horm')>=0?'Hormonio':
@@ -1393,7 +1409,6 @@ function renderResult(r, container) {
       '<div class="_slist" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>' +
     '</div>' +
     '<div class="ract">' +
-      '<button class="btn" style="background:#25D366;color:#fff;border-color:#25D366" onclick="envWA()">📱 WhatsApp</button>' +
       '<button class="btn" onclick="savH()">💾 Salvar</button>' +
       '<button class="btn" style="background:#1565C0;color:#fff;border-color:#1565C0" onclick="confirmarOrcamento()">✅ CONFIRMADA</button>' +
     '</div>' +
@@ -1455,6 +1470,7 @@ function calcFormulas() {
   if(!parsed) return;
   var container = document.getElementById('resultados-formulas');
   container.innerHTML = '';
+  var alguma = false;
   parsed.formulas.forEach(function(f, i) {
     var chk = document.getElementById('fcheck'+i);
     if(!chk || !chk.checked) return;
@@ -1462,7 +1478,15 @@ function calcFormulas() {
     var div = document.createElement('div');
     renderResult(r, div);
     container.appendChild(div);
+    alguma = true;
   });
+  // Botão WhatsApp único ao final de toda a receita
+  if(alguma) {
+    var waDiv = document.createElement('div');
+    waDiv.style.cssText = 'margin-top:8px;padding:8px 0';
+    waDiv.innerHTML = '<button class="btn" style="background:#25D366;color:#fff;border-color:#25D366;font-size:14px;padding:10px 24px" onclick="envWA()">📱 Enviar cotação completa por WhatsApp</button>';
+    container.appendChild(waDiv);
+  }
 }
 
 function envWA() {
@@ -1554,7 +1578,7 @@ function handleFile(file) {
   }
   document.getElementById('btnCalc').style.display = 'inline-flex';
   document.getElementById('btnLimpar').style.display = 'inline-flex';
-  document.getElementById('rfoto').innerHTML = '';
+  // NÃO limpar rfoto aqui — preserva orçamentos não confirmados (use btn Limpar para apagar)
 }
 
 function calcFoto() {
