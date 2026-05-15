@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.23</title>
+<title>Farmácia Alpha v4.24</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -74,7 +74,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.23';
+  var VER = 'v4.24';
   var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
     localStorage.setItem('alphaVer', VER);
@@ -89,10 +89,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </script>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.23 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.24 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.23</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.24</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -1620,7 +1620,24 @@ function calcSimQtd(r, q) {
 }
 
 // ── Renderizar resultado ───────────────────────────────────
-function renderResult(r, container) {
+function updateResumo() {
+  var ar = window._activeResults;
+  var el = document.getElementById('resumo-linhas');
+  if(!ar || !el) return;
+  var total = ar.reduce(function(s,x){return s+x.pv;},0);
+  var linhasRes = ar.map(function(x,i){
+    var unid = /cap|sach|sublingual/.test(normStr(x.fm||'')) ? 'doses' : 'mL/g';
+    return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px">' +
+      '<span>'+(ar.length>1?'<strong>'+(i+1)+'.</strong> ':'')+x.fm+' &bull; '+x.qtd+' '+unid+'</span>' +
+      '<span style="font-weight:700;color:var(--primary)">R$ '+x.pv.toFixed(2)+'</span></div>';
+  }).join('');
+  var totalLine = ar.length > 1
+    ? '<div style="display:flex;justify-content:space-between;padding:8px 0 4px;font-size:14px"><span style="font-weight:700">TOTAL</span><span style="font-weight:700;color:var(--primary)">R$ '+total.toFixed(2)+'</span></div>'
+    : '';
+  el.innerHTML = linhasRes + totalLine;
+}
+
+function renderResult(r, container, idx) {
   last = r;
   qtdsFixadas = [];
   simAtual = {qtd:0, pv:0};
@@ -1706,6 +1723,12 @@ function renderResult(r, container) {
     localSim = {qtd:q, pv:pv};
     simAtual = localSim;
     res.textContent = q + ' ' + unidLabel + ' = R$ ' + pv.toFixed(2);
+    // ── Atualizar resumo geral com nova qtd/pv ──
+    if(window._activeResults && idx !== undefined) {
+      window._activeResults[idx].qtd = q;
+      window._activeResults[idx].pv  = pv;
+      updateResumo();
+    }
   };
 
   container.querySelector('._sadd').onclick = function() {
@@ -1736,11 +1759,15 @@ function calcFormulas() {
     var r = calcRec({paciente:parsed.paciente, prescritor:parsed.prescritor||'', forma:f.forma, qtd:f.qtd, ativos:f.ativos, descricao:f.descricao||''});
     allResults.push(r);
     var div = document.createElement('div');
-    renderResult(r, div);
+    renderResult(r, div, allResults.length - 1);
     container.appendChild(div);
     alguma = true;
   });
   window._allResults = allResults;
+  // _activeResults rastreia qtd/pv atual por fórmula (atualizado ao simular)
+  window._activeResults = allResults.map(function(r){
+    return {fm:r.fm, qtd:r.qtd, pv:r.pv, pac:r.pac, pre:r.pre, custo:r.custo, mkp:r.mkp, itens:r.itens};
+  });
 
   if(alguma) {
     // ── Card resumo: paciente, prescritor, fórmulas e total ──
@@ -1763,7 +1790,7 @@ function calcFormulas() {
         '<span>👤 <strong>'+pac+'</strong></span>' +
         (pre ? '<span style="color:var(--text3)">🩺 '+pre+'</span>' : '') +
       '</div>' +
-      linhasRes + totalLine +
+      '<div id="resumo-linhas">' + linhasRes + totalLine + '</div>' +
       '<div style="margin-top:12px">' +
         '<button class="btn" style="background:#25D366;color:#fff;border-color:#25D366;font-size:14px;padding:10px 0;width:100%;justify-content:center" onclick="envWA()">📱 Enviar cotação por WhatsApp</button>' +
       '</div>' +
@@ -1774,33 +1801,36 @@ function calcFormulas() {
 
 function envWA() {
   var allRes = window._allResults;
+  var activeRes = window._activeResults || allRes;
   if(!allRes || allRes.length === 0) {
     if(!last) return;
     allRes = [last];
+    activeRes = allRes;
   }
-  var pac = allRes[0].pac || '';
-  var pre = allRes[0].pre || '';
+  var pac = (activeRes[0]||allRes[0]).pac || '';
+  var pre = (activeRes[0]||allRes[0]).pre || '';
   var nomeCliente = pac.split(' ')[0] || 'Cliente';
-  var total = allRes.reduce(function(s,r){return s+r.pv;},0);
+  var total = activeRes.reduce(function(s,r){return s+r.pv;},0);
 
   // Cabeçalho personalizado
   var header = 'Olá, ' + nomeCliente + '! Tudo bem?\n\n';
   if(pre) header += 'Conforme prescrição do(a) ' + pre + ', estou enviando a cotação dos itens solicitados.\n\n';
 
-  // Linhas de cada fórmula
+  // Linhas de cada fórmula — usa activeRes para qtd/pv atualizados pela simulação
   var linhasFormulas = allRes.map(function(r, i) {
-    var isSol = /cap|sach|sublingual/.test(normStr(r.fm||''));
+    var active = activeRes[i] || r;
+    var isSol = /cap|sach|sublingual/.test(normStr(active.fm||''));
     var unid = isSol ? 'doses' : 'mL/g';
     var prefixo = allRes.length > 1 ? (i+1)+') ' : '';
     // Se este resultado tem simulações fixadas, listá-las
     if(r === last && qtdsFixadas && qtdsFixadas.length > 0) {
-      var todas = [{qtd:r.qtd,pv:r.pv}].concat(qtdsFixadas);
+      var todas = [{qtd:active.qtd,pv:active.pv}].concat(qtdsFixadas);
       todas.sort(function(a,b){return a.qtd-b.qtd;});
       var unicas=[]; var vistas={};
       todas.forEach(function(x){if(!vistas[x.qtd]){unicas.push(x);vistas[x.qtd]=1;}});
-      return prefixo+r.fm+':\n'+unicas.map(function(x){return '   '+x.qtd+' '+unid+': R$ '+x.pv.toFixed(2);}).join('\n');
+      return prefixo+active.fm+':\n'+unicas.map(function(x){return '   '+x.qtd+' '+unid+': R$ '+x.pv.toFixed(2);}).join('\n');
     }
-    return prefixo+r.fm+' — '+r.qtd+' '+unid+': *R$ '+r.pv.toFixed(2)+'*';
+    return prefixo+active.fm+' — '+active.qtd+' '+unid+': *R$ '+active.pv.toFixed(2)+'*';
   }).join('\n');
 
   var totalLine = allRes.length > 1 ? '\n\n*TOTAL: R$ '+total.toFixed(2)+'*' : '';
