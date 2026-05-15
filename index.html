@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.15</title>
+<title>Farmácia Alpha v4.16</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -74,7 +74,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.15';
+  var VER = 'v4.16';
   var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
     localStorage.setItem('alphaVer', VER);
@@ -89,10 +89,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </script>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.15 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.16 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.15</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.16</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -224,7 +224,7 @@ var EQUIV = {
   // Vitamina C/D/E
   'vitamina c':'vit c','vit c':'vit c','acido ascorbico':'vit c',
   'vitamina d':'colecalciferol','vit d':'colecalciferol','vitamina d3':'colecalciferol','vit d3':'colecalciferol',
-  'vitamina e':'vit e acetato','vit e':'vit e acetato','tocoferol':'vit e acetato',
+  'tocoferol':'vit e acetato',
   // Vitaminas B
   'vitamina b1':'vit b1','tiamina':'vit b1',
   'vitamina b2':'vit b2','riboflavina':'vit b2',
@@ -393,11 +393,129 @@ var EQUIV = {
   'piridoxial fosfato':'piridoxal fosfato','piridoxial':'piridoxal fosfato',
   'chlorela':'clorela',
   'meloxican':'meloxicam',
-  'dmanose':'d manose','d-manose':'d manose'
+  'dmanose':'d manose','d-manose':'d manose',
+  // Ajuste10 — sinônimos não encontrados
+  'naringenina':'naringipure',
+  'telodermin':'telodormin',
+  'luminescense':'luminecense ue',
+  'nanovit c':'nano vit c',
+  'berberine':'berberina clor','berberina hcl':'berberina clor','berberine hcl':'berberina clor',
+  'sabonete gel com pca na':'sabonete gel base c pcana',
+  'sabonete gel pcana':'sabonete gel base c pcana',
+  'sabonete gel pca-na':'sabonete gel base c pcana'
 };
 
 // Insumos disponíveis apenas em forma líquida — não usar em fórmulas de cápsulas
 var LIQUID_KEYS = {'ac hialuronico':1,'acetona pa':1,'aldavine 5x':1,'argireline':1,'base esmalte':1,'bio restore f':1,'bioskinup contour':1,'buriti essencia':1,'calda de avela':1,'cb2':1,'citrolumine 8':1,'cloreto de k 3m s.elet':1,'cloroformio pa':1,'colageno':1,'edelweiss gc':1,'epifactor':1,'erythrulose':1,'essencia cha verde':1,'essencia chemoderm':1,'essencia green foam':1,'essencia maca':1,'essencia madeira bouqu':1,'essencia mel':1,'ext glicol  menta piperita':1,'ext glicol centella':1,'ext glicol cha branco':1,'ext glicol de aroeira':1,'extr fluido erva baleeira':1,'extr glicol de barbatimao':1,'extrato glicol orquidea':1,'eye 3d':1,'folicusan':1,'garra do diabo tintura':1,'gps':1,'herbin':1,'hipoclorito de na 2%':1,'idp2 peptideo':1,'lauril sul trietanolam':1,'linefactor':1,'lipo algowhite':1,'matrixyl morphomics':1,'nutrosa':1,'ol ess alecrim':1,'ol semente maracuja':1,'oleo de aveia':1,'oligominerals':1,'pca-na':1,'pro-lipo neo':1,'procapil':1,'progeline':1,'psodermax':1,'psoralight':1,'pumpkin enzyme':1,'raffermine':1,'regu stretsh':1,'renew zyme':1,'seacode tm':1,'siliciumax liquido':1,'silicone dc 9120':1,'surfax mea':1,'syn-coll':1,'tint  cardo mariano':1,'tint coentro':1,'tint erva santa maria':1,'tint guaco':1,'tint passiflora alata':1,'tint pata vaca':1,'tint saw palmeto':1,'tint sucupira':1,'tnt laranja amarga ui':1,'vinagre maca':1,'whitonyl':1,'wonderlight':1};
+
+// ── Produtos Associados ────────────────────────────────────
+// Mapa: nome_normalizado_principal → [{nome_assoc, ff_set, qtd, unid}]
+// ff_set: conjunto de formas (1=cap,2=creme,3=locao,4=gel,5=sol/xampu,11=pomada,15=sache)
+var PROD_ASSOC = (function(){
+  var d=[
+    ['ac azelaico','pureskin dm uso externo',[2,3,5,10],100,'%'],
+    ['ac fosforico 85% pa','benzoato de sodio',[3,5],0.05,'%'],
+    ['ac glicirrizico','edta dissodico',[2,3,4,5],0.2,'%'],
+    ['ac malico','edta dissodico',[2,3,4,5],0.2,'%'],
+    ['ac retinoic 1/10 ate 0,1%','bht',[2,3,5,10],0.2,'%'],
+    ['ac retinoico 1/100','bht',[2,3,5],0.2,'%'],
+    ['ac retinoico microesferas','polytrap 6603',[2],5,'%'],
+    ['ac retinoico microesferas','propilenoglicol',[2],20,'%'],
+    ['ac retinoico puro','bht',[2,3,4,5,10],0.2,'%'],
+    ['ac tioglicolico','neutrex',[2,3,5,10],10,'%'],
+    ['ac tranexamico','transcutol p',[2,3,10],3,'%'],
+    ['acetil carnitina','excipiente para umidade',[1],50,'%'],
+    ['acido kojico','coadjuvante ac kojico',[2,3,5,10],4.24,'%'],
+    ['acido lactobionico','silicone dc 9040',[2,3],3,'%'],
+    ['acido lactobionico','silicone dc 245',[2,3],2,'%'],
+    ['acido lipoico','excipiente para umidade',[1],100,'%'],
+    ['acido lipoico','neutrex',[2,3],5,'%'],
+    ['acido lipoico','bht',[2,3],0.05,'%'],
+    ['acido salicilico ue','antioxidante',[2,3,4,5,10],0.2,'%'],
+    ['acetil carnitina','excipiente para umidade',[1],50,'%'],
+    ['biointestil','excipiente para umidade',[1],50,'%'],
+    ['bitartarato colina','excipiente para umidade',[1],50,'%'],
+    ['cafeina anidra','ac citrico',[2,3,10],50,'%'],
+    ['cerasomosides','excipiente para umidade',[1],10,'%'],
+    ['cetirizine dicloridrato','excipiente para umidade',[1],30,'%'],
+    ['cetoconazol base','bht',[2,3,4],0.2,'%'],
+    ['coenzima q10','aerosil',[1],3,'%'],
+    ['dmae bitartarato','antiox dmae',[2,3,10],0.35,'%'],
+    ['dmae acetaminobenzoato','excipiente para umidade',[1],20,'%'],
+    ['enalapril','bicarbonato sodio',[1],50,'%'],
+    ['espironolactona micronizada','neutrex',[2,3,4,5,10],5,'%'],
+    ['fosfatidil serina','aerosil',[1],5,'%'],
+    ['gluconolactona','silicone dc 9040',[2,3],3,'%'],
+    ['gluconolactona','silicone dc 245',[2,3],2,'%'],
+    ['hidroquinona','antioxidante',[2,3,10],0.2,'%'],
+    ['iodeto potassio','aerosil',[1],1,'%'],
+    ['iodo ressublimado pa ui','iodeto potassio',[5],200,'%'],
+    ['l carnitina base','excipiente para umidade',[1],100,'%'],
+    ['l carnitina capsula','excipiente para umidade',[1],100,'%'],
+    ['lecitina de soja','excipiente para umidade',[1],20,'%'],
+    ['minoxidil base ue','hipossulfito sodio',[2,3,4,10],0.05,'%'],
+    ['minoxidil sulfato ue','hipossulfito sodio',[2,3,4,5],0.05,'%'],
+    ['neutrex','excipiente para umidade',[1],100,'%'],
+    ['osteosil','excipiente para umidade',[1],100,'%'],
+    ['pentravan','transcutol p',[2,3,10],2,'%'],
+    ['phloretin ue','antioxidante',[2,3,10],0.2,'%'],
+    ['piritionato zinco','coadjuvanto piritionat',[2,3,4,5],1.5,'%'],
+    ['progesterona base micronizada','celulosix liberacao modificada',[1],30,'%'],
+    ['pravastatina sodica','bht 1/100',[1],0.2,'%'],
+    ['quercell','aerosil',[1],3,'%'],
+    ['resorcina','antioxidante',[2,3,5,10,11],0.2,'%'],
+    ['same','excipiente para umidade',[1],55,'%'],
+    ['same','aerosil',[1],6,'%'],
+    ['shake de fibras','aerosil',[1,5],0.1,'%'],
+    ['sinvastatina','bht 1/100',[1],0.2,'%'],
+    ['subcitrato bismuto','excipiente para umidade',[1],100,'%'],
+    ['sulfacetamida sodica','metabissulfito sodio',[2,3,4],0.1,'%'],
+    ['vit c estabilizada','edta dissodico',[2,3],0.2,'%'],
+    ['vit k1 (oleo) pura','bht',[2,3,5],0.02,'%'],
+    ['aveia coloidal','glicerina vegetal bidestilada',[2,3,4,10],100,'%']
+  ];
+  var map={};
+  d.forEach(function(r){
+    var k=r[0];
+    if(!map[k]) map[k]=[];
+    map[k].push({assoc:r[1],ff:r[2],qtd:r[3],unid:r[4]});
+  });
+  return map;
+})();
+
+// Retorna produtos associados aplicáveis para um ativo na forma atual
+// formaCode: 1=cap,2=creme,3=locao,4=gel,5=sol/xampu/xarope,11=pomada
+function getProdAssoc(nomeAtivo, formaCode) {
+  var k = normStr(nomeAtivo);
+  // tentar match direto e também via variantes
+  var hits = PROD_ASSOC[k] || [];
+  if(!hits.length) {
+    var ab = normAbrev(k);
+    hits = PROD_ASSOC[ab] || [];
+  }
+  if(!hits.length) {
+    // busca parcial
+    for(var pk in PROD_ASSOC){
+      if(k.indexOf(pk)>=0 || pk.indexOf(k)>=0){
+        hits = PROD_ASSOC[pk]; break;
+      }
+    }
+  }
+  return hits.filter(function(h){ return h.ff.indexOf(formaCode)>=0; });
+}
+
+// Mapeia forma farmacêutica para código numérico usado em PROD_ASSOC
+function formaToCode(fml) {
+  fml = (fml||'').toLowerCase();
+  if(/cap|sache|sublingual/.test(fml)) return 1;
+  if(/creme/.test(fml)) return 2;
+  if(/locao|loção/.test(fml)) return 3;
+  if(/gel/.test(fml)) return 4;
+  if(/xarope|solucao|solução|shampoo|xampu|gota/.test(fml)) return 5;
+  if(/pomada/.test(fml)) return 11;
+  if(/hormonio|hormônio/.test(fml)) return 2; // airless creme
+  return 0;
+}
 
 // ── Tabelas progressivas ───────────────────────────────────
 var CF = 37.5, PM = 62;
@@ -512,6 +630,7 @@ function normStr(s) {
     .replace(/[úùûü]/g,'u').replace(/[ç]/g,'c')
     .replace(/[ñ]/g,'n').replace(/[®©™°]/g,'')
     .replace(/-/g,' ')
+    .replace(/\./g, ' ')
     .replace(/\s+/g,' ').trim();
 }
 
@@ -1018,6 +1137,14 @@ function calcRec(rec) {
     var c = isTopico ? g * (ins.pe||ins.p) : g * qtd * (ins.pe||ins.p);
     custo += c;
     itens.push({n:ins.n, dose:a.dose+' '+(a.unidade||'mg'), c:c});
+    // Verificar produtos associados
+    var fc = formaToCode(fml);
+    if(fc > 0 && ins) {
+      var assocs = getProdAssoc(ins.k || a.nome, fc);
+      assocs.forEach(function(as){
+        avs.push('⚠ Produto associado: adicionar ' + as.assoc.toUpperCase() + ' ' + as.qtd + as.unid + (as.unid==='%' ? ' sobre o total' : ''));
+      });
+    }
   });
 
   // ── 5. EMBALAGENS E COMPLEMENTOS POR FORMA ──
