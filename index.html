@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.17</title>
+<title>Farmácia Alpha v4.18</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -74,7 +74,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.17';
+  var VER = 'v4.18';
   var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
     localStorage.setItem('alphaVer', VER);
@@ -89,10 +89,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </script>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.17 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.18 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.17</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.18</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -186,7 +186,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 
   <!-- P4: Configurações -->
   <div class="page" id="p4">
-    <div class="card">
+    <!-- Seção API — oculta para vendedoras em modo PIN -->
+    <div class="card" id="api-section">
       <strong style="font-size:14px;display:block;margin-bottom:12px">Chave de API do Claude</strong>
       <div style="display:flex;gap:8px">
         <input class="inp" id="ainp" type="password" placeholder="sk-ant-api03-...">
@@ -199,6 +200,39 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
       </div>
       <p style="font-size:11px;color:var(--text3);margin-top:6px">Chave salva apenas neste navegador.<br>Obter em: <strong>console.anthropic.com</strong> → API Keys → Create Key</p>
     </div>
+    <!-- Seção Acesso Vendedoras -->
+    <div class="card" style="margin-top:12px">
+      <strong style="font-size:14px;display:block;margin-bottom:4px">🔒 Acesso para vendedoras</strong>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:12px">Com senha configurada, o app pedirá senha ao abrir e a chave de API ficará oculta das vendedoras.</p>
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Nome da vendedora</label>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input class="inp" id="vnome" type="text" placeholder="Ex: Ana, Maria...">
+        <button class="btn btnp" onclick="saveVendedor()">Salvar</button>
+      </div>
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Senha de acesso</label>
+      <div style="display:flex;gap:8px">
+        <input class="inp" id="vpin" type="password" placeholder="Senha para as vendedoras">
+        <button class="btn btnp" onclick="savePIN()">Definir senha</button>
+        <button class="btn" style="background:#e53935;color:#fff;border-color:#e53935" onclick="clearPIN()">Remover</button>
+      </div>
+      <div id="vpin-status" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay de acesso PIN — exibido quando senha está configurada e sessão não autenticada -->
+<div id="pin-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#1565C0;z-index:99999;align-items:center;justify-content:center;flex-direction:column">
+  <div style="text-align:center;margin-bottom:24px">
+    <div style="font-size:32px;margin-bottom:8px">💊</div>
+    <h2 style="color:#fff;margin:0;font-size:22px">Farmácia Alpha</h2>
+    <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:13px" id="pin-nome-label"></p>
+  </div>
+  <div style="background:#fff;border-radius:16px;padding:28px 32px;min-width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+    <p style="margin:0 0 14px;font-weight:600;font-size:15px;text-align:center">Digite sua senha de acesso</p>
+    <input id="pin-inp" type="password" class="inp" placeholder="Senha..." style="width:100%;margin-bottom:10px;font-size:16px;text-align:center;letter-spacing:4px"
+      onkeydown="if(event.key==='Enter')checkPIN()">
+    <button class="btn btnp" style="width:100%;justify-content:center;padding:12px" onclick="checkPIN()">Acessar →</button>
+    <p id="pin-err" style="color:#e53935;font-size:12px;text-align:center;margin:8px 0 0;min-height:16px"></p>
   </div>
 </div>
 
@@ -394,6 +428,15 @@ var EQUIV = {
   'chlorela':'clorela',
   'meloxican':'meloxicam',
   'dmanose':'d manose','d-manose':'d manose',
+  // Produtos associados — normalizações para garantir busca correta no banco
+  'glicerina vegetal bidestilada':'glicerina veg bidestilada',
+  'excipiente para umidade':'excipiente umidade',
+  'excipiente umidade':'excipiente umidade',
+  'aerosil':'aerosil',
+  'bht':'bht','bht 1/100':'bht 1/100','bht 1/10':'bht 1/10',
+  'antioxidante':'antioxidante',
+  'neutrex':'neutrex',
+  'transcutol p':'transcutol p',
   // Ajuste10 — sinônimos não encontrados
   'naringenina':'naringipure',
   'telodermin':'telodormin',
@@ -472,13 +515,13 @@ var PROD_ASSOC = (function(){
     ['sulfacetamida sodica','metabissulfito sodio',[2,3,4],0.1,'%'],
     ['vit c estabilizada','edta dissodico',[2,3],0.2,'%'],
     ['vit k1 (oleo) pura','bht',[2,3,5],0.02,'%'],
-    ['aveia coloidal','glicerina vegetal bidestilada',[2,3,4,10],100,'%']
+    ['aveia coloidal','glicerina vegetal bidestilada',[2,3,4,10],100,'%',true]  // relToActive: usa a mesma quantidade do ativo
   ];
   var map={};
   d.forEach(function(r){
     var k=r[0];
     if(!map[k]) map[k]=[];
-    map[k].push({assoc:r[1],ff:r[2],qtd:r[3],unid:r[4]});
+    map[k].push({assoc:r[1],ff:r[2],qtd:r[3],unid:r[4],relToActive:r[5]||false});
   });
   return map;
 })();
@@ -570,6 +613,25 @@ window.onload = function() {
     document.getElementById('inscount').textContent = 'Erro ao carregar';
     console.error('Erro insumos:', e);
   }
+
+  // ── Verificação de PIN de vendedoras ──
+  var vendPIN = localStorage.getItem('alphaVendPIN');
+  var vendNome = localStorage.getItem('alphaVendNome') || '';
+  if(vendPIN) {
+    if(sessionStorage.getItem('alphaUnlocked') === '1') {
+      // Sessão já autenticada — ocultar seção de API para vendedoras
+      document.getElementById('api-section').style.display = 'none';
+    } else {
+      // Mostrar overlay de PIN
+      var overlay = document.getElementById('pin-overlay');
+      overlay.style.display = 'flex';
+      if(vendNome) document.getElementById('pin-nome-label').textContent = 'Olá, ' + vendNome + '!';
+      document.getElementById('pin-inp').focus();
+    }
+  }
+  // Preencher campos de configuração do vendedor
+  if(vendNome) document.getElementById('vnome').value = vendNome;
+  if(vendPIN) document.getElementById('vpin-status').textContent = '✅ Senha configurada.';
 
   // API key
   var k = localStorage.getItem('cak');
@@ -1113,6 +1175,7 @@ function calcRec(rec) {
   }
 
   var sumAtivosG = 0;
+  var ativoGs = {}; // rastreia g por chave INS — usado por relToActive nos produtos associados
   (rec.ativos||[]).forEach(function(a, idx) {
     if(isTopico && idx === qspAtivoIdx) return; // base qsp calculada depois
     var ins = busIns(a.nome, fml);
@@ -1133,6 +1196,7 @@ function calcRec(rec) {
     } else {
       g = doseToG(a.dose, a.unidade, ins.n);
     }
+    ativoGs[ins.k] = g; // salva para cálculo relToActive
     sumAtivosG += g;
     var c = isTopico ? g * (ins.pe||ins.p) : g * qtd * (ins.pe||ins.p);
     custo += c;
@@ -1158,7 +1222,16 @@ function calcRec(rec) {
           avs.push('⚠ ' + as.assoc.toUpperCase() + ' ' + as.qtd + as.unid + ' (prod. associado — sem preço no banco)');
           return;
         }
-        var gA = (as.unid === '%') ? (as.qtd / 100) * volRef : (as.qtd / 1000);
+        var gA;
+        if(as.relToActive) {
+          // relToActive: % relativo à quantidade do próprio ativo (ex: Glicerina = 100% da Aveia Coloidal)
+          var activeG = ativoGs[ins.k] || 0;
+          gA = (as.qtd / 100) * activeG;
+        } else if(as.unid === '%') {
+          gA = (as.qtd / 100) * volRef;
+        } else {
+          gA = as.qtd / 1000; // MG fixo → gramas
+        }
         var cA = isTopico ? gA * (insA.pe||insA.p) : gA * qtd * (insA.pe||insA.p);
         custo += cA;
         itens.push({n: insA.n + ' (' + as.qtd + as.unid + ')', dose: 'assoc.', c: cA});
@@ -1481,7 +1554,7 @@ function calcRec(rec) {
   var pv = Math.round(custo * mkp + CF);
   if(pv < PM) pv = PM;
 
-  return {fm:fm, qtd:qtd, custo:custo, mkp:mkp, pv:pv, itens:itens, avs:avs, pac:rec.paciente||''};
+  return {fm:fm, qtd:qtd, custo:custo, mkp:mkp, pv:pv, itens:itens, avs:avs, pac:rec.paciente||'', pre:rec.prescritor||''};
 }
 
 // ── Simular outra quantidade ───────────────────────────────
@@ -1620,37 +1693,84 @@ function calcFormulas() {
   var container = document.getElementById('resultados-formulas');
   container.innerHTML = '';
   var alguma = false;
+  var allResults = [];
   parsed.formulas.forEach(function(f, i) {
     var chk = document.getElementById('fcheck'+i);
     if(!chk || !chk.checked) return;
     var r = calcRec({paciente:parsed.paciente, prescritor:parsed.prescritor||'', forma:f.forma, qtd:f.qtd, ativos:f.ativos, descricao:f.descricao||''});
+    allResults.push(r);
     var div = document.createElement('div');
     renderResult(r, div);
     container.appendChild(div);
     alguma = true;
   });
-  // Botão WhatsApp único ao final de toda a receita
+  window._allResults = allResults;
+
   if(alguma) {
-    var waDiv = document.createElement('div');
-    waDiv.style.cssText = 'margin-top:8px;padding:8px 0';
-    waDiv.innerHTML = '<button class="btn" style="background:#25D366;color:#fff;border-color:#25D366;font-size:14px;padding:10px 24px" onclick="envWA()">📱 Enviar cotação completa por WhatsApp</button>';
-    container.appendChild(waDiv);
+    // ── Card resumo: paciente, prescritor, fórmulas e total ──
+    var pac = parsed.paciente || '';
+    var pre = parsed.prescritor || '';
+    var total = allResults.reduce(function(s,r){return s+r.pv;}, 0);
+    var isSolArr = allResults.map(function(r){return /cap|sach|sublingual/.test(normStr(r.fm||''));});
+    var linhasRes = allResults.map(function(r,i){
+      var unid = isSolArr[i] ? 'doses' : 'mL/g';
+      return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px">' +
+        '<span>'+(allResults.length>1?'<strong>'+(i+1)+'.</strong> ':'')+r.fm+' &bull; '+r.qtd+' '+unid+'</span>' +
+        '<span style="font-weight:700;color:var(--primary)">R$ '+r.pv.toFixed(2)+'</span></div>';
+    }).join('');
+    var totalLine = allResults.length > 1
+      ? '<div style="display:flex;justify-content:space-between;padding:8px 0 4px;font-size:14px"><span style="font-weight:700">TOTAL</span><span style="font-weight:700;color:var(--primary)">R$ '+total.toFixed(2)+'</span></div>'
+      : '';
+    var resumoDiv = document.createElement('div');
+    resumoDiv.innerHTML = '<div class="card" style="margin-top:12px;border:2px solid var(--primary);padding:14px">' +
+      '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px;font-size:13px">' +
+        '<span>👤 <strong>'+pac+'</strong></span>' +
+        (pre ? '<span style="color:var(--text3)">🩺 '+pre+'</span>' : '') +
+      '</div>' +
+      linhasRes + totalLine +
+      '<div style="margin-top:12px">' +
+        '<button class="btn" style="background:#25D366;color:#fff;border-color:#25D366;font-size:14px;padding:10px 0;width:100%;justify-content:center" onclick="envWA()">📱 Enviar cotação por WhatsApp</button>' +
+      '</div>' +
+    '</div>';
+    container.appendChild(resumoDiv);
   }
 }
 
 function envWA() {
-  if(!last) return;
-  var msg;
-  if(qtdsFixadas && qtdsFixadas.length > 0) {
-    var todas = [{qtd:last.qtd,pv:last.pv}].concat(qtdsFixadas);
-    todas.sort(function(a,b){return a.qtd-b.qtd;});
-    var unicas=[]; var vistas={};
-    todas.forEach(function(x){if(!vistas[x.qtd]){unicas.push(x);vistas[x.qtd]=1;}});
-    var linhas = unicas.map(function(x){return x.qtd+' doses: R$ '+x.pv.toFixed(2);}).join('\n');
-    msg = encodeURIComponent('Olá!\n\nPaciente: '+last.pac+'\n'+last.fm+'\n\n'+linhas+'\n\nEstamos à disposição!');
-  } else {
-    msg = encodeURIComponent('Olá!\n\nPaciente: '+last.pac+'\n'+last.fm+' - '+last.qtd+' doses\n\nValor: R$ '+last.pv.toFixed(2)+'\n\nEstamos à disposição!');
+  var allRes = window._allResults;
+  if(!allRes || allRes.length === 0) {
+    if(!last) return;
+    allRes = [last];
   }
+  var pac = allRes[0].pac || '';
+  var pre = allRes[0].pre || '';
+  var nomeCliente = pac.split(' ')[0] || 'Cliente';
+  var total = allRes.reduce(function(s,r){return s+r.pv;},0);
+
+  // Cabeçalho personalizado
+  var header = 'Olá, ' + nomeCliente + '! Tudo bem?\n\n';
+  if(pre) header += 'Conforme prescrição do(a) ' + pre + ', estou enviando a cotação dos itens solicitados.\n\n';
+
+  // Linhas de cada fórmula
+  var linhasFormulas = allRes.map(function(r, i) {
+    var isSol = /cap|sach|sublingual/.test(normStr(r.fm||''));
+    var unid = isSol ? 'doses' : 'mL/g';
+    var prefixo = allRes.length > 1 ? (i+1)+') ' : '';
+    // Se este resultado tem simulações fixadas, listá-las
+    if(r === last && qtdsFixadas && qtdsFixadas.length > 0) {
+      var todas = [{qtd:r.qtd,pv:r.pv}].concat(qtdsFixadas);
+      todas.sort(function(a,b){return a.qtd-b.qtd;});
+      var unicas=[]; var vistas={};
+      todas.forEach(function(x){if(!vistas[x.qtd]){unicas.push(x);vistas[x.qtd]=1;}});
+      return prefixo+r.fm+':\n'+unicas.map(function(x){return '   '+x.qtd+' '+unid+': R$ '+x.pv.toFixed(2);}).join('\n');
+    }
+    return prefixo+r.fm+' — '+r.qtd+' '+unid+': *R$ '+r.pv.toFixed(2)+'*';
+  }).join('\n');
+
+  var totalLine = allRes.length > 1 ? '\n\n*TOTAL: R$ '+total.toFixed(2)+'*' : '';
+  var footer = '\n\nSe quiser ajustar algo, tirar dúvidas ou precisar de outra orientação, estou por aqui para ajudar. 😊';
+
+  var msg = encodeURIComponent(header + linhasFormulas + totalLine + footer);
   window.open('https://wa.me/?text='+msg,'_blank');
 }
 
@@ -1973,6 +2093,46 @@ function selAC(nome, preco, el) {
 }
 
 // ── API ────────────────────────────────────────────────────
+// ── Sistema de acesso PIN para vendedoras ─────────────────
+function savePIN() {
+  var p = document.getElementById('vpin').value.trim();
+  if(!p) { alert('Digite uma senha para as vendedoras.'); return; }
+  localStorage.setItem('alphaVendPIN', p);
+  document.getElementById('vpin').value = '';
+  document.getElementById('vpin-status').textContent = '✅ Senha configurada. As vendedoras precisarão digitar esta senha ao abrir o app.';
+}
+
+function clearPIN() {
+  if(!confirm('Remover senha? O app ficará sem proteção de acesso.')) return;
+  localStorage.removeItem('alphaVendPIN');
+  sessionStorage.removeItem('alphaUnlocked');
+  document.getElementById('vpin').value = '';
+  document.getElementById('vpin-status').textContent = 'Senha removida — app aberto sem senha.';
+  document.getElementById('api-section').style.display = '';
+}
+
+function saveVendedor() {
+  var nome = document.getElementById('vnome').value.trim();
+  if(!nome) { alert('Digite o nome da vendedora.'); return; }
+  localStorage.setItem('alphaVendNome', nome);
+  alert('Nome "' + nome + '" salvo! Será exibido na tela de acesso.');
+}
+
+function checkPIN() {
+  var entered = document.getElementById('pin-inp').value;
+  var stored = localStorage.getItem('alphaVendPIN');
+  if(entered === stored) {
+    sessionStorage.setItem('alphaUnlocked', '1');
+    document.getElementById('pin-overlay').style.display = 'none';
+    // Ocultar seção de API para vendedoras
+    document.getElementById('api-section').style.display = 'none';
+  } else {
+    document.getElementById('pin-err').textContent = 'Senha incorreta. Tente novamente.';
+    document.getElementById('pin-inp').value = '';
+    document.getElementById('pin-inp').focus();
+  }
+}
+
 function saveAPI() {
   var k = document.getElementById('ainp').value.trim();
   if(!k) return;
