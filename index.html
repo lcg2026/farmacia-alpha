@@ -1830,14 +1830,24 @@ function testAPI() {
   fetch('https://api.anthropic.com/v1/messages', {
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:10,messages:[{role:'user',content:'ok'}]})
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:10,messages:[{role:'user',content:'ok'}]})
   })
   .then(function(r){return r.json();})
   .then(function(d){
-    if(d.content) { document.getElementById('astat').textContent = '✅ Funcionando!'; document.getElementById('atag').className='tag tg'; }
-    else { document.getElementById('astat').textContent = '❌ Erro: '+(d.error&&d.error.message||'inválida'); }
+    if(d.content && d.content[0]) {
+      document.getElementById('astat').textContent = '✅ Funcionando!';
+      document.getElementById('atag').className='tag tg';
+    } else {
+      var tipo = d.error && d.error.type || '';
+      var msg  = d.error && d.error.message || JSON.stringify(d).substring(0,80);
+      if(tipo==='authentication_error') msg = 'Chave inválida — verifique a chave API';
+      else if(tipo==='permission_error') msg = 'Sem permissão — verifique o plano/chave';
+      document.getElementById('astat').textContent = '❌ ' + msg;
+    }
   })
-  .catch(function(e){ document.getElementById('astat').textContent = '❌ Erro de conexão'; });
+  .catch(function(e){
+    document.getElementById('astat').textContent = '❌ Sem conexão — verifique internet/VPN';
+  });
 }
 
 // ── Histórico ──────────────────────────────────────────────
