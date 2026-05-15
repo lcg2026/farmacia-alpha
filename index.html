@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.21</title>
+<title>Farmácia Alpha v4.22</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -74,7 +74,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.21';
+  var VER = 'v4.22';
   var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
     localStorage.setItem('alphaVer', VER);
@@ -89,10 +89,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </script>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.21 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.22 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.21</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.22</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -801,6 +801,16 @@ function stripQualifiers(s) {
 // ── Busca de insumo ────────────────────────────────────────
 function busIns(nome, formaCtx) {
   if(!nome) return null;
+  // ── Correções manuais da vendedora (prioridade máxima) ──
+  var _corr = window._corrections;
+  if(_corr) {
+    var _nc = normStr(nome);
+    if(_corr[_nc]) {
+      for(var _ci=0;_ci<INS.length;_ci++) {
+        if(INS[_ci] && INS[_ci].k === _corr[_nc]) return INS[_ci];
+      }
+    }
+  }
   nome = stripQualifiers(nome);
 
   // Gerar todas as variantes da query: normalizada, abreviada (acido→ac, etc.),
@@ -1118,7 +1128,7 @@ function calcRec(rec) {
   var qtd = parseInt(rec.qtd) || 60;
   var fm = (rec.forma || 'Capsulas');
   var fml = fm.toLowerCase();
-  var custo = 0, itens = [], avs = [];
+  var custo = 0, itens = [], avs = [], nf = [];
   var prescritor = normStr(rec.prescritor||'');
 
   // ── 1. Auto-detectar hormônio ──
@@ -1187,7 +1197,7 @@ function calcRec(rec) {
   (rec.ativos||[]).forEach(function(a, idx) {
     if(isTopico && idx === qspAtivoIdx) return; // base qsp calculada depois
     var ins = busIns(a.nome, fml);
-    if(!ins) { avs.push('Não encontrado: ' + a.nome); return; }
+    if(!ins) { nf.push(a.nome); avs.push('Não encontrado: ' + a.nome); return; }
     if(isSolido && (LIQUID_KEYS[ins.k||''] || /^tint\s/.test(ins.k||''))) {
       avs.push('Insumo líquido em cápsula/sachê: ' + a.nome + ' — não disponível como pó');
       return;
@@ -1562,7 +1572,7 @@ function calcRec(rec) {
   var pv = Math.round(custo * mkp + CF);
   if(pv < PM) pv = PM;
 
-  return {fm:fm, qtd:qtd, custo:custo, mkp:mkp, pv:pv, itens:itens, avs:avs, pac:rec.paciente||'', pre:rec.prescritor||''};
+  return {fm:fm, qtd:qtd, custo:custo, mkp:mkp, pv:pv, itens:itens, avs:avs, nf:nf, pac:rec.paciente||'', pre:rec.prescritor||''};
 }
 
 // ── Simular outra quantidade ───────────────────────────────
@@ -1618,7 +1628,23 @@ function renderResult(r, container) {
   var simLbl = isSolid ? 'Simular outra quantidade:' : 'Simular outro volume (mL/g):';
   var simPh  = isSolid ? 'Ex: 60' : 'Ex: 100';
 
-  var avHtml = r.avs.map(function(a){return '<div class="warn">⚠ '+a+'</div>';}).join('');
+  var avHtml = r.avs.map(function(a){
+    var nfMatch = a.match(/^Não encontrado:\s+(.+)$/);
+    if(nfMatch) {
+      var nomeOrig = nfMatch[1];
+      var safeNome = nomeOrig.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return '<div class="warn" style="padding:8px 10px">' +
+        '<div style="margin-bottom:5px">⚠ Não encontrado: <strong>'+nomeOrig+'</strong></div>' +
+        '<div style="display:flex;align-items:center;gap:6px;position:relative">' +
+          '<input type="text" class="nf-inp" placeholder="🔍 Buscar substituto no banco..." autocomplete="off" ' +
+                 'oninput="acNF(this,\''+safeNome+'\')" onfocus="acNF(this,\''+safeNome+'\')" ' +
+                 'style="flex:1;padding:5px 9px;border:1.5px solid var(--primary);border-radius:var(--r);font-size:12px;font-family:inherit;background:#fff">' +
+          '<div class="ac-drop"></div>' +
+        '</div>' +
+      '</div>';
+    }
+    return '<div class="warn">⚠ '+a+'</div>';
+  }).join('');
   var rows = r.itens.map(function(it){
     return '<div class="rrow"><span class="rn">'+it.n+(it.dose?' — '+it.dose:'')+'</span><span class="rv">R$ '+it.c.toFixed(4)+'</span></div>';
   }).join('');
@@ -2007,6 +2033,7 @@ function calcFoto() {
         container.innerHTML = '<div class="card" style="margin-bottom:16px"><p style="font-size:13px;font-weight:600;margin-bottom:10px">Paciente: '+parsed.paciente+'</p><p style="font-size:12px;color:var(--text3);margin-bottom:12px">Selecione as fórmulas para calcular:</p>'+checkboxes+'<button class="btn btnp" onclick="calcFormulas()" style="margin-top:8px">Calcular selecionadas</button></div><div id="resultados-formulas"></div>';
         // Guardar dados
         window._parsedRec = parsed;
+        window._corrections = {}; // limpar correções anteriores ao carregar nova receita
       } catch(e) { 
         // Try to recover: if JSON looks truncated, show user-friendly message
         var msg = 'Erro ao interpretar receita: ' + e.message;
@@ -2062,6 +2089,37 @@ function calcManual() {
   var container = document.getElementById('rmanual');
   container.innerHTML = '';
   renderResult(r, container);
+}
+
+// ── Autocomplete correção de "Não encontrado" ──────────────
+function acNF(inp, nomeOrig) {
+  var q = normStr(inp.value);
+  var drop = inp.nextSibling;
+  if(!q || q.length < 2) { drop.classList.remove('show'); return; }
+  var res = [], count = 0;
+  for(var i=0;i<INS.length&&count<8;i++) {
+    if(INS[i] && INS[i].k && INS[i].k.indexOf(q) >= 0) { res.push(INS[i]); count++; continue; }
+    if(INS[i] && INS[i].sk) {
+      for(var j=0;j<INS[i].sk.length;j++) {
+        if(INS[i].sk[j] && INS[i].sk[j].indexOf(q) >= 0) { res.push(INS[i]); count++; break; }
+      }
+    }
+  }
+  if(!res.length) { drop.classList.remove('show'); return; }
+  drop.innerHTML = res.map(function(ins) {
+    var sk = ins.k.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    var sn = nomeOrig.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div class="ac-item" onmousedown="selNF(\''+sn+'\',\''+sk+'\',this)">'+
+      ins.n+' <span style="color:var(--text3);font-size:11px">R$'+(ins.p||ins.pe).toFixed(4)+'/g</span></div>';
+  }).join('');
+  drop.classList.add('show');
+}
+
+function selNF(nomeOrig, insKey, el) {
+  el.parentElement.classList.remove('show');
+  if(!window._corrections) window._corrections = {};
+  window._corrections[normStr(nomeOrig)] = insKey;
+  calcFormulas();
 }
 
 // ── Autocomplete ───────────────────────────────────────────
