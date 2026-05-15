@@ -72,15 +72,18 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 @media(max-width:600px){.side{width:60px}.logo h1,.logo p,.nsec,.ni span{display:none}.ni{justify-content:center;padding:12px}.page{padding:16px}}
 </style>
 <script>
-// Anti-cache: force reload se a versão armazenada não bater com a atual
+// Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.8';
-  var stored = sessionStorage.getItem('alphaVer');
+  var VER = 'v4.14';
+  var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
-    sessionStorage.setItem('alphaVer', VER);
-    location.reload(true);
+    localStorage.setItem('alphaVer', VER);
+    // Adiciona parâmetro único na URL para forçar busca no servidor
+    if(location.search.indexOf('nc=') < 0) {
+      location.replace(location.pathname + '?nc=' + VER.replace(/\./g,'') + '&_=' + Date.now());
+    }
   } else {
-    sessionStorage.setItem('alphaVer', VER);
+    localStorage.setItem('alphaVer', VER);
   }
 })();
 </script>
