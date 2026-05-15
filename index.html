@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.18</title>
+<title>Farmácia Alpha v4.19</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -74,7 +74,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.18';
+  var VER = 'v4.19';
   var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
     localStorage.setItem('alphaVer', VER);
@@ -89,10 +89,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </script>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.18 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.19 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.18</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.19</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -1184,7 +1184,7 @@ function calcRec(rec) {
       avs.push('Insumo líquido em cápsula/sachê: ' + a.nome + ' — não disponível como pó');
       return;
     }
-    if((ins.pe||ins.p) === 0) { avs.push('Sem preço: ' + ins.n); return; }
+    if(!(ins.p||ins.pe)) { avs.push('Sem preço: ' + ins.n); return; }
     var u = (a.unidade||'mg').toLowerCase();
     var g;
     if(u === '%') {
@@ -1198,7 +1198,7 @@ function calcRec(rec) {
     }
     ativoGs[ins.k] = g; // salva para cálculo relToActive
     sumAtivosG += g;
-    var c = isTopico ? g * (ins.pe||ins.p) : g * qtd * (ins.pe||ins.p);
+    var c = isTopico ? g * (ins.p||ins.pe) : g * qtd * (ins.p||ins.pe);
     custo += c;
     itens.push({n:ins.n, dose:a.dose+' '+(a.unidade||'mg'), c:c});
   });
@@ -1218,7 +1218,7 @@ function calcRec(rec) {
         if(addedAssocs[dedupeKey]) return;
         addedAssocs[dedupeKey] = true;
         var insA = busIns(as.assoc, fml);
-        if(!insA || (insA.pe||insA.p) === 0) {
+        if(!insA || !(insA.p||insA.pe)) {
           avs.push('⚠ ' + as.assoc.toUpperCase() + ' ' + as.qtd + as.unid + ' (prod. associado — sem preço no banco)');
           return;
         }
@@ -1232,7 +1232,7 @@ function calcRec(rec) {
         } else {
           gA = as.qtd / 1000; // MG fixo → gramas
         }
-        var cA = isTopico ? gA * (insA.pe||insA.p) : gA * qtd * (insA.pe||insA.p);
+        var cA = isTopico ? gA * (insA.p||insA.pe) : gA * qtd * (insA.p||insA.pe);
         custo += cA;
         itens.push({n: insA.n + ' (' + as.qtd + as.unid + ')', dose: 'assoc.', c: cA});
       });
@@ -2072,7 +2072,7 @@ function showAC(inp) {
   }
   if(!res.length) { drop.classList.remove('show'); return; }
   drop.innerHTML = res.map(function(ins) {
-    return '<div class="ac-item" onmousedown="selAC(\''+ins.n.replace(/'/g,"\\'")+ '\','+(ins.pe||ins.p)+',this)">'+ins.n+' <span style="color:var(--text3);font-size:11px">R$'+(ins.pe||ins.p).toFixed(4)+'/g ef.</span></div>';
+    return '<div class="ac-item" onmousedown="selAC(\''+ins.n.replace(/'/g,"\\'")+ '\','+(ins.p||ins.pe)+',this)">'+ins.n+' <span style="color:var(--text3);font-size:11px">R$'+(ins.p||ins.pe).toFixed(4)+'/g</span></div>';
   }).join('');
   drop.classList.add('show');
 }
