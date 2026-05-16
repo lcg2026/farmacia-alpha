@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.24</title>
+<title>Farmácia Alpha v4.25</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -74,7 +74,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.24';
+  var VER = 'v4.25';
   var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
     localStorage.setItem('alphaVer', VER);
@@ -89,10 +89,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </script>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.24 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.25 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.24</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.25</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -169,7 +169,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <strong style="font-size:14px">Orçamentos de hoje</strong>
-        <button class="btn" onclick="hist=[];saveHist();renderHist()">Limpar</button>
+        <button id="btn-limpar" class="btn" onclick="hist=[];saveHist();renderHist()">Limpar</button>
       </div>
       <div id="histList"></div>
     </div>
@@ -585,6 +585,25 @@ var PROG = {
 // [vol_interno_mm3, tamanho, preco_gel, preco_veg, preco_enter] — volumes corrigidos Ajuste9
 var CGEL=[[210,'4',0.0195,0.05,0.12],[300,'3',0.0195,0.05,0.12],[371,'2',0.0195,0.05,0.12],[481,'1',0.0195,0.05,0.12],[681,'0',0.0195,0.05,0.12],[951,'00',0.03,0.06,0.125]];
 var POTES=[[60,{'3':90,'2':50,'1':30,'0':30,'00':30},2],[80,{'3':120,'2':90,'1':60,'0':45,'00':30},2],[110,{'3':180,'2':120,'1':120,'0':60,'00':60},2],[150,{'3':270,'2':180,'1':150,'0':90,'00':80},2],[230,{'3':480,'2':270,'1':240,'0':180,'00':120},2],[320,{'3':480,'2':390,'1':300,'0':240,'00':180},2],[500,{'3':720,'2':510,'1':480,'0':360,'00':270},2.5]];
+// ── Concentração de probióticos em Blh/g (bilhões de UFC por grama) ──
+// TODO: migrar para campo 'blhg' na Planilha Mestra via build_mestra_v2.py
+var BLHG = {
+  'l helveticus':140,'biomamps lactob helveticus':140,
+  'l rhamnosus':100,'l rhamnosus lemma':200,'biomamps lactob rhamnosus':200,
+  'l reuteri':200,
+  'l plantarum':100,
+  'bifidobacterium longum':100,'bifidobacterium longum lemma':100,
+  'bifidobacterium bifidum':100,
+  'bifidobacterium animalis':100,
+  'bifidobacterium infantis':100,
+  'bifidobacterium breve':100,
+  'bifidobacterium adolescentis':100,
+  'bifidobacterium lactis':100,
+  'pool de lactobacilos':100,
+  'lactobacilus infantis':100,
+  'lactobacilus gasseri':100,
+  'lactobacilus lactis':100
+};
 var AIRLESS=[{ml:30,p:5.9},{ml:60,p:9.0},{ml:90,p:13.9},{ml:35,p:27,topclick:true}];
 // Embalagens Loção bisnagas (semi-sólida) e frascos fluidos
 var EMB_LOCAO_BISNAGA=[[30,1.43],[60,1.48],[120,1.60],[200,2.50],[250,2.80]];
@@ -613,6 +632,35 @@ var simAtual = {qtd:0,pv:0}, qtdsFixadas = [];
 
 // ── Inicialização ──────────────────────────────────────────
 window.onload = function() {
+  // ── Controle de horário de acesso para vendedoras ──
+  (function checkHorario() {
+    var pin = localStorage.getItem('alphaVendPIN');
+    if(!pin) return; // sem PIN = admin, sem restrição
+    var now = new Date();
+    var day = now.getDay(); // 0=dom,1=seg,...,6=sab
+    var mins = now.getHours() * 60 + now.getMinutes();
+    var ok = false;
+    if(day >= 1 && day <= 5) ok = mins >= 7*60 && mins < 19*60;      // seg-sex 07:00–19:00
+    else if(day === 6)        ok = mins >= 7*60 && mins < 12*60+30;   // sab 07:00–12:30
+    if(!ok) {
+      var ov = document.getElementById('pin-overlay');
+      ov.innerHTML = '<div style="background:#fff;border-radius:12px;padding:32px 28px;max-width:320px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.15)">' +
+        '<div style="font-size:40px;margin-bottom:12px">🔒</div>' +
+        '<h3 style="margin:0 0 8px;color:#1565C0">Fora do horário</h3>' +
+        '<p style="color:#555;font-size:13px;margin-bottom:4px">Atendimento disponível:</p>' +
+        '<p style="font-weight:600;font-size:13px;color:#333">Seg–Sex: 07:00 às 19:00</p>' +
+        '<p style="font-weight:600;font-size:13px;color:#333">Sábado: 07:00 às 12:30</p>' +
+      '</div>';
+      ov.style.display = 'flex';
+      ov.style.pointerEvents = 'all';
+      return; // não verificar PIN — acesso completamente bloqueado
+    }
+  })();
+  // Ocultar "Limpar" para vendedoras (só supervisor/admin pode excluir)
+  if(localStorage.getItem('alphaVendPIN')) {
+    var bl = document.getElementById('btn-limpar');
+    if(bl) bl.style.display = 'none';
+  }
   // Carregar insumos
   try {
     INS = JSON.parse(atob(_D));
@@ -854,7 +902,8 @@ function busIns(nome, formaCtx) {
     for(var i=0; i<INS.length; i++) {
       if(!INS[i] || !INS[i].sk) continue;
       for(var j=0; j<INS[i].sk.length; j++) {
-        if(_matches(INS[i].sk[j], variants[v])) { matches.push(INS[i]); break; }
+        var _skn = normStr(INS[i].sk[j] || '');
+        if(_matches(_skn, variants[v])) { matches.push(INS[i]); break; }
       }
     }
     if(matches.length > 0) return _pickBest(matches, formaCtx);
@@ -878,7 +927,8 @@ function busIns(nome, formaCtx) {
           for(var i=0; i<INS.length; i++) {
             if(!INS[i] || !INS[i].sk) continue;
             for(var j=0; j<INS[i].sk.length; j++) {
-              if(_matches(INS[i].sk[j], strippedList[sl])) { matches.push(INS[i]); break; }
+              var _skn3 = normStr(INS[i].sk[j] || '');
+              if(_matches(_skn3, strippedList[sl])) { matches.push(INS[i]); break; }
             }
           }
         }
@@ -1160,6 +1210,12 @@ function calcRec(rec) {
       return dose / 1000000;
     }
     if(u === '%') return dose / 100;
+    if(u === 'blh') {
+      // Bilhões de UFC: converter para gramas usando concentração Blh/g do produto
+      var _blhConc = BLHG[normStr(insNome||'')] || 0;
+      if(_blhConc > 0) return dose / _blhConc;
+      return dose / 1000; // sem Blh/g cadastrado — tratar como mg (fallback)
+    }
     return dose / 1000; // mg (padrão)
   }
 
@@ -1281,8 +1337,14 @@ function calcRec(rec) {
     } else {
     // Selecionar tamanho da cápsula (1mg ≈ 1mm³)
     var capDoseMg = totalGCheck > 0 ? totalGCheck * 1000 : 300;
+    var nCaps = 1;
     var cap = CGEL[CGEL.length-1];
-    for(var ci=0;ci<CGEL.length;ci++){if(capDoseMg<=CGEL[ci][0]){cap=CGEL[ci];break;}}
+    if(capDoseMg > CGEL[CGEL.length-1][0]) {
+      nCaps = Math.ceil(capDoseMg / CGEL[CGEL.length-1][0]);
+      avs.push('Volume por dose (' + capDoseMg.toFixed(0) + 'mg) excede cápsula 00 (951mg) — ' + nCaps + ' cápsulas por dose');
+    } else {
+      for(var ci=0;ci<CGEL.length;ci++){if(capDoseMg<=CGEL[ci][0]){cap=CGEL[ci];break;}}
+    }
 
     // Tipo de cápsula: oleosa → vegetal, entérica → entérica, padrão → gelatinosa
     var isOleosa = /omega|oleo|oil|oleosa|vitamina e|vitamina a\b|retinol/.test(nomesAtivos);
@@ -1290,16 +1352,18 @@ function calcRec(rec) {
     var capPreco = isEnterica ? cap[4] : isOleosa ? cap[3] : cap[2];
     var capTipo = isEnterica ? 'Entérica' : isOleosa ? 'Vegetal' : '';
 
-    var cc = capPreco * qtd;
+    var cc = capPreco * qtd * nCaps;
+    var totalCaps = qtd * nCaps;
     var pt = POTES[POTES.length-1];
-    for(var pi=0;pi<POTES.length;pi++){if((POTES[pi][1][cap[1]]||0)>=qtd){pt=POTES[pi];break;}}
+    for(var pi=0;pi<POTES.length;pi++){if((POTES[pi][1][cap[1]]||0)>=totalCaps){pt=POTES[pi];break;}}
     custo += cc + pt[2];
-    itens.push({n:'Cápsulas n'+cap[1]+(capTipo?' '+capTipo:'')+' ('+qtd+')+Pote '+pt[0]+'ml', dose:'', c:cc+pt[2]});
+    var capLabel = 'Cápsulas n'+cap[1]+(capTipo?' '+capTipo:'')+(nCaps>1?' ('+nCaps+'×/dose, '+totalCaps+'un total)':'('+qtd+'un)')+'+Pote '+pt[0]+'ml';
+    itens.push({n:capLabel, dose:'', c:cc+pt[2]});
 
     // ── Excipiente ──
     var jaTemExcipiente = /celulose|lactose|amido|avicel|excipiente|celulosix/.test(nomesAtivos);
     if(!jaTemExcipiente) {
-      var excipMg = cap[0] - (totalGCheck * 1000);
+      var excipMg = cap[0] * nCaps - (totalGCheck * 1000);
       if(excipMg > 10) {
         var excipG = excipMg / 1000;
         // Selecionar tipo de excipiente
@@ -2295,7 +2359,37 @@ function renderHist() {
     '<div style="background:#FFF3E0;border-radius:6px;padding:8px;text-align:center"><div style="font-size:20px;font-weight:700;color:#E65100">'+totalRej+'</div><div style="font-size:11px;color:#E65100">Pendentes</div></div>' +
     '<div style="background:#F3E5F5;border-radius:6px;padding:8px;text-align:center"><div style="font-size:20px;font-weight:700;color:#6A1B9A">'+taxaConv+'%</div><div style="font-size:11px;color:#6A1B9A">Conversão</div></div>' +
     '</div>' +
-    (totalConf > 0 ? '<div style="font-size:12px;color:#2E7D32;margin-bottom:10px;font-weight:600">💰 Valor confirmado hoje: R$ '+valorConf.toFixed(2)+'</div>' : '');
+    (totalConf > 0 ? '<div style="font-size:12px;color:#2E7D32;margin-bottom:10px;font-weight:600">💰 Valor confirmado hoje: R$ '+valorConf.toFixed(2)+'</div>' : '') +
+    (function() {
+      // Preço médio
+      var mediaConf = totalConf > 0 ? valorConf / totalConf : 0;
+      var valorRej = rejeitados.reduce(function(s,h){return s+h.pv;},0);
+      var mediaRej  = rejeitados.length > 0 ? valorRej / rejeitados.length : 0;
+      // Formas farmacêuticas
+      var formas = {};
+      filtrado.forEach(function(h){
+        var f = h.fm || 'Outro';
+        if(!formas[f]) formas[f] = {v:0, r:0};
+        if(h.confirmado) formas[f].v++; else formas[f].r++;
+      });
+      var formasHtml = Object.keys(formas).map(function(f){
+        var fi = formas[f];
+        return '<span style="font-size:11px;background:#F5F5F5;border-radius:4px;padding:2px 8px;margin:2px;display:inline-block">'+f+': '+fi.v+'✅ '+fi.r+'⏳</span>';
+      }).join('');
+      // Horários — agrupar por hora
+      var horas = {};
+      filtrado.forEach(function(h){ var hr = new Date(h.ts).getHours()+'h'; if(!horas[hr])horas[hr]=0; if(h.confirmado)horas[hr]++; });
+      var peakHr = '—', peakN = 0;
+      Object.keys(horas).forEach(function(hr){ if(horas[hr]>peakN){peakN=horas[hr];peakHr=hr;} });
+      return '<div style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;font-size:12px">' +
+          '<div style="background:#F1F8E9;border-radius:6px;padding:8px"><strong>R$ '+(mediaConf>0?mediaConf.toFixed(2):'—')+'</strong><br><span style="color:#555">Ticket médio confirmado</span></div>' +
+          '<div style="background:#FBE9E7;border-radius:6px;padding:8px"><strong>R$ '+(mediaRej>0?mediaRej.toFixed(2):'—')+'</strong><br><span style="color:#555">Ticket médio pendente</span></div>' +
+        '</div>' +
+        (peakN > 0 ? '<div style="font-size:12px;margin-bottom:6px">⏰ Pico de fechamentos: <strong>'+peakHr+' ('+peakN+' confirmações)</strong></div>' : '') +
+        (formasHtml ? '<div style="font-size:12px;margin-bottom:4px;font-weight:600">Formas farmacêuticas hoje:</div><div style="margin-bottom:6px">'+formasHtml+'</div>' : '') +
+      '</div>';
+    })();
 
   el.innerHTML = statsHtml + filtrado.map(function(h){
     var status = h.confirmado
