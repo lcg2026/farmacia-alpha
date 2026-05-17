@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.25</title>
+<title>Farmácia Alpha v4.26</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -74,7 +74,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.25';
+  var VER = 'v4.26';
   var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
     localStorage.setItem('alphaVer', VER);
@@ -89,10 +89,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </script>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.25 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.26 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.25</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.26</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -453,7 +453,21 @@ var EQUIV = {
   'berberine':'berberina clor','berberina hcl':'berberina clor','berberine hcl':'berberina clor',
   'sabonete gel com pca na':'sabonete gel base c pcana',
   'sabonete gel pcana':'sabonete gel base c pcana',
-  'sabonete gel pca-na':'sabonete gel base c pcana'
+  'sabonete gel pca-na':'sabonete gel base c pcana',
+  // Minoxidil — formas e sinônimos (Ajuste14)
+  'minoxidil':'minoxidil sulfato',
+  'minoxidil ue':'minoxidil sulfato',
+  'minoxidil sulfato ue':'minoxidil sulfato',
+  'sulfato de minoxidil':'minoxidil sulfato',
+  'minoxidil base ue':'minoxidil base',
+  'minoxidil topico':'minoxidil sulfato',
+  // Veículos capilares
+  'locao capilar sem alcool':'locao capilar',
+  'loção capilar sem alcool':'locao capilar',
+  'solucao capilar':'locao capilar',
+  'sol capilar':'locao capilar',
+  'sol hidroalcoolica':'sol hidroalcoolica',
+  'solucao hidroalcoolica':'sol hidroalcoolica'
 };
 
 // Insumos disponíveis apenas em forma líquida — não usar em fórmulas de cápsulas
@@ -604,6 +618,18 @@ var BLHG = {
   'lactobacilus gasseri':100,
   'lactobacilus lactis':100
 };
+// ── Preços padronizados Minoxidil em Cápsula (item 21408 — Minoxidil 1/10 Cápsula) ──
+var MINOX_PRECO = {
+  2.0:  {30:{pix:113,cartao:119},60:{pix:149,cartao:157},90:{pix:185,cartao:195},120:{pix:209,cartao:220},180:{pix:305,cartao:321}},
+  2.5:  {30:{pix:113,cartao:119},60:{pix:163,cartao:172},90:{pix:209,cartao:220},120:{pix:219,cartao:229},180:{pix:315,cartao:329}},
+  3.0:  {30:{pix:137,cartao:145},60:{pix:169,cartao:179},90:{pix:222,cartao:233},120:{pix:271,cartao:286},180:{pix:349,cartao:369}},
+  3.5:  {30:{pix:145,cartao:152},60:{pix:185,cartao:195},90:{pix:239,cartao:252},120:{pix:289,cartao:305},180:{pix:369,cartao:389}},
+  4.0:  {30:{pix:146,cartao:154},60:{pix:196,cartao:206},90:{pix:269,cartao:292},120:{pix:341,cartao:359},180:{pix:379,cartao:399}},
+  5.0:  {30:{pix:156,cartao:165},60:{pix:206,cartao:217},90:{pix:289,cartao:305},120:{pix:351,cartao:369},180:{pix:389,cartao:410}}
+};
+// ── Embalagens frasco vidro para Minoxidil tópico ──
+// [volume_max_ml, preco_R$]
+var MINOX_VIDRO=[[20,0.40],[30,0.438],[60,0.551],[100,0.594],[150,0.748],[200,0.913],[250,1.03],[400,1.826]];
 var AIRLESS=[{ml:30,p:5.9},{ml:60,p:9.0},{ml:90,p:13.9},{ml:35,p:27,topclick:true}];
 // Embalagens Loção bisnagas (semi-sólida) e frascos fluidos
 var EMB_LOCAO_BISNAGA=[[30,1.43],[60,1.48],[120,1.60],[200,2.50],[250,2.80]];
@@ -1235,6 +1261,13 @@ function calcRec(rec) {
   var isTopico = /locao|loção|creme|gel|pomada|shampoo|xampu|hormonio/.test(fml);
   var isSolido = fml.indexOf('cap') >= 0 || fml === 'sache' || fml === 'sublingual';
 
+  // ── Detectar Minoxidil (Ajuste14) ──
+  var hasMinoxidil = /minoxidil/.test(nomesAtivos);
+  var hasFatorCrescimento = /fator afgf|fator bfgf|fator igf|fator vegf|copper peptide/.test(nomesAtivos);
+  // isMinoxTopico: qualquer forma tópica/líquida que contenha Minoxidil (inclui xarope/solucao)
+  var isMinoxTopico = hasMinoxidil && (isTopico || /xarope|solucao|solução/.test(fml));
+  var isMinoxCap    = hasMinoxidil && fml.indexOf('cap') >= 0;
+
   // Detectar base qsp declarada na receita (para formas tópicas)
   var qspAtivoIdx = -1, qspTotal = 0;
   if(isTopico) {
@@ -1483,6 +1516,11 @@ function calcRec(rec) {
   if(fml.indexOf('locao')>=0 || fml.indexOf('loção')>=0) {
     var qspVolL = (qspAtivoIdx >= 0) ? qspTotal : qtd;
     var baseNomeL = (qspAtivoIdx >= 0) ? rec.ativos[qspAtivoIdx].nome : 'locao base hidratante';
+    // Minoxidil + fator de crescimento → veículo obrigatório: Loção Capilar sem Álcool (item 622)
+    if(isMinoxTopico && hasFatorCrescimento) {
+      baseNomeL = 'locao capilar';
+      avs.push('Veículo: Loção Capilar sem Álcool (fator de crescimento detectado — item 10360)');
+    }
     var insBaseL = busIns(baseNomeL, fml);
     if(!insBaseL) insBaseL = busIns('locao base hidratante');
     var pBaseL = (insBaseL && (insBaseL.pe||insBaseL.p) >= 0.05) ? (insBaseL.pe||insBaseL.p) : 0.065;
@@ -1491,16 +1529,23 @@ function calcRec(rec) {
     var cBaseL = baseGL * pBaseL;
     custo += cBaseL;
     itens.push({n:(insBaseL?insBaseL.n:'Loção Base Hidratante')+' qsp', dose:baseGL.toFixed(2)+'g', c:cBaseL});
-    // Embalagem
-    var isFluidaL = /fluida|frasco|pump/.test(fml);
+    // Embalagem — Minoxidil tópico usa frasco de vidro
     var cEmbL;
-    if(isFluidaL) {
-      cEmbL = pickEmb(qspVolL, EMB_LOCAO_FLUIDA);
+    if(isMinoxTopico) {
+      var vidL = MINOX_VIDRO[MINOX_VIDRO.length-1];
+      for(var vi=0;vi<MINOX_VIDRO.length;vi++){if(MINOX_VIDRO[vi][0]>=qspVolL){vidL=MINOX_VIDRO[vi];break;}}
+      cEmbL = vidL[1];
+      itens.push({n:'Frasco Vidro '+vidL[0]+'ml (Minoxidil)', dose:qspVolL+'ml', c:cEmbL});
     } else {
-      cEmbL = pickEmb(qspVolL, EMB_LOCAO_BISNAGA);
+      var isFluidaL = /fluida|frasco|pump/.test(fml);
+      if(isFluidaL) {
+        cEmbL = pickEmb(qspVolL, EMB_LOCAO_FLUIDA);
+      } else {
+        cEmbL = pickEmb(qspVolL, EMB_LOCAO_BISNAGA);
+      }
+      itens.push({n:'Embalagem Loção', dose:qspVolL+'g', c:cEmbL});
     }
     custo += cEmbL;
-    itens.push({n:'Embalagem Loção', dose:qspVolL+'g', c:cEmbL});
   }
 
   // ── 5E. CREME / GEL ──
@@ -1591,11 +1636,19 @@ function calcRec(rec) {
         itens.push({n:insBaseX.n+' qsp', dose:baseGX.toFixed(2)+'g', c:baseGX*(insBaseX.pe||insBaseX.p)});
       }
     }
-    // Gotas = vidro âmbar, líquido = PET
-    var isGotas = /gota|gotas/.test(fml+' '+normStr(rec.descricao||''));
-    var cEmbX = isGotas ? pickEmb(qspVolX, EMB_XAROPE_VIDRO) : pickEmb(qspVolX, EMB_XAROPE_PET);
+    // Minoxidil tópico → frasco vidro específico; gotas → vidro âmbar; líquido → PET
+    var cEmbX;
+    if(isMinoxTopico) {
+      var vidX = MINOX_VIDRO[MINOX_VIDRO.length-1];
+      for(var vi2=0;vi2<MINOX_VIDRO.length;vi2++){if(MINOX_VIDRO[vi2][0]>=qspVolX){vidX=MINOX_VIDRO[vi2];break;}}
+      cEmbX = vidX[1];
+      itens.push({n:'Frasco Vidro '+vidX[0]+'ml (Minoxidil)', dose:qspVolX+'ml', c:cEmbX});
+    } else {
+      var isGotas = /gota|gotas/.test(fml+' '+normStr(rec.descricao||''));
+      cEmbX = isGotas ? pickEmb(qspVolX, EMB_XAROPE_VIDRO) : pickEmb(qspVolX, EMB_XAROPE_PET);
+      itens.push({n:'Embalagem Xarope', dose:qspVolX+'ml', c:cEmbX});
+    }
     custo += cEmbX;
-    itens.push({n:'Embalagem Xarope', dose:qspVolX+'ml', c:cEmbX});
   }
 
   // ── 5I. SUBLINGUAL / OROTAB (comprimidos — não cápsulas) ──
@@ -1633,12 +1686,54 @@ function calcRec(rec) {
     fml.indexOf('xarope')>=0?'Xarope':
     fml.indexOf('sublingual')>=0||fml.indexOf('orotab')>=0?'Sublingual':
     'Capsulas';
+  // Minoxidil tópico → SEMPRE usar aba Loção Hidratante para MKP
+  if(isMinoxTopico) progKey = 'Locao';
   var tab = PROG[progKey] || PROG.Capsulas;
   var mkp = getMKP(custo, tab);
   var pv = Math.round(custo * mkp + CF);
   if(pv < PM) pv = PM;
 
-  return {fm:fm, qtd:qtd, custo:custo, mkp:mkp, pv:pv, itens:itens, avs:avs, nf:nf, pac:rec.paciente||'', pre:rec.prescritor||''};
+  // ── 6B. MINOXIDIL EM CÁPSULA — Preço padronizado ──
+  var minoxPad = null;
+  if(isMinoxCap) {
+    var _minoxDoseMg = null;
+    (rec.ativos||[]).forEach(function(a) {
+      if(/minoxidil/.test(normStr(a.nome||''))) {
+        var u = (a.unidade||'mg').toLowerCase();
+        var d = parseFloat(a.dose) || 0;
+        // Converter para mg se necessário
+        if(u === 'mg') _minoxDoseMg = d;
+        else if(u === 'g') _minoxDoseMg = d * 1000;
+        else if(u === 'mcg') _minoxDoseMg = d / 1000;
+        else _minoxDoseMg = d; // assume mg
+      }
+    });
+    if(_minoxDoseMg !== null) {
+      // Arredondar para chave mais próxima da tabela
+      var _doseKeys = [2.0,2.5,3.0,3.5,4.0,5.0];
+      var _doseKey = null, _bestDist = 99;
+      for(var _di=0;_di<_doseKeys.length;_di++) {
+        var _dist = Math.abs(_doseKeys[_di] - _minoxDoseMg);
+        if(_dist < _bestDist) { _bestDist=_dist; _doseKey=_doseKeys[_di]; }
+      }
+      // Arredondar qtd para chave mais próxima
+      var _qtdKeys = [30,60,90,120,180];
+      var _qtdKey = null; _bestDist = 9999;
+      for(var _qi=0;_qi<_qtdKeys.length;_qi++) {
+        var _dist2 = Math.abs(_qtdKeys[_qi] - qtd);
+        if(_dist2 < _bestDist) { _bestDist=_dist2; _qtdKey=_qtdKeys[_qi]; }
+      }
+      if(_doseKey !== null && _qtdKey !== null && MINOX_PRECO[_doseKey] && MINOX_PRECO[_doseKey][_qtdKey]) {
+        minoxPad = MINOX_PRECO[_doseKey][_qtdKey];
+        minoxPad.dose = _doseKey;
+        minoxPad.qtdRef = _qtdKey;
+        pv = minoxPad.pix; // preço padrão = Pix (menor)
+        avs.push('💊 Preço padronizado Minoxidil '+_doseKey+'mg ('+_qtdKey+' caps): Pix R$'+minoxPad.pix+' / Cartão R$'+minoxPad.cartao);
+      }
+    }
+  }
+
+  return {fm:fm, qtd:qtd, custo:custo, mkp:mkp, pv:pv, itens:itens, avs:avs, nf:nf, pac:rec.paciente||'', pre:rec.prescritor||'', minoxPad:minoxPad};
 }
 
 // ── Simular outra quantidade ───────────────────────────────
@@ -1733,10 +1828,24 @@ function renderResult(r, container, idx) {
   }).join('');
   var minLabel = r.pv === PM ? '<span class="tag tr" style="font-size:10px">preço mínimo</span>' : '';
 
+  // Bloco de preço — Minoxidil padronizado mostra Pix e Cartão separados
+  var precoHtml;
+  if(r.minoxPad) {
+    precoHtml = '<div style="margin-top:10px;padding:10px;background:#E8F5E9;border-radius:6px;border:1px solid #A5D6A7">' +
+      '<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:6px">💊 PREÇO PADRONIZADO MINOXIDIL '+r.minoxPad.dose+'mg ('+r.minoxPad.qtdRef+' cáps)</div>' +
+      '<div style="display:flex;gap:16px;align-items:center">' +
+        '<div style="text-align:center"><div style="font-size:10px;color:#4A6A4A;font-weight:600">PIX / À VISTA</div><div style="font-size:22px;font-weight:700;color:#1B5E20">R$ '+r.minoxPad.pix.toFixed(2)+'</div></div>' +
+        '<div style="text-align:center"><div style="font-size:10px;color:#4A6A4A;font-weight:600">CARTÃO</div><div style="font-size:22px;font-weight:700;color:#2E7D32">R$ '+r.minoxPad.cartao.toFixed(2)+'</div></div>' +
+      '</div>' +
+    '</div>';
+  } else {
+    precoHtml = '<div class="rtot"><span>Preço de venda ' + minLabel + '</span><span>R$ ' + r.pv.toFixed(2) + '</span></div>';
+  }
+
   var html = '<div class="rcard">' +
     '<h3>' + r.fm + ' • ' + r.qtd + ' ' + unidLabel + '</h3>' +
     avHtml + rows +
-    '<div class="rtot"><span>Preço de venda ' + minLabel + '</span><span>R$ ' + r.pv.toFixed(2) + '</span></div>' +
+    precoHtml +
     '<div class="sim-box">' +
       '<label>' + simLbl + '</label>' +
       '<div class="sim-row">' +
@@ -1749,6 +1858,7 @@ function renderResult(r, container, idx) {
     '</div>' +
     '<div class="ract">' +
       '<button class="btn" onclick="savH()">💾 Salvar</button>' +
+      '<button class="btn" style="background:#FF8F00;color:#fff;border-color:#FF8F00" onclick="copiarOrcamento(this)">📋 Copiar</button>' +
       '<button class="btn" style="background:#1565C0;color:#fff;border-color:#1565C0" onclick="confirmarOrcamento()">✅ CONFIRMADA</button>' +
     '</div>' +
   '</div>';
@@ -1830,7 +1940,7 @@ function calcFormulas() {
   window._allResults = allResults;
   // _activeResults rastreia qtd/pv atual por fórmula (atualizado ao simular)
   window._activeResults = allResults.map(function(r){
-    return {fm:r.fm, qtd:r.qtd, pv:r.pv, pac:r.pac, pre:r.pre, custo:r.custo, mkp:r.mkp, itens:r.itens};
+    return {fm:r.fm, qtd:r.qtd, pv:r.pv, pac:r.pac, pre:r.pre, custo:r.custo, mkp:r.mkp, itens:r.itens, minoxPad:r.minoxPad||null};
   });
 
   if(alguma) {
@@ -1855,8 +1965,9 @@ function calcFormulas() {
         (pre ? '<span style="color:var(--text3)">🩺 '+pre+'</span>' : '') +
       '</div>' +
       '<div id="resumo-linhas">' + linhasRes + totalLine + '</div>' +
-      '<div style="margin-top:12px">' +
-        '<button class="btn" style="background:#25D366;color:#fff;border-color:#25D366;font-size:14px;padding:10px 0;width:100%;justify-content:center" onclick="envWA()">📱 Enviar cotação por WhatsApp</button>' +
+      '<div style="margin-top:12px;display:flex;gap:8px">' +
+        '<button class="btn" style="background:#FF8F00;color:#fff;border-color:#FF8F00;font-size:13px;padding:10px 14px" onclick="copiarOrcamentoGeral(this)">📋 Copiar orçamento</button>' +
+        '<button class="btn" style="background:#25D366;color:#fff;border-color:#25D366;font-size:13px;padding:10px 0;flex:1;justify-content:center" onclick="envWA()">📱 Enviar por WhatsApp</button>' +
       '</div>' +
     '</div>';
     container.appendChild(resumoDiv);
@@ -1902,6 +2013,66 @@ function envWA() {
 
   var msg = encodeURIComponent(header + linhasFormulas + totalLine + footer);
   window.open('https://wa.me/?text='+msg,'_blank');
+}
+
+// ── Copiar orçamento de uma única fórmula ──
+function copiarOrcamento(btn) {
+  if(!last) { alert('Nenhum orçamento calculado.'); return; }
+  var r = last;
+  var isSol = /cap|sach|sublingual/.test(normStr(r.fm||''));
+  var unid = isSol ? 'doses' : 'mL/g';
+  var linhas = [];
+  if(r.pac) linhas.push('Paciente: ' + r.pac);
+  if(r.pre) linhas.push('Prescritor(a): ' + r.pre);
+  linhas.push('');
+  linhas.push('📋 ' + r.fm + ' — ' + r.qtd + ' ' + unid);
+  if(r.minoxPad) {
+    linhas.push('  Pix/À vista: R$ ' + r.minoxPad.pix.toFixed(2));
+    linhas.push('  Cartão:      R$ ' + r.minoxPad.cartao.toFixed(2));
+  } else {
+    linhas.push('  Preço: R$ ' + r.pv.toFixed(2));
+  }
+  var txt = linhas.join('\n');
+  navigator.clipboard.writeText(txt).then(function(){
+    var orig = btn.textContent; btn.textContent = '✅ Copiado!'; btn.style.background='#2E7D32';
+    setTimeout(function(){btn.textContent=orig;btn.style.background='#FF8F00';},2000);
+  }).catch(function(){ alert('Texto para copiar:\n\n'+txt); });
+}
+
+// ── Copiar orçamento geral (todas as fórmulas) ──
+function copiarOrcamentoGeral(btn) {
+  var allRes = window._allResults;
+  var activeRes = window._activeResults || allRes;
+  if(!allRes || allRes.length === 0) { alert('Nenhum orçamento calculado.'); return; }
+  var pac = (activeRes[0]||allRes[0]).pac || '';
+  var pre = (activeRes[0]||allRes[0]).pre || '';
+  var total = activeRes.reduce(function(s,r){return s+r.pv;},0);
+  var linhas = [];
+  if(pac) linhas.push('Paciente: ' + pac);
+  if(pre) linhas.push('Prescritor(a): ' + pre);
+  linhas.push('');
+  allRes.forEach(function(r, i) {
+    var active = activeRes[i] || r;
+    var isSol = /cap|sach|sublingual/.test(normStr(active.fm||''));
+    var unid = isSol ? 'doses' : 'mL/g';
+    var prefixo = allRes.length > 1 ? (i+1)+') ' : '';
+    linhas.push(prefixo + active.fm + ' — ' + active.qtd + ' ' + unid);
+    if(r.minoxPad) {
+      linhas.push('   Pix/À vista: R$ ' + r.minoxPad.pix.toFixed(2));
+      linhas.push('   Cartão:      R$ ' + r.minoxPad.cartao.toFixed(2));
+    } else {
+      linhas.push('   Preço: R$ ' + active.pv.toFixed(2));
+    }
+  });
+  if(allRes.length > 1) {
+    linhas.push('');
+    linhas.push('TOTAL: R$ ' + total.toFixed(2));
+  }
+  var txt = linhas.join('\n');
+  navigator.clipboard.writeText(txt).then(function(){
+    var orig = btn.textContent; btn.textContent = '✅ Copiado!'; btn.style.background='#2E7D32';
+    setTimeout(function(){btn.textContent=orig;btn.style.background='#FF8F00';},2000);
+  }).catch(function(){ alert('Texto para copiar:\n\n'+txt); });
 }
 
 function savH() {
@@ -2065,7 +2236,7 @@ function calcFoto() {
   }
 
   readAllFiles(fileList, function(fileData) {
-    var prompt ='Leia esta receita de farmacia de manipulacao. Extraia SOMENTE formulas manipuladas com ativos e doses. IGNORE completamente: (1) medicamentos com fabricante/marca comercial (Myralis, Marjan, Central Nutrition, Besins, Pharma, Sandoz, etc.); (2) itens com unidades totais industriais como "(12un)", "(90un)", "(180un)"; (3) codigos CID (ex: CID N95, CID F32); (4) orientacoes de uso.\n\nREGRAS DE FORMA:\n- Presenca de Pentravan/Transcutol/Lipoderm/INDERM/Versapro como ingrediente (qsp ou com dose) + hormonio (estradiol/testosterona/estriol) = forma HORMONIO\n- Progesterona ORAL (comprimido/capsula) = Capsulas. Progesterona GEL ou CREME (topica/transdermico) = HORMONIO (mesmo sem mencionar Pentravan — o veiculo e implicito).\n- Capsulas/comprimido = Capsulas | Sache/Envelope = Sache | Locao = Locao | Creme = Creme | Gel = Gel | Pomada = Pomada | Shampoo/Xampu = Shampoo | Xarope/Solucao = Xarope | Sublingual/Orotab (comprimido) = Sublingual | Capsula sublingual/TAPIOCAPS = Sublingual Capsula\n- ATENCAO: Bupropiona NAO e Buspirona — sao medicamentos DIFERENTES. Leia com atencao: se estiver escrito Bupropiona, use EXATAMENTE esse nome.\n- ATENCAO nomes facilmente confundidos: "Verisol" (NAO Versiol), "Picnogenol" (NAO Plenogenol), "Hydroxiprolisilane C" (NAO Hydroxiprostiane C). Se ler algo parecido, use o nome correto listado aqui.\n- REGRA CRITICA DE FORMA POR UNIDADE: Se todos os ativos de uma formula tiverem doses em mg/mcg/UI/g (sem nenhum "%" e sem base/veiculo topico qsp), a forma OBRIGATORIAMENTE e Capsulas ou Sache — NUNCA Creme, Gel, Locao ou Pomada. Ingredientes com "%" so aparecem em formas topicas.\n\nREGRA DE QUANTIDADE (campo qtd):\n- Capsulas/Saches/Sublingual: qtd = NUMERO DE UNIDADES (ex: 60 capsulas, 30 saches)\n- Locao/Creme/Gel/Pomada/Hormonio/Shampoo/Xarope: qtd = VOLUME OU PESO TOTAL DA FORMULA em mL ou g (ex: "Locao base qsp 100ml" → qtd=100; "Creme qsp 30g" → qtd=30)\n- Sem duracao informada = 30 para capsulas e saches; manter volume prescrito para topicos\n- ATENCAO SACHE: "Maneira: 1 sache com Xml de agua" ou "tomar 1 sache ao dia" e INSTRUCAO DE USO — NAO e a quantidade total. Se a receita nao indicar o total de saches a preparar, use qtd=30.\n\nATIVOS: Para cada ativo preencha {nome, dose, unidade} separados. REGRAS DO CAMPO "nome": (1) somente o nome do principio ativo — SEM dose, SEM unidade, SEM parenteses de liberacao; (2) Melatonina com qualificador de liberacao (lenta/prolongada/dual/duo/SR/retard) → nome SEMPRE = "Melatonina SR"; (3) NUNCA adicione ativos que nao estejam literalmente escritos na receita — nao invente, nao complete, nao sugira ingredientes ausentes; (4) NUNCA extraia instrucoes de preparo ou modo de uso como ativos — exemplos do que IGNORAR como ativo: "1 sachê com 150ml de agua", "dissolver em agua", "1 dose com agua", "tomar com liquido"; (5) "Sachet", "Envelope", "Sache" isolados como nome de ativo sao ERRO — sao formas farmaceuticas, nao ativos. Para formas topicas, inclua a base/veiculo como ativo com unidade "qsp" e dose = volume total.\n\nEXEMPLO locao: "PUREGENE PDRN 0,2% / Locao base hidratante qsp 100ml" → {"forma":"Locao","qtd":100,"ativos":[{"nome":"PUREGENE PDRN","dose":0.2,"unidade":"%"},{"nome":"Locao base hidratante","dose":100,"unidade":"qsp"}]}\nREGRA ESPECIAL — HORMONIO "X mg POR DOSE / N DOSES": quando a receita informa dose POR DOSE (ex: "20mg por dose, 30 doses"), o campo qtd = N doses, e a dose do ativo deve ser expressa como PORCENTAGEM de concentracao no veiculo: dose_pct = X_mg / 1000 * 100 (ex: 20mg/dose em veiculo de 1g = 2%). Use unidade="%" para que o calculo seja correto. NUNCA use unidade="mg" com a dose por dose unitaria — sempre converta para %.\nEXEMPLO hormonal POR DOSE: "PROGESTERONA GEL 20mg POR DOSE / 30 DOSES" → {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Progesterona","dose":2,"unidade":"%"}]}\nEXEMPLO hormonal: "Estradiol 0.5mg / Pentravan qsp 30g" → {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Estradiol","dose":0.5,"unidade":"mg"},{"nome":"Pentravan","dose":30,"unidade":"qsp"}]}\nEXEMPLO capsulas: "Progesterona micronizada 100mg / Comprimido q.s.p. 30 capsulas" → {"forma":"Capsulas","qtd":30,"ativos":[{"nome":"Progesterona micronizada","dose":100,"unidade":"mg"}]}\nEXEMPLO capsulas SR: "Mulungu 200mg / Passiflora 200mg / Melatonina (liberacao lenta) 2mg / 30 capsulas" → {"forma":"Capsulas","qtd":30,"ativos":[{"nome":"Mulungu","dose":200,"unidade":"mg"},{"nome":"Passiflora","dose":200,"unidade":"mg"},{"nome":"Melatonina SR","dose":2,"unidade":"mg"}]}\n\nResponda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":30,"descricao":"","ativos":[{"nome":"nome","dose":0,"unidade":"mg"}]}]}';
+    var prompt ='Leia esta receita de farmacia de manipulacao. Extraia SOMENTE formulas manipuladas com ativos e doses. IGNORE completamente: (1) medicamentos com fabricante/marca comercial (Myralis, Marjan, Central Nutrition, Besins, Pharma, Sandoz, etc.); (2) itens com unidades totais industriais como "(12un)", "(90un)", "(180un)"; (3) codigos CID (ex: CID N95, CID F32); (4) orientacoes de uso.\n\nREGRAS DE FORMA:\n- Presenca de Pentravan/Transcutol/Lipoderm/INDERM/Versapro como ingrediente (qsp ou com dose) + hormonio (estradiol/testosterona/estriol) = forma HORMONIO\n- Progesterona ORAL (comprimido/capsula) = Capsulas. Progesterona GEL ou CREME (topica/transdermico) = HORMONIO (mesmo sem mencionar Pentravan — o veiculo e implicito).\n- Capsulas/comprimido = Capsulas | Sache/Envelope = Sache | Locao = Locao | Creme = Creme | Gel = Gel | Pomada = Pomada | Shampoo/Xampu = Shampoo | Xarope/Solucao = Xarope | Sublingual/Orotab (comprimido) = Sublingual | Capsula sublingual/TAPIOCAPS = Sublingual Capsula\n- ATENCAO: Bupropiona NAO e Buspirona — sao medicamentos DIFERENTES. Leia com atencao: se estiver escrito Bupropiona, use EXATAMENTE esse nome.\n- ATENCAO nomes facilmente confundidos: "Verisol" (NAO Versiol), "Picnogenol" (NAO Plenogenol), "Hydroxiprolisilane C" (NAO Hydroxiprostiane C). Se ler algo parecido, use o nome correto listado aqui.\n- MINOXIDIL: (a) Se CAPSULAS: use o nome exato "Minoxidil" com dose em mg (ex: 2,5mg) — NAO adicione percentual. (b) Se USO TOPICO (uso externo, pingar, loção capilar): extraia como ativo com unidade "%" se vier como concentracao (ex: Minoxidil 10%) OU em mg se dose absoluta. Veiculos topicos: "Solucao Hidroalcoolica", "Locao Capilar", "Locao Capilar sem Alcool" — extraia como ativo com unidade "qsp" e dose = volume total. (c) NUNCA confunda Minoxidil capsula com Minoxidil topico — presenca de "pingar", "uso externo", "uso local", "frasco" indica uso TOPICO.\n- REGRA CRITICA DE FORMA POR UNIDADE: Se todos os ativos de uma formula tiverem doses em mg/mcg/UI/g (sem nenhum "%" e sem base/veiculo topico qsp), a forma OBRIGATORIAMENTE e Capsulas ou Sache — NUNCA Creme, Gel, Locao ou Pomada. Ingredientes com "%" so aparecem em formas topicas.\n\nREGRA DE QUANTIDADE (campo qtd):\n- Capsulas/Saches/Sublingual: qtd = NUMERO DE UNIDADES (ex: 60 capsulas, 30 saches)\n- Locao/Creme/Gel/Pomada/Hormonio/Shampoo/Xarope: qtd = VOLUME OU PESO TOTAL DA FORMULA em mL ou g (ex: "Locao base qsp 100ml" → qtd=100; "Creme qsp 30g" → qtd=30)\n- Sem duracao informada = 30 para capsulas e saches; manter volume prescrito para topicos\n- ATENCAO SACHE: "Maneira: 1 sache com Xml de agua" ou "tomar 1 sache ao dia" e INSTRUCAO DE USO — NAO e a quantidade total. Se a receita nao indicar o total de saches a preparar, use qtd=30.\n\nATIVOS: Para cada ativo preencha {nome, dose, unidade} separados. REGRAS DO CAMPO "nome": (1) somente o nome do principio ativo — SEM dose, SEM unidade, SEM parenteses de liberacao; (2) Melatonina com qualificador de liberacao (lenta/prolongada/dual/duo/SR/retard) → nome SEMPRE = "Melatonina SR"; (3) NUNCA adicione ativos que nao estejam literalmente escritos na receita — nao invente, nao complete, nao sugira ingredientes ausentes; (4) NUNCA extraia instrucoes de preparo ou modo de uso como ativos — exemplos do que IGNORAR como ativo: "1 sachê com 150ml de agua", "dissolver em agua", "1 dose com agua", "tomar com liquido"; (5) "Sachet", "Envelope", "Sache" isolados como nome de ativo sao ERRO — sao formas farmaceuticas, nao ativos. Para formas topicas, inclua a base/veiculo como ativo com unidade "qsp" e dose = volume total.\n\nEXEMPLO locao: "PUREGENE PDRN 0,2% / Locao base hidratante qsp 100ml" → {"forma":"Locao","qtd":100,"ativos":[{"nome":"PUREGENE PDRN","dose":0.2,"unidade":"%"},{"nome":"Locao base hidratante","dose":100,"unidade":"qsp"}]}\nREGRA ESPECIAL — HORMONIO "X mg POR DOSE / N DOSES": quando a receita informa dose POR DOSE (ex: "20mg por dose, 30 doses"), o campo qtd = N doses, e a dose do ativo deve ser expressa como PORCENTAGEM de concentracao no veiculo: dose_pct = X_mg / 1000 * 100 (ex: 20mg/dose em veiculo de 1g = 2%). Use unidade="%" para que o calculo seja correto. NUNCA use unidade="mg" com a dose por dose unitaria — sempre converta para %.\nEXEMPLO hormonal POR DOSE: "PROGESTERONA GEL 20mg POR DOSE / 30 DOSES" → {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Progesterona","dose":2,"unidade":"%"}]}\nEXEMPLO hormonal: "Estradiol 0.5mg / Pentravan qsp 30g" → {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Estradiol","dose":0.5,"unidade":"mg"},{"nome":"Pentravan","dose":30,"unidade":"qsp"}]}\nEXEMPLO capsulas: "Progesterona micronizada 100mg / Comprimido q.s.p. 30 capsulas" → {"forma":"Capsulas","qtd":30,"ativos":[{"nome":"Progesterona micronizada","dose":100,"unidade":"mg"}]}\nEXEMPLO capsulas SR: "Mulungu 200mg / Passiflora 200mg / Melatonina (liberacao lenta) 2mg / 30 capsulas" → {"forma":"Capsulas","qtd":30,"ativos":[{"nome":"Mulungu","dose":200,"unidade":"mg"},{"nome":"Passiflora","dose":200,"unidade":"mg"},{"nome":"Melatonina SR","dose":2,"unidade":"mg"}]}\n\nResponda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":30,"descricao":"","ativos":[{"nome":"nome","dose":0,"unidade":"mg"}]}]}';
 
     // Construir conteúdo com todas as imagens/PDFs recebidos
     var contentBlocks = fileData.map(function(fd) {
