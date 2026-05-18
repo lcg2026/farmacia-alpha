@@ -82,11 +82,17 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.33';
+  var VER = 'v4.34';
+  // Atualizar badges de versão dinamicamente
+  document.addEventListener('DOMContentLoaded', function() {
+    var badge = document.getElementById('ver-badge');
+    var logo  = document.getElementById('ver-logo');
+    if(badge) badge.textContent = VER + ' ✓';
+    if(logo)  logo.textContent  = VER;
+  });
   var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
     localStorage.setItem('alphaVer', VER);
-    // Adiciona parâmetro único na URL para forçar busca no servidor
     if(location.search.indexOf('nc=') < 0) {
       location.replace(location.pathname + '?nc=' + VER.replace(/\./g,'') + '&_=' + Date.now());
     }
@@ -97,10 +103,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </script>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.27 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.34 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span style="font-weight:400;font-size:11px;opacity:0.5">v4.27</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span id="ver-logo" style="font-weight:400;font-size:11px;opacity:0.5">v4.34</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -238,20 +244,32 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     </div>
     <!-- Seção Atalho / Incógnito -->
     <div class="card" style="margin-top:12px">
-      <strong style="font-size:14px;display:block;margin-bottom:4px">📲 Atalho para vendedoras</strong>
-      <p style="font-size:12px;color:var(--text3);margin-bottom:12px">Instale como app ou abra sempre em modo anônimo para maior segurança.</p>
+      <strong style="font-size:14px;display:block;margin-bottom:4px">📲 Atalhos de acesso</strong>
+      <!-- Aviso admin -->
+      <div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:8px;padding:10px;margin-bottom:10px">
+        <strong style="font-size:12px;color:#E65100;display:block;margin-bottom:4px">⚠ Importante — Admin vs Vendedoras</strong>
+        <p style="font-size:12px;color:#BF360C;margin:0"><strong>Admin:</strong> use o navegador normal (não anônimo). O modo anônimo apaga o cadastro de vendedoras ao fechar.<br><strong>Vendedoras:</strong> podem usar modo anônimo ou instalar como app.</p>
+      </div>
       <!-- Opção 1: Instalar como app -->
       <div style="background:#E8F5E9;border-radius:8px;padding:12px;margin-bottom:10px">
-        <strong style="font-size:13px;color:#1B5E20;display:block;margin-bottom:6px">📱 Instalar como App (recomendado)</strong>
+        <strong style="font-size:13px;color:#1B5E20;display:block;margin-bottom:6px">📱 Instalar como App — para as vendedoras (recomendado)</strong>
         <p style="font-size:12px;color:#2E7D32;margin-bottom:8px">No Chrome/Edge: clique no ícone ⊕ na barra de endereços → "Instalar". O app abre em janela própria, sem histórico do navegador.</p>
         <p style="font-size:12px;color:#2E7D32;margin-bottom:4px"><strong>Celular Android:</strong> Chrome → menu ⋮ → "Adicionar à tela inicial"</p>
         <p style="font-size:12px;color:#2E7D32"><strong>iPhone:</strong> Safari → compartilhar ⬆ → "Adicionar à tela de início"</p>
       </div>
-      <!-- Opção 2: Atalho Windows incógnito -->
+      <!-- Opção 2: Atalhos Windows -->
       <div style="background:#FFF3E0;border-radius:8px;padding:12px;margin-bottom:10px">
-        <strong style="font-size:13px;color:#E65100;display:block;margin-bottom:6px">🖥️ Atalho Windows — Chrome modo anônimo</strong>
-        <p style="font-size:12px;color:#BF360C;margin-bottom:8px">Baixe o arquivo abaixo e coloque na área de trabalho. Ao clicar, abre o Agente direto em modo anônimo.</p>
-        <button class="btn" style="background:#E65100;color:#fff;border-color:#E65100;font-size:12px" onclick="baixarAtalho()">⬇ Baixar atalho (.bat)</button>
+        <strong style="font-size:13px;color:#E65100;display:block;margin-bottom:8px">🖥️ Atalhos Windows (.bat)</strong>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div style="flex:1;min-width:140px">
+            <p style="font-size:11px;color:#555;margin:0 0 6px"><strong>Para o Admin</strong> — abre sem incógnito, dados salvos</p>
+            <button class="btn" style="background:#1565C0;color:#fff;border-color:#1565C0;font-size:12px;width:100%" onclick="baixarAtalhoAdmin()">⬇ Atalho Admin</button>
+          </div>
+          <div style="flex:1;min-width:140px">
+            <p style="font-size:11px;color:#555;margin:0 0 6px"><strong>Para Vendedoras</strong> — abre em modo anônimo</p>
+            <button class="btn" style="background:#E65100;color:#fff;border-color:#E65100;font-size:12px;width:100%" onclick="baixarAtalho()">⬇ Atalho Vendedora</button>
+          </div>
+        </div>
       </div>
       <!-- Contador de orçamentos -->
       <div style="background:#F3E5F5;border-radius:8px;padding:12px">
@@ -2677,14 +2695,25 @@ function copiarLinkVendedora() {
   }
 }
 
-// ── Atalho incógnito e contador ORC ──────────────────────────
+// ── Atalhos e contador ORC ────────────────────────────────────
 function baixarAtalho() {
+  // Vendedoras — modo anônimo (localStorage apaga ao fechar, segurança)
   var url = 'https://lcg2026.github.io/farmacia-alpha/';
   var bat = '@echo off\nstart chrome --incognito --app="' + url + '"\n';
   var blob = new Blob([bat], {type:'text/plain'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'Agente Alpha - Abrir.bat';
+  a.download = 'Agente Alpha - Vendedora.bat';
+  a.click();
+}
+function baixarAtalhoAdmin() {
+  // Admin — navegador normal, dados persistem (lista de vendedoras)
+  var url = 'https://lcg2026.github.io/farmacia-alpha/';
+  var bat = '@echo off\nstart chrome --app="' + url + '"\n';
+  var blob = new Blob([bat], {type:'text/plain'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Agente Alpha - Admin.bat';
   a.click();
 }
 function resetOrcCounter() {
