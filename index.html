@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.31</title>
+<title>Farmácia Alpha v4.32</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -82,7 +82,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.31';
+  var VER = 'v4.32';
   var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
     localStorage.setItem('alphaVer', VER);
@@ -208,29 +208,29 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
       </div>
       <p style="font-size:11px;color:var(--text3);margin-top:6px">Chave salva apenas neste navegador.<br>Obter em: <strong>console.anthropic.com</strong> → API Keys → Create Key</p>
     </div>
-    <!-- Seção Acesso Vendedoras -->
+    <!-- Seção Gerenciar Vendedoras -->
     <div class="card" style="margin-top:12px">
-      <strong style="font-size:14px;display:block;margin-bottom:4px">🔒 Acesso para vendedoras</strong>
-      <p style="font-size:12px;color:var(--text3);margin-bottom:12px">Com senha configurada, o app pedirá senha ao abrir e a chave de API ficará oculta das vendedoras.</p>
-      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Nome da vendedora</label>
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <input class="inp" id="vnome" type="text" placeholder="Ex: Ana, Maria...">
-        <button class="btn btnp" onclick="saveVendedor()">Salvar</button>
+      <strong style="font-size:14px;display:block;margin-bottom:4px">👥 Gerenciar Vendedoras</strong>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:12px">Cada vendedora tem nome e senha individuais. Gere um link personalizado para configurar o dispositivo de cada uma.</p>
+      <!-- Formulário de cadastro -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:110px">
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Nome</label>
+          <input class="inp" id="v-add-nome" type="text" placeholder="Ex: Ana">
+        </div>
+        <div style="flex:1;min-width:110px">
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Senha</label>
+          <input class="inp" id="v-add-pin" type="password" placeholder="Senha">
+        </div>
+        <button class="btn btnp" style="white-space:nowrap;align-self:flex-end" onclick="addVendedora()">+ Adicionar</button>
       </div>
-      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Senha de acesso</label>
-      <div style="display:flex;gap:8px">
-        <input class="inp" id="vpin" type="password" placeholder="Senha para as vendedoras">
-        <button class="btn btnp" onclick="savePIN()">Definir senha</button>
-        <button class="btn" style="background:#e53935;color:#fff;border-color:#e53935" onclick="clearPIN()">Remover</button>
-      </div>
-      <div id="vpin-status" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
-      <!-- Gerar link de acesso -->
-      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-        <strong style="font-size:13px;display:block;margin-bottom:4px">📲 Configurar novo dispositivo</strong>
-        <p style="font-size:12px;color:var(--text3);margin-bottom:8px">Gera um link único. Vendedora abre <strong>uma vez</strong> no celular/notebook dela — fica configurado automaticamente.</p>
-        <button id="btn-gerar-link" class="btn" style="background:#1565C0;color:#fff;border-color:#1565C0;margin-bottom:8px" onclick="gerarLinkVendedora()">🔗 Gerar link de acesso</button>
-        <input id="link-vendedora-box" type="text" class="inp" style="display:none;font-size:11px;color:#555;background:#f9f9f9" readonly onclick="this.select()">
-        <p style="font-size:11px;color:#C62828;margin-top:6px">⚠ Envie este link apenas para as vendedoras. Quem tiver o link terá acesso ao app.</p>
+      <!-- Lista -->
+      <div id="vend-lista" style="margin-bottom:8px"></div>
+      <!-- Link gerado -->
+      <div id="link-vend-area" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <strong style="font-size:12px;display:block;margin-bottom:6px" id="link-vend-label">🔗 Link de acesso</strong>
+        <input id="link-vendedora-box" type="text" class="inp" style="font-size:11px;color:#555;background:#f9f9f9;margin-bottom:6px" readonly onclick="this.select()">
+        <p style="font-size:11px;color:#C62828;margin:0">⚠ Envie apenas para a vendedora indicada. Quem tiver o link terá acesso ao app.</p>
       </div>
     </div>
     <!-- Seção Atalho / Incógnito -->
@@ -759,6 +759,7 @@ window.onload = function() {
   (function checkHorario() {
     var pin = localStorage.getItem('alphaVendPIN');
     if(!pin) return; // sem PIN = admin, sem restrição
+    if(localStorage.getItem('alphaVendedoras') !== null) return; // dispositivo admin
     var now = new Date();
     var day = now.getDay(); // 0=dom,1=seg,...,6=sab
     var mins = now.getHours() * 60 + now.getMinutes();
@@ -794,9 +795,11 @@ window.onload = function() {
   }
 
   // ── Verificação de PIN de vendedoras ──
-  var vendPIN = localStorage.getItem('alphaVendPIN');
+  var vendPIN  = localStorage.getItem('alphaVendPIN');
   var vendNome = localStorage.getItem('alphaVendNome') || '';
-  if(vendPIN) {
+  // Dispositivo admin: tem lista de vendedoras → sem PIN para o próprio admin
+  var _isAdminDevice = localStorage.getItem('alphaVendedoras') !== null;
+  if(vendPIN && !_isAdminDevice) {
     if(sessionStorage.getItem('alphaUnlocked') === '1') {
       // Sessão já autenticada — ocultar seção de API para vendedoras
       document.getElementById('api-section').style.display = 'none';
@@ -808,9 +811,6 @@ window.onload = function() {
       document.getElementById('pin-inp').focus();
     }
   }
-  // Preencher campos de configuração do vendedor
-  if(vendNome) document.getElementById('vnome').value = vendNome;
-  if(vendPIN) document.getElementById('vpin-status').textContent = '✅ Senha configurada.';
 
   // API key
   var k = localStorage.getItem('cak');
@@ -2574,30 +2574,79 @@ function selAC(nome, preco, el) {
 }
 
 // ── API ────────────────────────────────────────────────────
-// ── Sistema de acesso PIN para vendedoras ─────────────────
-// ── Gerar link de acesso para vendedoras ─────────────────────
-function gerarLinkVendedora() {
-  var pin  = localStorage.getItem('alphaVendPIN');
-  var nome = localStorage.getItem('alphaVendNome') || '';
-  var api  = localStorage.getItem('cak') || '';
-  if(!pin) { alert('Configure a senha de acesso primeiro (seção acima).'); return; }
-  if(!api) { alert('Configure e salve a Chave de API antes de gerar o link.'); return; }
-  var cfg = btoa(JSON.stringify({p: pin, n: nome, k: api}));
-  var base = location.origin + location.pathname.replace(/\/$/, '');
-  // Remover qualquer parâmetro existente e adicionar o novo
-  var url = base + '?cfg=' + cfg;
-  var el = document.getElementById('link-vendedora-box');
-  if(el) {
-    el.value = url;
-    el.style.display = 'block';
+// ── Sistema de vendedoras (múltiplas, com senha individual) ────
+function getVendedoras() {
+  try { return JSON.parse(localStorage.getItem('alphaVendedoras') || '[]'); } catch(e) { return []; }
+}
+function _saveVendedorasList(list) {
+  localStorage.setItem('alphaVendedoras', JSON.stringify(list));
+}
+function addVendedora() {
+  var nome = (document.getElementById('v-add-nome').value || '').trim();
+  var pin  = (document.getElementById('v-add-pin').value  || '').trim();
+  if(!nome || !pin) { alert('Preencha nome e senha.'); return; }
+  var list = getVendedoras();
+  if(list.some(function(v){ return v.nome.toLowerCase() === nome.toLowerCase(); })) {
+    alert('Já existe uma vendedora com o nome "' + nome + '".'); return;
   }
-  // Copiar para área de transferência
-  navigator.clipboard.writeText(url).then(function() {
-    var btn = document.getElementById('btn-gerar-link');
-    if(btn) { var orig=btn.textContent; btn.textContent='✅ Link copiado!'; btn.style.background='#2E7D32'; setTimeout(function(){btn.textContent=orig;btn.style.background='#1565C0';},3000); }
-  }).catch(function() {
-    alert('Link gerado (não foi possível copiar automaticamente):\n\n' + url);
+  list.push({id: 'V' + Date.now(), nome: nome, pin: pin});
+  _saveVendedorasList(list);
+  document.getElementById('v-add-nome').value = '';
+  document.getElementById('v-add-pin').value  = '';
+  renderVendedorasList();
+}
+function removeVendedora(id) {
+  if(!confirm('Remover esta vendedora?')) return;
+  _saveVendedorasList(getVendedoras().filter(function(v){ return v.id !== id; }));
+  renderVendedorasList();
+  document.getElementById('link-vend-area').style.display = 'none';
+}
+function renderVendedorasList() {
+  var el = document.getElementById('vend-lista');
+  if(!el) return;
+  var list = getVendedoras();
+  if(list.length === 0) {
+    el.innerHTML = '<p style="color:var(--text3);font-size:13px;text-align:center;padding:10px 0">Nenhuma vendedora cadastrada.</p>';
+    return;
+  }
+  var h = '<table style="width:100%;border-collapse:collapse;font-size:13px">'
+    + '<tr style="border-bottom:2px solid var(--border)">'
+    + '<th style="text-align:left;padding:5px 4px">Nome</th>'
+    + '<th style="text-align:left;padding:5px 4px">Senha</th>'
+    + '<th></th></tr>';
+  list.forEach(function(v) {
+    var stars = '•'.repeat(Math.min(v.pin.length, 8));
+    h += '<tr style="border-bottom:1px solid var(--border)">'
+      + '<td style="padding:8px 4px;font-weight:600">' + v.nome + '</td>'
+      + '<td style="padding:8px 4px;color:var(--text3);letter-spacing:2px">' + stars + '</td>'
+      + '<td style="padding:8px 4px;text-align:right;white-space:nowrap">'
+      + '<button class="btn" data-vid="' + v.id + '" style="font-size:11px;padding:4px 8px;margin-right:4px;background:#1565C0;color:#fff;border-color:#1565C0" onclick="gerarLinkVendedora(this.dataset.vid)">🔗 Link</button>'
+      + '<button class="btn" data-vid="' + v.id + '" style="font-size:11px;padding:4px 8px;background:#e53935;color:#fff;border-color:#e53935" onclick="removeVendedora(this.dataset.vid)">🗑</button>'
+      + '</td></tr>';
   });
+  h += '</table>';
+  el.innerHTML = h;
+}
+function gerarLinkVendedora(id) {
+  var list = getVendedoras();
+  var v = null;
+  for(var i=0;i<list.length;i++){ if(list[i].id===id){ v=list[i]; break; } }
+  if(!v) { alert('Vendedora não encontrada.'); return; }
+  var api = localStorage.getItem('cak') || '';
+  if(!api) { alert('Configure e salve a Chave de API antes de gerar o link.'); return; }
+  var cfg = btoa(JSON.stringify({p: v.pin, n: v.nome, k: api}));
+  var base = location.origin + location.pathname.replace(/\/$/, '');
+  var url  = base + '?cfg=' + cfg;
+  var area = document.getElementById('link-vend-area');
+  var box  = document.getElementById('link-vendedora-box');
+  var lbl  = document.getElementById('link-vend-label');
+  if(lbl)  lbl.textContent  = '🔗 Link de acesso — ' + v.nome;
+  if(box)  box.value        = url;
+  if(area) area.style.display = 'block';
+  setTimeout(function(){ if(box){ box.focus(); box.select(); } }, 50);
+  navigator.clipboard.writeText(url).then(function() {
+    if(lbl) { var orig=lbl.textContent; lbl.textContent='✅ Link copiado! — ' + v.nome; setTimeout(function(){ lbl.textContent=orig; }, 3000); }
+  }).catch(function() {});
 }
 
 // ── Atalho incógnito e contador ORC ──────────────────────────
@@ -2623,35 +2672,14 @@ function initConfigPage() {
   var el2 = document.getElementById('last-orc-show');
   if(el) el.textContent = devId;
   if(el2) el2.textContent = seq > 0 ? 'ORC-'+devId+'-'+String(seq).padStart(4,'0') : '(nenhum ainda)';
+  renderVendedorasList();
 }
 // Atualizar painel de config quando a aba é selecionada
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('n4').addEventListener('click', function(){ setTimeout(initConfigPage, 50); });
 });
 
-function savePIN() {
-  var p = document.getElementById('vpin').value.trim();
-  if(!p) { alert('Digite uma senha para as vendedoras.'); return; }
-  localStorage.setItem('alphaVendPIN', p);
-  document.getElementById('vpin').value = '';
-  document.getElementById('vpin-status').textContent = '✅ Senha configurada. As vendedoras precisarão digitar esta senha ao abrir o app.';
-}
-
-function clearPIN() {
-  if(!confirm('Remover senha? O app ficará sem proteção de acesso.')) return;
-  localStorage.removeItem('alphaVendPIN');
-  sessionStorage.removeItem('alphaUnlocked');
-  document.getElementById('vpin').value = '';
-  document.getElementById('vpin-status').textContent = 'Senha removida — app aberto sem senha.';
-  document.getElementById('api-section').style.display = '';
-}
-
-function saveVendedor() {
-  var nome = document.getElementById('vnome').value.trim();
-  if(!nome) { alert('Digite o nome da vendedora.'); return; }
-  localStorage.setItem('alphaVendNome', nome);
-  alert('Nome "' + nome + '" salvo! Será exibido na tela de acesso.');
-}
+// savePIN / clearPIN / saveVendedor removidos — substituídos pelo sistema multi-vendedoras
 
 function checkPIN() {
   var entered = document.getElementById('pin-inp').value;
