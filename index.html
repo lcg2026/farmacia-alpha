@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.32</title>
+<title>Farmácia Alpha v4.33</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -82,7 +82,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.32';
+  var VER = 'v4.33';
   var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
     localStorage.setItem('alphaVer', VER);
@@ -229,7 +229,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
       <!-- Link gerado -->
       <div id="link-vend-area" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
         <strong style="font-size:12px;display:block;margin-bottom:6px" id="link-vend-label">🔗 Link de acesso</strong>
-        <input id="link-vendedora-box" type="text" class="inp" style="font-size:11px;color:#555;background:#f9f9f9;margin-bottom:6px" readonly onclick="this.select()">
+        <div style="display:flex;gap:8px;margin-bottom:6px">
+          <input id="link-vendedora-box" type="text" class="inp" style="flex:1;font-size:11px;color:#555;background:#f9f9f9" readonly onclick="this.select()">
+          <button id="btn-copiar-link" class="btn btnp" style="white-space:nowrap;font-size:12px" onclick="copiarLinkVendedora()">📋 Copiar</button>
+        </div>
         <p style="font-size:11px;color:#C62828;margin:0">⚠ Envie apenas para a vendedora indicada. Quem tiver o link terá acesso ao app.</p>
       </div>
     </div>
@@ -740,7 +743,7 @@ window.onload = function() {
       var params = new URLSearchParams(location.search);
       var cfg = params.get('cfg');
       if(!cfg) return;
-      var data = JSON.parse(atob(cfg));
+      var data = JSON.parse(decodeURIComponent(escape(atob(cfg))));
       if(data.p) localStorage.setItem('alphaVendPIN',  data.p);
       if(data.n) localStorage.setItem('alphaVendNome', data.n);
       if(data.k) localStorage.setItem('cak', data.k); // chave API (opcional)
@@ -2627,6 +2630,10 @@ function renderVendedorasList() {
   h += '</table>';
   el.innerHTML = h;
 }
+function _b64utf8(str) {
+  // btoa seguro para UTF-8 (nomes com acentos)
+  return btoa(unescape(encodeURIComponent(str)));
+}
 function gerarLinkVendedora(id) {
   var list = getVendedoras();
   var v = null;
@@ -2634,19 +2641,40 @@ function gerarLinkVendedora(id) {
   if(!v) { alert('Vendedora não encontrada.'); return; }
   var api = localStorage.getItem('cak') || '';
   if(!api) { alert('Configure e salve a Chave de API antes de gerar o link.'); return; }
-  var cfg = btoa(JSON.stringify({p: v.pin, n: v.nome, k: api}));
+  var cfg  = _b64utf8(JSON.stringify({p: v.pin, n: v.nome, k: api}));
   var base = location.origin + location.pathname.replace(/\/$/, '');
   var url  = base + '?cfg=' + cfg;
   var area = document.getElementById('link-vend-area');
   var box  = document.getElementById('link-vendedora-box');
   var lbl  = document.getElementById('link-vend-label');
-  if(lbl)  lbl.textContent  = '🔗 Link de acesso — ' + v.nome;
-  if(box)  box.value        = url;
+  if(lbl)  lbl.textContent = '🔗 Link de acesso — ' + v.nome;
+  if(box)  box.value = url;
   if(area) area.style.display = 'block';
   setTimeout(function(){ if(box){ box.focus(); box.select(); } }, 50);
-  navigator.clipboard.writeText(url).then(function() {
-    if(lbl) { var orig=lbl.textContent; lbl.textContent='✅ Link copiado! — ' + v.nome; setTimeout(function(){ lbl.textContent=orig; }, 3000); }
-  }).catch(function() {});
+}
+function copiarLinkVendedora() {
+  var box = document.getElementById('link-vendedora-box');
+  var btn = document.getElementById('btn-copiar-link');
+  if(!box || !box.value) return;
+  var url = box.value;
+  function marcarCopiado() {
+    if(btn) { btn.textContent='✅ Copiado!'; btn.style.background='#2E7D32'; }
+    setTimeout(function(){ if(btn){ btn.textContent='📋 Copiar'; btn.style.background=''; } }, 3000);
+  }
+  // Tentar API moderna
+  if(navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(marcarCopiado).catch(function() {
+      // Fallback: seleção + execCommand
+      box.select(); box.setSelectionRange(0, 99999);
+      try { document.execCommand('copy'); marcarCopiado(); }
+      catch(e) { alert('Não foi possível copiar automaticamente.\nSelecione o link acima e copie manualmente (Ctrl+C).'); }
+    });
+  } else {
+    // Fallback direto
+    box.select(); box.setSelectionRange(0, 99999);
+    try { document.execCommand('copy'); marcarCopiado(); }
+    catch(e) { alert('Não foi possível copiar automaticamente.\nSelecione o link acima e copie manualmente (Ctrl+C).'); }
+  }
 }
 
 // ── Atalho incógnito e contador ORC ──────────────────────────
