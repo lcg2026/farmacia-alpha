@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.28</title>
+<title>Farmácia Alpha v4.29</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -82,7 +82,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.28';
+  var VER = 'v4.29';
   var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
     localStorage.setItem('alphaVer', VER);
@@ -224,6 +224,14 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
         <button class="btn" style="background:#e53935;color:#fff;border-color:#e53935" onclick="clearPIN()">Remover</button>
       </div>
       <div id="vpin-status" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
+      <!-- Gerar link de acesso -->
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">📲 Configurar novo dispositivo</strong>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:8px">Gera um link único. Vendedora abre <strong>uma vez</strong> no celular/notebook dela — fica configurado automaticamente.</p>
+        <button id="btn-gerar-link" class="btn" style="background:#1565C0;color:#fff;border-color:#1565C0;margin-bottom:8px" onclick="gerarLinkVendedora()">🔗 Gerar link de acesso</button>
+        <input id="link-vendedora-box" type="text" class="inp" style="display:none;font-size:11px;color:#555;background:#f9f9f9" readonly onclick="this.select()">
+        <p style="font-size:11px;color:#C62828;margin-top:6px">⚠ Envie este link apenas para as vendedoras. Quem tiver o link terá acesso ao app.</p>
+      </div>
     </div>
     <!-- Seção Atalho / Incógnito -->
     <div class="card" style="margin-top:12px">
@@ -725,6 +733,28 @@ if('serviceWorker' in navigator) {
 }
 
 window.onload = function() {
+  // ── Configuração automática via link (?cfg=BASE64) ──
+  // Admin gera link em Configurações → envia para vendedora → abre 1 vez → configurado
+  (function applyConfigLink() {
+    try {
+      var params = new URLSearchParams(location.search);
+      var cfg = params.get('cfg');
+      if(!cfg) return;
+      var data = JSON.parse(atob(cfg));
+      if(data.p) localStorage.setItem('alphaVendPIN',  data.p);
+      if(data.n) localStorage.setItem('alphaVendNome', data.n);
+      if(data.k) localStorage.setItem('cak', data.k); // chave API (opcional)
+      // Remover ?cfg= da URL sem recarregar
+      history.replaceState({}, '', location.pathname);
+      // Feedback visual
+      var toast = document.createElement('div');
+      toast.textContent = '✅ Acesso configurado com sucesso!';
+      toast.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1B5E20;color:#fff;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:600;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,.3)';
+      document.body.appendChild(toast);
+      setTimeout(function(){ toast.remove(); }, 3500);
+    } catch(e) { /* link inválido — ignorar */ }
+  })();
+
   // ── Controle de horário de acesso para vendedoras ──
   (function checkHorario() {
     var pin = localStorage.getItem('alphaVendPIN');
@@ -2539,6 +2569,29 @@ function selAC(nome, preco, el) {
 
 // ── API ────────────────────────────────────────────────────
 // ── Sistema de acesso PIN para vendedoras ─────────────────
+// ── Gerar link de acesso para vendedoras ─────────────────────
+function gerarLinkVendedora() {
+  var pin  = localStorage.getItem('alphaVendPIN');
+  var nome = localStorage.getItem('alphaVendNome') || '';
+  if(!pin) { alert('Configure a senha de acesso primeiro (seção acima).'); return; }
+  var cfg = btoa(JSON.stringify({p: pin, n: nome}));
+  var base = location.origin + location.pathname.replace(/\/$/, '');
+  // Remover qualquer parâmetro existente e adicionar o novo
+  var url = base + '?cfg=' + cfg;
+  var el = document.getElementById('link-vendedora-box');
+  if(el) {
+    el.value = url;
+    el.style.display = 'block';
+  }
+  // Copiar para área de transferência
+  navigator.clipboard.writeText(url).then(function() {
+    var btn = document.getElementById('btn-gerar-link');
+    if(btn) { var orig=btn.textContent; btn.textContent='✅ Link copiado!'; btn.style.background='#2E7D32'; setTimeout(function(){btn.textContent=orig;btn.style.background='#1565C0';},3000); }
+  }).catch(function() {
+    alert('Link gerado (não foi possível copiar automaticamente):\n\n' + url);
+  });
+}
+
 // ── Atalho incógnito e contador ORC ──────────────────────────
 function baixarAtalho() {
   var url = 'https://lcg2026.github.io/farmacia-alpha/';
