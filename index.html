@@ -82,7 +82,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.34';
+  var VER = 'v4.35';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -103,10 +103,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </script>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.34 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.35 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span id="ver-logo" style="font-weight:400;font-size:11px;opacity:0.5">v4.34</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span id="ver-logo" style="font-weight:400;font-size:11px;opacity:0.5">v4.35</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -259,15 +259,16 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
       </div>
       <!-- Opção 2: Atalhos Windows -->
       <div style="background:#FFF3E0;border-radius:8px;padding:12px;margin-bottom:10px">
-        <strong style="font-size:13px;color:#E65100;display:block;margin-bottom:8px">🖥️ Atalhos Windows (.bat)</strong>
+        <strong style="font-size:13px;color:#E65100;display:block;margin-bottom:4px">🖥️ Atalhos de área de trabalho Windows (.bat)</strong>
+        <p style="font-size:11px;color:#BF360C;margin:0 0 10px">Estes arquivos abrem o Chrome direto no Agente. Não são links — são atalhos para instalar no computador.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <div style="flex:1;min-width:140px">
-            <p style="font-size:11px;color:#555;margin:0 0 6px"><strong>Para o Admin</strong> — abre sem incógnito, dados salvos</p>
-            <button class="btn" style="background:#1565C0;color:#fff;border-color:#1565C0;font-size:12px;width:100%" onclick="baixarAtalhoAdmin()">⬇ Atalho Admin</button>
+            <p style="font-size:11px;color:#555;margin:0 0 6px">Computador do <strong>admin</strong> — sem incógnito, dados persistem</p>
+            <button class="btn" style="background:#1565C0;color:#fff;border-color:#1565C0;font-size:12px;width:100%" onclick="baixarAtalhoAdmin()">⬇ .bat Admin</button>
           </div>
           <div style="flex:1;min-width:140px">
-            <p style="font-size:11px;color:#555;margin:0 0 6px"><strong>Para Vendedoras</strong> — abre em modo anônimo</p>
-            <button class="btn" style="background:#E65100;color:#fff;border-color:#E65100;font-size:12px;width:100%" onclick="baixarAtalho()">⬇ Atalho Vendedora</button>
+            <p style="font-size:11px;color:#555;margin:0 0 6px">Computador das <strong>vendedoras</strong> — modo anônimo</p>
+            <button class="btn" style="background:#E65100;color:#fff;border-color:#E65100;font-size:12px;width:100%" onclick="baixarAtalho()">⬇ .bat Vendedora</button>
           </div>
         </div>
       </div>
@@ -2627,7 +2628,11 @@ function renderVendedorasList() {
   if(!el) return;
   var list = getVendedoras();
   if(list.length === 0) {
-    el.innerHTML = '<p style="color:var(--text3);font-size:13px;text-align:center;padding:10px 0">Nenhuma vendedora cadastrada.</p>';
+    el.innerHTML = '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:8px;padding:12px;text-align:center">'
+      + '<p style="font-size:13px;color:#E65100;margin:0 0 4px;font-weight:600">Nenhuma vendedora cadastrada</p>'
+      + '<p style="font-size:12px;color:#777;margin:0">Preencha Nome + Senha acima e clique <strong>+ Adicionar</strong>.<br>'
+      + 'Depois clique <strong>🔗 Link</strong> na linha da vendedora para gerar o link de acesso.</p>'
+      + '</div>';
     return;
   }
   var h = '<table style="width:100%;border-collapse:collapse;font-size:13px">'
