@@ -12,7 +12,15 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.27</title>
+<title>Farmácia Alpha v4.28</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B5E20">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Alpha">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -74,7 +82,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.27';
+  var VER = 'v4.28';
   var stored = localStorage.getItem('alphaVer');
   if(stored && stored !== VER) {
     localStorage.setItem('alphaVer', VER);
@@ -216,6 +224,31 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
         <button class="btn" style="background:#e53935;color:#fff;border-color:#e53935" onclick="clearPIN()">Remover</button>
       </div>
       <div id="vpin-status" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
+    </div>
+    <!-- Seção Atalho / Incógnito -->
+    <div class="card" style="margin-top:12px">
+      <strong style="font-size:14px;display:block;margin-bottom:4px">📲 Atalho para vendedoras</strong>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:12px">Instale como app ou abra sempre em modo anônimo para maior segurança.</p>
+      <!-- Opção 1: Instalar como app -->
+      <div style="background:#E8F5E9;border-radius:8px;padding:12px;margin-bottom:10px">
+        <strong style="font-size:13px;color:#1B5E20;display:block;margin-bottom:6px">📱 Instalar como App (recomendado)</strong>
+        <p style="font-size:12px;color:#2E7D32;margin-bottom:8px">No Chrome/Edge: clique no ícone ⊕ na barra de endereços → "Instalar". O app abre em janela própria, sem histórico do navegador.</p>
+        <p style="font-size:12px;color:#2E7D32;margin-bottom:4px"><strong>Celular Android:</strong> Chrome → menu ⋮ → "Adicionar à tela inicial"</p>
+        <p style="font-size:12px;color:#2E7D32"><strong>iPhone:</strong> Safari → compartilhar ⬆ → "Adicionar à tela de início"</p>
+      </div>
+      <!-- Opção 2: Atalho Windows incógnito -->
+      <div style="background:#FFF3E0;border-radius:8px;padding:12px;margin-bottom:10px">
+        <strong style="font-size:13px;color:#E65100;display:block;margin-bottom:6px">🖥️ Atalho Windows — Chrome modo anônimo</strong>
+        <p style="font-size:12px;color:#BF360C;margin-bottom:8px">Baixe o arquivo abaixo e coloque na área de trabalho. Ao clicar, abre o Agente direto em modo anônimo.</p>
+        <button class="btn" style="background:#E65100;color:#fff;border-color:#E65100;font-size:12px" onclick="baixarAtalho()">⬇ Baixar atalho (.bat)</button>
+      </div>
+      <!-- Contador de orçamentos -->
+      <div style="background:#F3E5F5;border-radius:8px;padding:12px">
+        <strong style="font-size:13px;color:#6A1B9A;display:block;margin-bottom:4px">🔢 Numeração de orçamentos</strong>
+        <p style="font-size:12px;color:#6A1B9A;margin-bottom:6px">Código deste dispositivo: <strong id="dev-id-show">—</strong></p>
+        <p style="font-size:12px;color:#6A1B9A;margin-bottom:6px">Último orçamento gerado: <strong id="last-orc-show">—</strong></p>
+        <button class="btn" style="font-size:12px" onclick="resetOrcCounter()">🔄 Zerar contador</button>
+      </div>
     </div>
   </div>
 </div>
@@ -591,6 +624,24 @@ function formaToCode(fml) {
 
 // ── Tabelas progressivas ───────────────────────────────────
 var CF = 37.5, PM = 62;
+
+// ── Numeração sequencial de orçamentos ──────────────────────
+// Formato: ORC-XX-NNNN  (XX = código do dispositivo, NNNN = sequencial global)
+function getDevId() {
+  var id = localStorage.getItem('alphaDevId');
+  if(!id) {
+    var c = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    id = c[Math.floor(Math.random()*c.length)] + Math.floor(Math.random()*10);
+    localStorage.setItem('alphaDevId', id);
+  }
+  return id;
+}
+function getNextOrcNum() {
+  var n = parseInt(localStorage.getItem('alphaOrcSeq') || '0') + 1;
+  localStorage.setItem('alphaOrcSeq', n);
+  return 'ORC-' + getDevId() + '-' + String(n).padStart(4, '0');
+}
+window._currentOrcNum = null; // limpo a cada nova receita
 var PROG = {
   Capsulas:[[5.25,6],[5.5,6],[5.75,6],[6,6],[6.25,6],[6.5,6],[6.75,6],[7,5.9],[7.25,5.9],[7.5,5.9],[7.75,5.7],[8,5.7],[8.25,5.7],[9,5.7],[9.25,5.7],[9.5,5.7],[9.75,5.7],[10,5.6],[10.25,5.6],[10.5,5.5],[10.75,5.4],[11,5],[11.25,5],[11.5,5],[11.75,4.9],[12,4.5],[12.25,4.42],[12.5,4.42],[12.75,4.42],[13,4.42],[13.25,4.42],[13.5,4.42],[13.75,4.42],[14,4.42],[14.25,4.42],[14.5,4.42],[14.75,4.42],[15,4.42],[15.25,4.42],[15.5,4.42],[15.75,4.42],[16,4.42],[16.25,4.4],[16.5,4.4],[16.75,4.4],[17,4.4],[17.25,4.4],[17.5,4.4],[17.75,4.4],[18,4.4],[18.25,4.4],[18.5,4.4],[18.75,4.4],[19,4.4],[19.25,4.4],[19.5,4.4],[19.75,4.4],[20,4.25],[25,4.25],[30,4],[33,4],[36,4],[40,3.7],[42.5,3.7],[45,3.7],[50,3.5],[55,3.5],[60,3.4],[65,3.3],[70,3.3],[75,3.2],[80,3],[90,3],[110,2.95],[150,2.95],[200,2.9],[300,2.85],[600,2.75],[5000,2.6],[10000,2.6]],
   Sache:[[3.75,6.85],[4,6.8],[4.25,6.7],[4.5,6.6],[4.75,6.5],[5,6.4],[5.25,6.3],[5.5,6.2],[5.75,6.1],[6,6.1],[6.25,5.95],[6.5,5.9],[6.75,5.9],[7,5.8],[7.25,5.7],[7.5,5.6],[7.75,5.5],[8,5.4],[8.25,5.3],[8.5,5.3],[8.75,5.3],[9,5.3],[9.25,5.3],[9.5,5.3],[9.75,5.3],[10,5.2],[10.25,5.1],[10.5,5.05],[10.75,4.8],[11,4.8],[11.25,4.7],[11.5,4.7],[11.75,4.7],[12,4.6],[12.25,4.6],[12.5,4.6],[12.75,4.55],[13,4.55],[13.25,4.55],[13.5,4.55],[13.75,4.55],[14,4.55],[14.25,4.55],[14.5,4.55],[14.75,4.55],[15,4.5],[15.25,4.5],[15.5,4.5],[15.75,4.5],[16,4.5],[16.25,4.5],[16.5,4.5],[16.75,4.5],[17,4.5],[17.25,4.5],[17.5,4.5],[17.75,4.5],[18,4.5],[18.25,4.5],[18.5,4.5],[18.75,4.5],[19,4.5],[19.25,4.5],[19.5,4.5],[19.75,4.5],[20,4.5],[25,4.5],[30,4.5],[50,4],[60,4],[70,4],[80,4],[90,3.8],[100,3.3],[150,3.3],[200,3],[300,2.9],[5000,2.8]],
@@ -1878,8 +1929,9 @@ function renderResult(r, container, idx) {
     precoHtml = '<div class="rtot"><span>Preço de venda ' + minLabel + '</span><span>R$ ' + r.pv.toFixed(2) + '</span></div>';
   }
 
+  var orcBadge = r.orc ? '<span style="float:right;font-size:10px;font-weight:500;color:#4A6A4A;background:#C8E6C9;border-radius:4px;padding:2px 7px;letter-spacing:.03em">'+r.orc+'</span>' : '';
   var html = '<div class="rcard">' +
-    '<h3>' + r.fm + ' • ' + r.qtd + ' ' + unidLabel + '</h3>' +
+    '<h3>' + r.fm + ' • ' + r.qtd + ' ' + unidLabel + orcBadge + '</h3>' +
     avHtml + rows +
     precoHtml +
     '<div class="sim-box">' +
@@ -1959,6 +2011,9 @@ function renderResult(r, container, idx) {
 function calcFormulas() {
   var parsed = window._parsedRec;
   if(!parsed) return;
+  // Gerar número de orçamento apenas na primeira chamada (não ao re-calcular por correção)
+  if(!window._currentOrcNum) window._currentOrcNum = getNextOrcNum();
+  var orcNum = window._currentOrcNum;
   var container = document.getElementById('resultados-formulas');
   container.innerHTML = '';
   var alguma = false;
@@ -1967,6 +2022,7 @@ function calcFormulas() {
     var chk = document.getElementById('fcheck'+i);
     if(!chk || !chk.checked) return;
     var r = calcRec({paciente:parsed.paciente, prescritor:parsed.prescritor||'', forma:f.forma, qtd:f.qtd, ativos:f.ativos, descricao:f.descricao||''});
+    r.orc = orcNum;
     allResults.push(r);
     var div = document.createElement('div');
     renderResult(r, div, allResults.length - 1);
@@ -1976,7 +2032,7 @@ function calcFormulas() {
   window._allResults = allResults;
   // _activeResults rastreia qtd/pv atual por fórmula (atualizado ao simular)
   window._activeResults = allResults.map(function(r){
-    return {fm:r.fm, qtd:r.qtd, pv:r.pv, pac:r.pac, pre:r.pre, custo:r.custo, mkp:r.mkp, itens:r.itens, minoxPad:r.minoxPad||null};
+    return {fm:r.fm, qtd:r.qtd, pv:r.pv, pac:r.pac, pre:r.pre, custo:r.custo, mkp:r.mkp, itens:r.itens, minoxPad:r.minoxPad||null, orc:r.orc||null};
   });
 
   if(alguma) {
@@ -1996,9 +2052,12 @@ function calcFormulas() {
       : '';
     var resumoDiv = document.createElement('div');
     resumoDiv.innerHTML = '<div class="card" style="margin-top:12px;border:2px solid var(--primary);padding:14px">' +
-      '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px;font-size:13px">' +
-        '<span>👤 <strong>'+pac+'</strong></span>' +
-        (pre ? '<span style="color:var(--text3)">🩺 '+pre+'</span>' : '') +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">' +
+        '<div style="display:flex;flex-wrap:wrap;gap:12px;font-size:13px">' +
+          '<span>👤 <strong>'+pac+'</strong></span>' +
+          (pre ? '<span style="color:var(--text3)">🩺 '+pre+'</span>' : '') +
+        '</div>' +
+        (orcNum ? '<span style="font-size:11px;font-weight:700;color:#1B5E20;background:#C8E6C9;border-radius:4px;padding:3px 10px;white-space:nowrap">'+orcNum+'</span>' : '') +
       '</div>' +
       '<div id="resumo-linhas">' + linhasRes + totalLine + '</div>' +
       '<div style="margin-top:12px;display:flex;gap:8px">' +
@@ -2023,9 +2082,11 @@ function envWA() {
   var nomeCliente = pac.split(' ')[0] || 'Cliente';
   var total = activeRes.reduce(function(s,r){return s+r.pv;},0);
 
+  var orcRef = (activeRes[0]||allRes[0]).orc || null;
   // Cabeçalho personalizado
   var header = 'Olá, ' + nomeCliente + '! Tudo bem?\n\n';
   if(pre) header += 'Conforme prescrição do(a) ' + pre + ', estou enviando a cotação dos itens solicitados.\n\n';
+  if(orcRef) header += '📋 Orçamento ' + orcRef + '\n\n';
 
   // Linhas de cada fórmula — usa activeRes para qtd/pv atualizados pela simulação
   var linhasFormulas = allRes.map(function(r, i) {
@@ -2058,6 +2119,7 @@ function copiarOrcamento(btn) {
   var isSol = /cap|sach|sublingual/.test(normStr(r.fm||''));
   var unid = isSol ? 'doses' : 'mL/g';
   var linhas = [];
+  if(r.orc) linhas.push('📋 Orçamento ' + r.orc);
   if(r.pac) linhas.push('Paciente: ' + r.pac);
   if(r.pre) linhas.push('Prescritor(a): ' + r.pre);
   linhas.push('');
@@ -2082,8 +2144,10 @@ function copiarOrcamentoGeral(btn) {
   if(!allRes || allRes.length === 0) { alert('Nenhum orçamento calculado.'); return; }
   var pac = (activeRes[0]||allRes[0]).pac || '';
   var pre = (activeRes[0]||allRes[0]).pre || '';
+  var orcG = (activeRes[0]||allRes[0]).orc || null;
   var total = activeRes.reduce(function(s,r){return s+r.pv;},0);
   var linhas = [];
+  if(orcG) linhas.push('📋 Orçamento ' + orcG);
   if(pac) linhas.push('Paciente: ' + pac);
   if(pre) linhas.push('Prescritor(a): ' + pre);
   linhas.push('');
@@ -2113,7 +2177,7 @@ function copiarOrcamentoGeral(btn) {
 
 function savH() {
   if(!last) return;
-  hist.unshift({pac:last.pac, fm:last.fm, qtd:last.qtd, pv:last.pv, ts:Date.now(), confirmado:false});
+  hist.unshift({pac:last.pac, fm:last.fm, qtd:last.qtd, pv:last.pv, ts:Date.now(), confirmado:false, orc:last.orc||null});
   saveHist();
   alert('Salvo no histórico!');
 }
@@ -2130,7 +2194,7 @@ function confirmarOrcamento() {
     }
   }
   if(!found) {
-    hist.unshift({pac:last.pac, fm:last.fm, qtd:last.qtd, pv:last.pv, ts:Date.now(), confirmado:true});
+    hist.unshift({pac:last.pac, fm:last.fm, qtd:last.qtd, pv:last.pv, ts:Date.now(), confirmado:true, orc:last.orc||null});
   }
   saveHist();
   alert('✅ Orçamento de ' + last.pac + ' marcado como CONFIRMADO!');
@@ -2337,6 +2401,7 @@ function calcFoto() {
         // Guardar dados
         window._parsedRec = parsed;
         window._corrections = {}; // limpar correções anteriores ao carregar nova receita
+        window._currentOrcNum = null; // nova receita → novo número de orçamento
       } catch(e) { 
         // Try to recover: if JSON looks truncated, show user-friendly message
         var msg = 'Erro ao interpretar receita: ' + e.message;
@@ -2388,7 +2453,9 @@ function calcManual() {
     if(nome && dose > 0) ativos.push({nome:nome, dose:dose, unidade:unidade});
   });
   if(!ativos.length) { alert('Adicione pelo menos um insumo!'); return; }
+  window._currentOrcNum = getNextOrcNum(); // novo cálculo manual = novo ORC
   var r = calcRec({paciente:pac, forma:forma, qtd:qtd, ativos:ativos});
+  r.orc = window._currentOrcNum;
   var container = document.getElementById('rmanual');
   container.innerHTML = '';
   renderResult(r, container);
@@ -2463,6 +2530,35 @@ function selAC(nome, preco, el) {
 
 // ── API ────────────────────────────────────────────────────
 // ── Sistema de acesso PIN para vendedoras ─────────────────
+// ── Atalho incógnito e contador ORC ──────────────────────────
+function baixarAtalho() {
+  var url = 'https://lcg2026.github.io/farmacia-alpha/';
+  var bat = '@echo off\nstart chrome --incognito --app="' + url + '"\n';
+  var blob = new Blob([bat], {type:'text/plain'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Agente Alpha - Abrir.bat';
+  a.click();
+}
+function resetOrcCounter() {
+  if(!confirm('Zerar o contador de orçamentos?\nO próximo orçamento será ORC-'+getDevId()+'-0001')) return;
+  localStorage.setItem('alphaOrcSeq', '0');
+  document.getElementById('last-orc-show').textContent = '—';
+  alert('Contador zerado!');
+}
+function initConfigPage() {
+  var devId = getDevId();
+  var seq = parseInt(localStorage.getItem('alphaOrcSeq') || '0');
+  var el = document.getElementById('dev-id-show');
+  var el2 = document.getElementById('last-orc-show');
+  if(el) el.textContent = devId;
+  if(el2) el2.textContent = seq > 0 ? 'ORC-'+devId+'-'+String(seq).padStart(4,'0') : '(nenhum ainda)';
+}
+// Atualizar painel de config quando a aba é selecionada
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('n4').addEventListener('click', function(){ setTimeout(initConfigPage, 50); });
+});
+
 function savePIN() {
   var p = document.getElementById('vpin').value.trim();
   if(!p) { alert('Digite uma senha para as vendedoras.'); return; }
@@ -2602,7 +2698,8 @@ function renderHist() {
     var status = h.confirmado
       ? '<span style="font-size:11px;background:#E3F2FD;color:#1565C0;border-radius:4px;padding:2px 6px;font-weight:600">✅ CONFIRMADO</span>'
       : '<span style="font-size:11px;background:#FFF3E0;color:#E65100;border-radius:4px;padding:2px 6px">pendente</span>';
-    return '<div class="hist-item" style="display:flex;justify-content:space-between;align-items:flex-start"><div><strong>'+h.pac+'</strong> — '+h.fm+' '+h.qtd+' doses<br><span style="font-size:11px;color:var(--text3)">'+new Date(h.ts).toLocaleTimeString('pt-BR')+'</span></div><div style="text-align:right"><span style="font-weight:600">R$ '+h.pv.toFixed(2)+'</span><br>'+status+'</div></div>';
+    var orcTag = h.orc ? '<span style="font-size:10px;font-weight:600;color:#1B5E20;background:#C8E6C9;border-radius:3px;padding:1px 5px;margin-left:4px">'+h.orc+'</span>' : '';
+    return '<div class="hist-item" style="display:flex;justify-content:space-between;align-items:flex-start"><div><strong>'+h.pac+'</strong>'+orcTag+' — '+h.fm+' '+h.qtd+' doses<br><span style="font-size:11px;color:var(--text3)">'+new Date(h.ts).toLocaleTimeString('pt-BR')+'</span></div><div style="text-align:right"><span style="font-weight:600">R$ '+h.pv.toFixed(2)+'</span><br>'+status+'</div></div>';
   }).join('');
 }
 

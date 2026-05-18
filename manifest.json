@@ -1,0 +1,25 @@
+{
+  "name": "Farmácia Alpha — Orçamentos",
+  "short_name": "Alpha",
+  "description": "Sistema de Orçamento de Manipulação",
+  "start_url": "/farmacia-alpha/?pwa=1",
+  "scope": "/farmacia-alpha/",
+  "display": "standalone",
+  "background_color": "#1B5E20",
+  "theme_color": "#1B5E20",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
