@@ -715,6 +715,15 @@ var hist = [], last = null, arq = null;
 var simAtual = {qtd:0,pv:0}, qtdsFixadas = [];
 
 // ── Inicialização ──────────────────────────────────────────
+// Registrar Service Worker para PWA instalável
+if('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/farmacia-alpha/sw.js')
+      .then(function(reg){ console.log('SW registrado:', reg.scope); })
+      .catch(function(err){ console.warn('SW falhou:', err); });
+  });
+}
+
 window.onload = function() {
   // ── Controle de horário de acesso para vendedoras ──
   (function checkHorario() {
