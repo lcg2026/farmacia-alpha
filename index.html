@@ -82,7 +82,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.35';
+  var VER = 'v4.36';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -103,10 +103,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </script>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.35 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.36 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span id="ver-logo" style="font-weight:400;font-size:11px;opacity:0.5">v4.35</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span id="ver-logo" style="font-weight:400;font-size:11px;opacity:0.5">v4.36</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -217,7 +217,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <!-- Seção Gerenciar Vendedoras -->
     <div class="card" style="margin-top:12px">
       <strong style="font-size:14px;display:block;margin-bottom:4px">👥 Gerenciar Vendedoras</strong>
-      <p style="font-size:12px;color:var(--text3);margin-bottom:12px">Cada vendedora tem nome e senha individuais. Gere um link personalizado para configurar o dispositivo de cada uma.</p>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:12px">Cada vendedora tem nome e senha individuais. Use <strong>🔗 Link</strong> para enviar digitalmente ou <strong>📥 .bat</strong> para instalar via pendrive/pasta compartilhada.</p>
       <!-- Formulário de cadastro -->
       <div style="display:flex;gap:8px;margin-bottom:12px;align-items:flex-end;flex-wrap:wrap">
         <div style="flex:1;min-width:110px">
@@ -2646,7 +2646,8 @@ function renderVendedorasList() {
       + '<td style="padding:8px 4px;font-weight:600">' + v.nome + '</td>'
       + '<td style="padding:8px 4px;color:var(--text3);letter-spacing:2px">' + stars + '</td>'
       + '<td style="padding:8px 4px;text-align:right;white-space:nowrap">'
-      + '<button class="btn" data-vid="' + v.id + '" style="font-size:11px;padding:4px 8px;margin-right:4px;background:#1565C0;color:#fff;border-color:#1565C0" onclick="gerarLinkVendedora(this.dataset.vid)">🔗 Link</button>'
+      + '<button class="btn" data-vid="' + v.id + '" style="font-size:11px;padding:4px 8px;margin-right:3px;background:#1565C0;color:#fff;border-color:#1565C0" onclick="gerarLinkVendedora(this.dataset.vid)" title="Gerar link para enviar digitalmente">🔗 Link</button>'
+      + '<button class="btn" data-vid="' + v.id + '" style="font-size:11px;padding:4px 8px;margin-right:3px;background:#2E7D32;color:#fff;border-color:#2E7D32" onclick="baixarBatVendedora(this.dataset.vid)" title="Baixar arquivo .bat para instalar no computador da vendedora">📥 .bat</button>'
       + '<button class="btn" data-vid="' + v.id + '" style="font-size:11px;padding:4px 8px;background:#e53935;color:#fff;border-color:#e53935" onclick="removeVendedora(this.dataset.vid)">🗑</button>'
       + '</td></tr>';
   });
@@ -2698,6 +2699,28 @@ function copiarLinkVendedora() {
     try { document.execCommand('copy'); marcarCopiado(); }
     catch(e) { alert('Não foi possível copiar automaticamente.\nSelecione o link acima e copie manualmente (Ctrl+C).'); }
   }
+}
+
+// ── Instalador personalizado por vendedora ────────────────────
+function baixarBatVendedora(id) {
+  var list = getVendedoras();
+  var v = null;
+  for(var i=0;i<list.length;i++){ if(list[i].id===id){ v=list[i]; break; } }
+  if(!v) { alert('Vendedora não encontrada.'); return; }
+  var api = localStorage.getItem('cak') || '';
+  if(!api) { alert('Configure e salve a Chave de API antes de gerar o instalador.'); return; }
+  var cfg = _b64utf8(JSON.stringify({p: v.pin, n: v.nome, k: api}));
+  var url = 'https://lcg2026.github.io/farmacia-alpha/?cfg=' + cfg;
+  // .bat que abre o Chrome com a URL de configuração automática
+  var bat = '@echo off\r\n'
+    + 'echo Configurando Agente Alpha para ' + v.nome + '...\r\n'
+    + 'start chrome --app="' + url + '"\r\n'
+    + 'echo Pronto! Feche esta janela.\r\n';
+  var blob = new Blob([bat], {type: 'text/plain'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Instalar Agente Alpha - ' + v.nome + '.bat';
+  a.click();
 }
 
 // ── Atalhos e contador ORC ────────────────────────────────────
