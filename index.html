@@ -82,7 +82,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.36';
+  var VER = 'v4.37';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -103,10 +103,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </script>
 </head>
 <body>
-<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.36 ✓</div>
+<div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.37 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span id="ver-logo" style="font-weight:400;font-size:11px;opacity:0.5">v4.36</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span id="ver-logo" style="font-weight:400;font-size:11px;opacity:0.5">v4.37</span></h1><p id="inscount">Carregando...</p></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -2617,9 +2617,12 @@ function addVendedora() {
   document.getElementById('v-add-pin').value  = '';
   renderVendedorasList();
 }
-function removeVendedora(id) {
-  if(!confirm('Remover esta vendedora?')) return;
-  _saveVendedorasList(getVendedoras().filter(function(v){ return v.id !== id; }));
+function removeVendedora(idx) {
+  var list = getVendedoras();
+  var nome = list[idx] ? list[idx].nome : '?';
+  if(!confirm('Remover ' + nome + '?')) return;
+  list.splice(idx, 1);
+  _saveVendedorasList(list);
   renderVendedorasList();
   document.getElementById('link-vend-area').style.display = 'none';
 }
@@ -2640,28 +2643,25 @@ function renderVendedorasList() {
     + '<th style="text-align:left;padding:5px 4px">Nome</th>'
     + '<th style="text-align:left;padding:5px 4px">Senha</th>'
     + '<th></th></tr>';
-  list.forEach(function(v) {
-    var stars = '•'.repeat(Math.min(v.pin.length, 8));
+  list.forEach(function(v, i) {
+    var stars = '•'.repeat(Math.min((v.pin||'').length, 8));
     h += '<tr style="border-bottom:1px solid var(--border)">'
       + '<td style="padding:8px 4px;font-weight:600">' + v.nome + '</td>'
       + '<td style="padding:8px 4px;color:var(--text3);letter-spacing:2px">' + stars + '</td>'
       + '<td style="padding:8px 4px;text-align:right;white-space:nowrap">'
-      + '<button class="btn" data-vid="' + v.id + '" style="font-size:11px;padding:4px 8px;margin-right:3px;background:#1565C0;color:#fff;border-color:#1565C0" onclick="gerarLinkVendedora(this.dataset.vid)" title="Gerar link para enviar digitalmente">🔗 Link</button>'
-      + '<button class="btn" data-vid="' + v.id + '" style="font-size:11px;padding:4px 8px;margin-right:3px;background:#2E7D32;color:#fff;border-color:#2E7D32" onclick="baixarBatVendedora(this.dataset.vid)" title="Baixar arquivo .bat para instalar no computador da vendedora">📥 .bat</button>'
-      + '<button class="btn" data-vid="' + v.id + '" style="font-size:11px;padding:4px 8px;background:#e53935;color:#fff;border-color:#e53935" onclick="removeVendedora(this.dataset.vid)">🗑</button>'
+      + '<button class="btn" style="font-size:11px;padding:4px 8px;margin-right:3px;background:#1565C0;color:#fff;border-color:#1565C0" onclick="gerarLinkVendedora(' + i + ')" title="Gerar link para enviar digitalmente">🔗 Link</button>'
+      + '<button class="btn" style="font-size:11px;padding:4px 8px;margin-right:3px;background:#2E7D32;color:#fff;border-color:#2E7D32" onclick="baixarBatVendedora(' + i + ')" title="Baixar .bat para instalar no computador da vendedora">📥 .bat</button>'
+      + '<button class="btn" style="font-size:11px;padding:4px 8px;background:#e53935;color:#fff;border-color:#e53935" onclick="removeVendedora(' + i + ')">🗑</button>'
       + '</td></tr>';
   });
   h += '</table>';
   el.innerHTML = h;
 }
 function _b64utf8(str) {
-  // btoa seguro para UTF-8 (nomes com acentos)
   return btoa(unescape(encodeURIComponent(str)));
 }
-function gerarLinkVendedora(id) {
-  var list = getVendedoras();
-  var v = null;
-  for(var i=0;i<list.length;i++){ if(list[i].id===id){ v=list[i]; break; } }
+function gerarLinkVendedora(idx) {
+  var v = getVendedoras()[idx];
   if(!v) { alert('Vendedora não encontrada.'); return; }
   var api = localStorage.getItem('cak') || '';
   if(!api) { alert('Configure e salve a Chave de API antes de gerar o link.'); return; }
@@ -2671,7 +2671,7 @@ function gerarLinkVendedora(id) {
   var area = document.getElementById('link-vend-area');
   var box  = document.getElementById('link-vendedora-box');
   var lbl  = document.getElementById('link-vend-label');
-  if(lbl)  lbl.textContent = '🔗 Link de acesso — ' + v.nome;
+  if(lbl)  lbl.textContent = '🔗 Link — ' + v.nome;
   if(box)  box.value = url;
   if(area) area.style.display = 'block';
   setTimeout(function(){ if(box){ box.focus(); box.select(); } }, 50);
@@ -2702,10 +2702,8 @@ function copiarLinkVendedora() {
 }
 
 // ── Instalador personalizado por vendedora ────────────────────
-function baixarBatVendedora(id) {
-  var list = getVendedoras();
-  var v = null;
-  for(var i=0;i<list.length;i++){ if(list[i].id===id){ v=list[i]; break; } }
+function baixarBatVendedora(idx) {
+  var v = getVendedoras()[idx];
   if(!v) { alert('Vendedora não encontrada.'); return; }
   var api = localStorage.getItem('cak') || '';
   if(!api) { alert('Configure e salve a Chave de API antes de gerar o instalador.'); return; }
