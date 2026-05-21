@@ -82,7 +82,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.38';
+  var VER = 'v4.39';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1504,6 +1504,11 @@ function calcRec(rec) {
     var isEnterica = /enteric|enterica|gastro/.test(fml+' '+nomesAtivos);
     // Ajuste16: detectar cápsula vegetal por descrição ou Nutricolin
     var isVegetal = /vegetal/.test(fml+' '+nomesAtivos) || /nutricolin/.test(nomesAtivos);
+    // Ajuste17: n°4 vegetal não disponível — mínimo para cápsulas vegetais é n°3 (CGEL[1])
+    if((isVegetal || isOleosa) && cap[1] === '4') {
+      cap = CGEL[1]; // n°3 (300mg)
+      avs.push('Cápsula n°4 vegetal indisponível — usando n°3');
+    }
     var capPreco = isEnterica ? cap[4] : (isOleosa || isVegetal) ? cap[3] : cap[2];
     var capTipo = isEnterica ? 'Entérica' : (isOleosa || isVegetal) ? 'Vegetal' : '';
 
