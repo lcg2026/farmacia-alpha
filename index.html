@@ -82,7 +82,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.40';
+  var VER = 'v4.41';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -686,6 +686,9 @@ var PROG = {
 // Cápsulas: [vol_interno_mm3, tamanho, preco_gelatinosa, preco_vegetal, preco_enterica]
 // [vol_interno_mm3, tamanho, preco_gel, preco_veg, preco_enter] — volumes corrigidos Ajuste9
 var CGEL=[[210,'4',0.0195,0.05,0.12],[300,'3',0.0195,0.05,0.12],[371,'2',0.0195,0.05,0.12],[481,'1',0.0195,0.05,0.12],[681,'0',0.0195,0.05,0.12],[951,'00',0.03,0.06,0.125]];
+// Insumos com tipo de cápsula fixo — planilha "Insumo X Tipo de Cápsulas" (2026-05-22)
+var CAP_INS_VEGETAL = /\bacetil l carnitina\b|\bacido lipoico\b|\bbiosil\b|\bchronic\b|\bclock\b|shatavarinas|\bkeranat\b|\bl carnitina base\b|\blipowheat\b|\bmodutin\b|\boli ola\b|\bormona\b|\breverse\b|tcm para capsula|\btkw\b|\bnutricolin\b/;
+var CAP_INS_ENTERICA = /\balfa amilase\b|\bbiointestil\b|\bduloxetina\b|\blipase\b|\bsulfasalazina\b|\bpancreatina\b/;
 var POTES=[[60,{'3':90,'2':50,'1':30,'0':30,'00':30},2],[80,{'3':120,'2':90,'1':60,'0':45,'00':30},2],[110,{'3':180,'2':120,'1':120,'0':60,'00':60},2],[150,{'3':270,'2':180,'1':150,'0':90,'00':80},2],[230,{'3':480,'2':270,'1':240,'0':180,'00':120},2],[320,{'3':480,'2':390,'1':300,'0':240,'00':180},2],[500,{'3':720,'2':510,'1':480,'0':360,'00':270},2.5]];
 // ── Concentração de probióticos em Blh/g (bilhões de UFC por grama) ──
 // TODO: migrar para campo 'blhg' na Planilha Mestra via build_mestra_v2.py
@@ -1501,9 +1504,10 @@ function calcRec(rec) {
 
     // Tipo de cápsula: oleosa → vegetal, entérica → entérica, padrão → gelatinosa
     var isOleosa = /omega|oleo|oil|oleosa|vitamina e|vitamina a\b|retinol/.test(nomesAtivos);
-    var isEnterica = /enteric|enterica|gastro/.test(fml+' '+nomesAtivos);
-    // Ajuste16: detectar cápsula vegetal por descrição ou Nutricolin
-    var isVegetal = /vegetal/.test(fml+' '+nomesAtivos) || /nutricolin/.test(nomesAtivos);
+    var fmlNorm = normStr(fml);
+    var isEnterica = /enteric|enterica|gastro/.test(fmlNorm+' '+nomesAtivos) || CAP_INS_ENTERICA.test(nomesAtivos);
+    // Ajuste16 + planilha: vegetal por descrição ("vegetais" incluso) ou insumo listado
+    var isVegetal = /vegetal|vegetais/.test(fmlNorm+' '+nomesAtivos) || CAP_INS_VEGETAL.test(nomesAtivos);
     // Ajuste17: n°4 vegetal não disponível — mínimo para cápsulas vegetais é n°3 (CGEL[1])
     if((isVegetal || isOleosa) && cap[1] === '4') {
       cap = CGEL[1]; // n°3 (300mg)
