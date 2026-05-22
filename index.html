@@ -82,7 +82,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.41';
+  var VER = 'v4.42';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1406,6 +1406,7 @@ function calcRec(rec) {
   }
 
   var sumAtivosG = 0;
+  var sumVolMm3 = 0; // volume real (mm³) considerando densidade de cada ativo (ins.d)
   var ativoGs = {}; // rastreia g por chave INS — usado por relToActive nos produtos associados
   (rec.ativos||[]).forEach(function(a, idx) {
     if(isTopico && idx === qspAtivoIdx) return; // base qsp calculada depois
@@ -1429,6 +1430,7 @@ function calcRec(rec) {
     }
     ativoGs[ins.k] = g; // salva para cálculo relToActive
     sumAtivosG += g;
+    sumVolMm3 += g * 1000 / ((ins.d && ins.d > 0) ? ins.d : 1.0);
     // Ajuste16: usar preço de VENDA (pe) como prioritário
     var c = isTopico ? g * (ins.pe||ins.p) : g * qtd * (ins.pe||ins.p);
     custo += c;
@@ -1491,13 +1493,13 @@ function calcRec(rec) {
       custo += ccTap + cDescarb + pt[2];
       itens.push({n:'TAPIOCAPS n'+tapCap[1]+' ('+qtd+') + DESCARB CAPS + Pote '+pt[0]+'ml', dose:'', c:ccTap+cDescarb+pt[2]});
     } else {
-    // Selecionar tamanho da cápsula (1mg ≈ 1mm³)
-    var capDoseMg = totalGCheck > 0 ? totalGCheck * 1000 : 300;
+    // Selecionar tamanho da cápsula — usa volume real (mm³) com densidade de cada ativo
+    var capDoseMg = sumVolMm3 > 0 ? sumVolMm3 : (totalGCheck * 1000 || 300);
     var nCaps = 1;
     var cap = CGEL[CGEL.length-1];
     if(capDoseMg > CGEL[CGEL.length-1][0]) {
       nCaps = Math.ceil(capDoseMg / CGEL[CGEL.length-1][0]);
-      avs.push('Volume por dose (' + capDoseMg.toFixed(0) + 'mg) excede cápsula 00 (951mg) — ' + nCaps + ' cápsulas por dose');
+      avs.push('Volume por dose (' + capDoseMg.toFixed(0) + 'mm³) excede cápsula 00 — ' + nCaps + ' cápsulas por dose');
     } else {
       for(var ci=0;ci<CGEL.length;ci++){if(capDoseMg<=CGEL[ci][0]){cap=CGEL[ci];break;}}
     }
@@ -1527,7 +1529,7 @@ function calcRec(rec) {
     // ── Excipiente ──
     var jaTemExcipiente = /celulose|lactose|amido|avicel|excipiente|celulosix/.test(nomesAtivos);
     if(!jaTemExcipiente) {
-      var excipMg = cap[0] * nCaps - (totalGCheck * 1000);
+      var excipMg = cap[0] * nCaps - sumVolMm3;
       if(excipMg > 10) {
         var excipG = excipMg / 1000;
         // Selecionar tipo de excipiente
