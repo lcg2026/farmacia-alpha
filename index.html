@@ -21,6 +21,47 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Alpha">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- ── Controle de Acesso Alpha ─────────────────────────────── -->
+<script>
+var ACCESS_KEY='ALPHA2026';
+(function(){
+  try{
+    var p=new URLSearchParams(location.search);
+    if(p.get('k')===ACCESS_KEY) sessionStorage.setItem('alphaAuth','1');
+    window._alphaOK=sessionStorage.getItem('alphaAuth')==='1';
+    if(window._alphaOK) document.documentElement.classList.add('alpha-ok');
+    else document.addEventListener('DOMContentLoaded',_showLock);
+  }catch(e){}
+  function _showLock(){
+    document.body.setAttribute('style','margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1B5E20,#2E7D32);font-family:Arial,sans-serif;visibility:visible');
+    document.body.innerHTML=
+      '<div style="background:#fff;border-radius:20px;padding:44px 36px;max-width:380px;width:90%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.35)">'
+      +'<div style="font-size:52px;margin-bottom:12px">🔒</div>'
+      +'<h2 style="color:#1B5E20;margin:0 0 8px;font-size:22px">Farmácia Alpha</h2>'
+      +'<p style="color:#666;font-size:13px;margin:0 0 24px;line-height:1.6">Acesso interno restrito.<br>Use o atalho instalado no seu computador.</p>'
+      +'<input id="lockKey" type="password" placeholder="Chave de acesso" autocomplete="off"'
+      +' style="width:100%;padding:12px;border:2px solid #ddd;border-radius:10px;font-size:15px;outline:none;text-align:center;margin-bottom:10px"'
+      +' onkeydown="if(event.key===\'Enter\')_tryKey()">'
+      +'<button onclick="_tryKey()" style="width:100%;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.5px">Entrar</button>'
+      +'<p id="lockErr" style="color:#e53935;font-size:12px;margin-top:10px;min-height:16px"></p>'
+      +'<p style="color:#bbb;font-size:11px;margin-top:16px">Farmácia Alpha — Acesso Interno</p>'
+      +'</div>';
+    setTimeout(function(){var el=document.getElementById('lockKey');if(el)el.focus();},100);
+  }
+})();
+function _tryKey(){
+  var el=document.getElementById('lockKey');
+  if(!el) return;
+  if(el.value===ACCESS_KEY){
+    sessionStorage.setItem('alphaAuth','1');
+    location.reload();
+  } else {
+    document.getElementById('lockErr').textContent='Chave incorreta. Tente novamente.';
+    el.value=''; el.focus();
+  }
+}
+</script>
+<style>html:not(.alpha-ok) body{visibility:hidden}</style>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--g50:#E8F5E9;--g100:#C8E6C9;--g600:#2E7D32;--g700:#1B5E20;--bg:#F4F7F4;--card:#fff;--border:#D8E8D8;--text:#1A2E1A;--text2:#4A6A4A;--text3:#8A9A8A;--r:8px}
@@ -82,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.42';
+  var VER = 'v4.43';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -2685,7 +2726,7 @@ function gerarLinkVendedora(idx) {
   if(!api) { alert('Configure e salve a Chave de API antes de gerar o link.'); return; }
   var cfg  = _b64utf8(JSON.stringify({p: v.pin, n: v.nome, k: api}));
   var base = location.origin + location.pathname.replace(/\/$/, '');
-  var url  = base + '?cfg=' + cfg;
+  var url  = base + '?k=' + ACCESS_KEY + '&cfg=' + cfg;
   var area = document.getElementById('link-vend-area');
   var box  = document.getElementById('link-vendedora-box');
   var lbl  = document.getElementById('link-vend-label');
@@ -2726,7 +2767,7 @@ function baixarBatVendedora(idx) {
   var api = localStorage.getItem('cak') || '';
   if(!api) { alert('Configure e salve a Chave de API antes de gerar o instalador.'); return; }
   var cfg = _b64utf8(JSON.stringify({p: v.pin, n: v.nome, k: api}));
-  var url = 'https://lcg2026.github.io/farmacia-alpha/?cfg=' + cfg;
+  var url = 'https://lcg2026.github.io/farmacia-alpha/?k=' + ACCESS_KEY + '&cfg=' + cfg;
   // .bat que abre o Chrome com a URL de configuração automática
   var bat = '@echo off\r\n'
     + 'echo Configurando Agente Alpha para ' + v.nome + '...\r\n'
@@ -2742,7 +2783,7 @@ function baixarBatVendedora(idx) {
 // ── Atalhos e contador ORC ────────────────────────────────────
 function baixarAtalho() {
   // Vendedoras — modo anônimo (localStorage apaga ao fechar, segurança)
-  var url = 'https://lcg2026.github.io/farmacia-alpha/';
+  var url = 'https://lcg2026.github.io/farmacia-alpha/?k=' + ACCESS_KEY;
   var bat = '@echo off\nstart chrome --incognito --app="' + url + '"\n';
   var blob = new Blob([bat], {type:'text/plain'});
   var a = document.createElement('a');
@@ -2752,7 +2793,7 @@ function baixarAtalho() {
 }
 function baixarAtalhoAdmin() {
   // Admin — navegador normal, dados persistem (lista de vendedoras)
-  var url = 'https://lcg2026.github.io/farmacia-alpha/';
+  var url = 'https://lcg2026.github.io/farmacia-alpha/?k=' + ACCESS_KEY;
   var bat = '@echo off\nstart chrome --app="' + url + '"\n';
   var blob = new Blob([bat], {type:'text/plain'});
   var a = document.createElement('a');
