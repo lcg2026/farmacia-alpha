@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.43';
+  var VER = 'v4.44';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -728,7 +728,7 @@ var PROG = {
 // [vol_interno_mm3, tamanho, preco_gel, preco_veg, preco_enter] — volumes corrigidos Ajuste9
 var CGEL=[[210,'4',0.0195,0.05,0.12],[300,'3',0.0195,0.05,0.12],[371,'2',0.0195,0.05,0.12],[481,'1',0.0195,0.05,0.12],[681,'0',0.0195,0.05,0.12],[951,'00',0.03,0.06,0.125]];
 // Insumos com tipo de cápsula fixo — planilha "Insumo X Tipo de Cápsulas" (2026-05-22)
-var CAP_INS_VEGETAL = /\bacetil l carnitina\b|\bacido lipoico\b|\bbiosil\b|\bchronic\b|\bclock\b|shatavarinas|\bkeranat\b|\bl carnitina base\b|\blipowheat\b|\bmodutin\b|\boli ola\b|\bormona\b|\breverse\b|tcm para capsula|\btkw\b|\bnutricolin\b/;
+var CAP_INS_VEGETAL = /\bacetil l carnitina\b|\bacido lipoico\b|\bbiosil\b|\bchronic\b|\bclock\b|\beva 360\b|shatavarinas|\bkeranat\b|\bl carnitina base\b|\blipowheat\b|\bmodutin\b|\boli ola\b|\bormona\b|\breverse\b|tcm para capsula|\btkw\b|\bnutricolin\b/;
 var CAP_INS_ENTERICA = /\balfa amilase\b|\bbiointestil\b|\bduloxetina\b|\blipase\b|\bsulfasalazina\b|\bpancreatina\b/;
 var POTES=[[60,{'3':90,'2':50,'1':30,'0':30,'00':30},2],[80,{'3':120,'2':90,'1':60,'0':45,'00':30},2],[110,{'3':180,'2':120,'1':120,'0':60,'00':60},2],[150,{'3':270,'2':180,'1':150,'0':90,'00':80},2],[230,{'3':480,'2':270,'1':240,'0':180,'00':120},2],[320,{'3':480,'2':390,'1':300,'0':240,'00':180},2],[500,{'3':720,'2':510,'1':480,'0':360,'00':270},2.5]];
 // ── Concentração de probióticos em Blh/g (bilhões de UFC por grama) ──
@@ -752,6 +752,8 @@ var BLHG = {
 };
 // ── Preços padronizados Minoxidil em Cápsula (item 21408 — Minoxidil 1/10 Cápsula) ──
 var MINOX_PRECO = {
+  0.5:  {30:{pix:87, cartao:92 },60:{pix:115,cartao:121},90:{pix:125,cartao:132},120:{pix:140,cartao:147},180:{pix:175,cartao:184}},
+  1.0:  {30:{pix:90, cartao:95 },60:{pix:120,cartao:127},90:{pix:130,cartao:137},120:{pix:147,cartao:155},180:{pix:183,cartao:193}},
   2.0:  {30:{pix:113,cartao:119},60:{pix:149,cartao:157},90:{pix:185,cartao:195},120:{pix:209,cartao:220},180:{pix:305,cartao:321}},
   2.5:  {30:{pix:113,cartao:119},60:{pix:163,cartao:172},90:{pix:209,cartao:220},120:{pix:219,cartao:229},180:{pix:315,cartao:329}},
   3.0:  {30:{pix:137,cartao:145},60:{pix:169,cartao:179},90:{pix:222,cartao:233},120:{pix:271,cartao:286},180:{pix:349,cartao:369}},
@@ -762,7 +764,7 @@ var MINOX_PRECO = {
 // ── Embalagens frasco vidro para Minoxidil tópico ──
 // [volume_max_ml, preco_R$]
 var MINOX_VIDRO=[[20,0.40],[30,0.438],[60,0.551],[100,0.594],[150,0.748],[200,0.913],[250,1.03],[400,1.826]];
-var AIRLESS=[{ml:30,p:5.9},{ml:60,p:9.0},{ml:90,p:13.9},{ml:120,p:18.0},{ml:35,p:27,topclick:true}];
+var AIRLESS=[{ml:30,p:5.9},{ml:60,p:9.5},{ml:90,p:13.9},{ml:120,p:18.0},{ml:35,p:27,topclick:true}];
 // Embalagens Loção bisnagas (semi-sólida) e frascos fluidos
 var EMB_LOCAO_BISNAGA=[[30,1.43],[60,1.48],[120,1.60],[200,2.50],[250,2.80]];
 var EMB_LOCAO_FLUIDA=[[120,1.057],[200,1.235]];
