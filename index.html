@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.47';
+  var VER = 'v4.48';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1428,10 +1428,16 @@ function calcRec(rec) {
     }
     if(u === '%') return dose / 100;
     if(u === 'blh') {
-      // Bilhões de UFC: converter para gramas usando concentração Blh/g do produto
-      var _blhConc = BLHG[normStr(insNome||'')] || 0;
+      // Bilhões de UFC: g = dose_bilhoes ÷ BLH/g (§1.7)
+      var _insNk = normStr(insNome||'');
+      var _blhConc = BLHG[_insNk] || 0;
+      // Fallback 1: extrair concentração do próprio nome do item (ex: "L Rhamnosus BLH 100" → 100)
+      if(!_blhConc) {
+        var _blhM = _insNk.match(/\bblh\s*(\d+)/);
+        if(_blhM) _blhConc = parseFloat(_blhM[1]);
+      }
       if(_blhConc > 0) return dose / _blhConc;
-      return dose / 1000; // sem Blh/g cadastrado — tratar como mg (fallback)
+      return dose / 1000; // sem concentração BLH conhecida — fallback
     }
     return dose / 1000; // mg (padrão)
   }
@@ -1496,9 +1502,13 @@ function calcRec(rec) {
       g = 0; // base qsp é tratada separadamente
     } else {
       g = doseToG(a.dose, a.unidade, ins.n);
-      // §1.7: BLH sem concentração cadastrada — alertar
-      if((a.unidade||'').toLowerCase()==='blh' && !BLHG[normStr(ins.n||'')]) {
-        avs.push('⚠️ '+ins.n+': concentração BLH/g não cadastrada — confirmar com farmacêutico.');
+      // §1.7: BLH sem concentração — alertar (só se não há BLHG nem "BLH X" no nome do item)
+      var _uuBLH = (a.unidade||'').toLowerCase().trim();
+      if(/^bilh[oõ]/.test(_uuBLH) || _uuBLH === 'blh') {
+        var _nkBLH = normStr(ins.n||'');
+        if(!BLHG[_nkBLH] && !_nkBLH.match(/\bblh\s*\d+/)) {
+          avs.push('⚠️ '+ins.n+': concentração BLH/g não cadastrada — confirmar com farmacêutico.');
+        }
       }
     }
     ativoGs[ins.k] = g; // salva para cálculo relToActive
@@ -2199,26 +2209,60 @@ function renderResult(r, container, idx) {
     if(!it || !(it.g > 0)) return;
     var rowEl = container.querySelector('.rrow[data-ii="'+ii+'"]');
     if(!rowEl) return;
-    // Substituir linha por formulário inline de correção
+    // Substituir linha por formulário inline com autocomplete
     rowEl.innerHTML =
       '<div style="display:flex;align-items:center;gap:5px;flex:1;flex-wrap:wrap;padding:2px 0">'+
         '<span style="font-size:10px;color:#2E7D32;font-weight:600;white-space:nowrap">✎ Corrigir:</span>'+
-        '<input type="text" class="_ci" placeholder="Nome do ingrediente correto..." autocomplete="off" '+
-          'style="flex:1;min-width:120px;padding:3px 7px;border:1.5px solid var(--primary);border-radius:var(--r);font-size:12px;font-family:inherit">'+
+        '<div class="_ciwrap" style="position:relative;flex:1;min-width:130px">'+
+          '<input type="text" class="_ci" placeholder="Digite para buscar ingrediente..." autocomplete="off" '+
+            'style="width:100%;box-sizing:border-box;padding:3px 7px;border:1.5px solid var(--primary);border-radius:var(--r);font-size:12px;font-family:inherit">'+
+          '<div class="_cidrop" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ccc;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:300;max-height:180px;overflow-y:auto;display:none"></div>'+
+        '</div>'+
         '<button class="_cok" style="padding:3px 10px;background:#1B5E20;color:#fff;border:none;border-radius:var(--r);font-size:12px;cursor:pointer;white-space:nowrap">✓ OK</button>'+
         '<button class="_ccancel" style="padding:3px 8px;background:#e0e0e0;border:none;border-radius:var(--r);font-size:12px;cursor:pointer">✕</button>'+
       '</div>';
-    var ci = rowEl.querySelector('._ci');
+    var ci  = rowEl.querySelector('._ci');
+    var cdrop = rowEl.querySelector('._cidrop');
     if(!ci) return;
     ci.focus();
-    function _corr() {
+    // ── Autocomplete ──
+    ci.oninput = function() {
+      var q = normStr(ci.value);
+      if(!q || q.length < 2) { cdrop.style.display='none'; return; }
+      var res = [], cnt = 0;
+      for(var _i=0; _i<INS.length && cnt<8; _i++) {
+        if(!INS[_i]) continue;
+        if(INS[_i].k && INS[_i].k.indexOf(q)>=0) { res.push(INS[_i]); cnt++; continue; }
+        if(INS[_i].sk) { for(var _j=0;_j<INS[_i].sk.length;_j++) { if(INS[_i].sk[_j]&&INS[_i].sk[_j].indexOf(q)>=0){res.push(INS[_i]);cnt++;break;} } }
+      }
+      if(!res.length) { cdrop.style.display='none'; return; }
+      cdrop.innerHTML = res.map(function(ins){
+        return '<div class="_cit" data-n="'+ins.n.replace(/"/g,'&quot;')+'" '+
+          'style="padding:6px 9px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0">'+
+          ins.n+' <span style="color:#999;font-size:10px">R$'+(ins.pe||ins.p).toFixed(4)+'/g</span></div>';
+      }).join('');
+      cdrop.style.display='block';
+    };
+    ci.onblur = function(){ setTimeout(function(){ cdrop.style.display='none'; },200); };
+    // Clique no item do dropdown aplica imediatamente
+    cdrop.addEventListener('mousedown', function(e){
+      var item = e.target;
+      while(item && item!==cdrop){ if(item.classList&&item.classList.contains('_cit')) break; item=item.parentNode; }
+      if(!item||!item.classList||!item.classList.contains('_cit')) return;
+      e.preventDefault();
+      ci.value = item.getAttribute('data-n');
+      cdrop.style.display='none';
+      _applyCorr();
+    });
+    // ── Aplicar correção ──
+    function _applyCorr() {
       var nm = ci.value.trim();
       if(!nm) { renderResult(r, container, idx); return; }
       var ni = busIns(nm, r.fm);
       if(!ni || !(ni.pe||ni.p)) {
-        ci.style.borderColor = '#e53935';
-        ci.placeholder = '⚠ Não encontrado — tente outro nome';
-        ci.value = ''; ci.focus();
+        ci.style.borderColor='#e53935';
+        ci.placeholder='⚠ Não encontrado — tente outro nome';
+        ci.value=''; ci.focus();
         return;
       }
       var oldC = it.c;
@@ -2231,9 +2275,9 @@ function renderResult(r, container, idx) {
       r.pv = Math.round(r.custo*r.mkp+CF); if(r.pv<PM) r.pv=PM;
       renderResult(r, container, idx);
     }
-    rowEl.querySelector('._cok').onclick = _corr;
+    rowEl.querySelector('._cok').onclick = _applyCorr;
     rowEl.querySelector('._ccancel').onclick = function(){ renderResult(r, container, idx); };
-    ci.onkeydown = function(e){ if(e.key==='Enter') _corr(); if(e.key==='Escape') renderResult(r, container, idx); };
+    ci.onkeydown = function(e){ if(e.key==='Enter') _applyCorr(); if(e.key==='Escape') renderResult(r,container,idx); };
   };
   container.addEventListener('click', container._corrClick);
 }
