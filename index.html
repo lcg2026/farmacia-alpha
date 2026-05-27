@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.44';
+  var VER = 'v4.45';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -578,7 +578,14 @@ var EQUIV = {
   'solução viscosa':'sol hidroalcoolica',
   'solucao capilar minoxidil':'sol hidroalcoolica',
   'veiculo minoxidil':'sol hidroalcoolica',
-  'frasco qsp':'sol hidroalcoolica'
+  'frasco qsp':'sol hidroalcoolica',
+  // ATA (Ácido Tricloroacético — item 50337) — Regras Alpha §5.2
+  'ata':'ac tricloroacetico',
+  'acido tricloro':'ac tricloroacetico',
+  'acido tricloroacetico':'ac tricloroacetico',
+  'acido tricloroacetico pa':'ac tricloroacetico',
+  'agua purificada qsp':'agua purificada',
+  'aqua purificada':'agua purificada'
 };
 
 // Insumos disponíveis apenas em forma líquida — não usar em fórmulas de cápsulas
@@ -1614,14 +1621,10 @@ function calcRec(rec) {
     var cAroma = 0.5 * qtd * 0.198; custo += cAroma;
     itens.push({n:'Aroma cotação pó 0,5g/sachê', dose:'', c:cAroma});
 
-    // Celulose apenas para Lactobacillus (Ajuste16)
-    if(hasLactoS) {
-      var cCelS = 2 * qtd * 0.026; custo += cCelS;
-      itens.push({n:'Celulose Micr PH101 2g/sachê', dose:'', c:cCelS});
-    }
+    // Celulosix Lacto em sachê: NÃO adicionar (só vale para Cápsula — Regras Alpha §3)
 
-    // Escolher tamanho do sachê (peso total por dose = ativos + base + aroma + extras)
-    var pesoTotalDose = totalGCheck + 4 + 0.5 + (hasLactoS ? 2 : 0);
+    // Escolher tamanho do sachê (peso total por dose = ativos + base + aroma)
+    var pesoTotalDose = totalGCheck + 4 + 0.5;
     var SACHES=[{n:'7x7 P',cap:4,p:0.1166},{n:'7x9 M',cap:9,p:0.1314},{n:'7x17 G',cap:20,p:0.115}];
     var sache = SACHES[SACHES.length-1];
     for(var si=0;si<SACHES.length;si++){if(pesoTotalDose<=SACHES[si].cap){sache=SACHES[si];break;}}
@@ -1749,7 +1752,10 @@ function calcRec(rec) {
     } else if(fml.indexOf('gel') >= 0) {
       baseNomeC = 'gel de aristoflex';
     } else {
-      baseNomeC = 'creme base';
+      // Creme para área dos olhos → item 11827 (Regras Alpha §10)
+      var isOlhos = /\bolhos\b|periocular|contorno olhos|area olhos|eye area/.test(fml+' '+normStr(rec.descricao||''));
+      baseNomeC = isOlhos ? 'creme p area olhos' : 'creme base';
+      if(isOlhos) avs.push('🔵 Creme área dos olhos: usando base item 11827 (Creme p/ área olhos)');
     }
     var insBaseC = busIns(baseNomeC, fml);
     if(insBaseC && (insBaseC.pe||insBaseC.p) > 0) {
@@ -1810,6 +1816,21 @@ function calcRec(rec) {
     var cEmbSh = pickEmb(qspVolSh, EMB_SHAMPOO);
     custo += cEmbSh;
     itens.push({n:'Embalagem Shampoo', dose:qspVolSh+'ml', c:cEmbSh});
+  }
+
+  // ── Ess Padrão 0,5% — Dra. Gabriela Gomes Pedro (CRM 92265) ──
+  // Aplica em: Creme, Loção, Gel, Sabonete líquido (Regras Alpha §10)
+  var _crmPres = (prescritor.match(/crm\s*(\d+)/)||[])[1]||'';
+  if(_crmPres === '92265' && /creme|locao|loção|gel|shampoo|xampu|sabonete/.test(fml)) {
+    var _insEssPad = busIns('ess padrao', fml);
+    if(_insEssPad && (_insEssPad.pe||_insEssPad.p) > 0) {
+      var _essG = qtd * 0.005; // 0,5% do volume total
+      var _cEssPad = _essG * (_insEssPad.pe||_insEssPad.p);
+      custo += _cEssPad;
+      itens.push({n:'Ess Padrão 0,5% (CRM 92265 — item 25677)', dose:_essG.toFixed(2)+'g', c:_cEssPad});
+    } else {
+      avs.push('⚠️ Ess Padrão (item 25677) não localizado — incluir 0,5% manualmente para CRM 92265');
+    }
   }
 
   // ── 5H. XAROPE ──
