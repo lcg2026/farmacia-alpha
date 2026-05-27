@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.45';
+  var VER = 'v4.46';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1477,6 +1477,10 @@ function calcRec(rec) {
       g = 0; // base qsp é tratada separadamente
     } else {
       g = doseToG(a.dose, a.unidade, ins.n);
+      // §1.7: BLH sem concentração cadastrada — alertar
+      if((a.unidade||'').toLowerCase()==='blh' && !BLHG[normStr(ins.n||'')]) {
+        avs.push('⚠️ '+ins.n+': concentração BLH/g não cadastrada — confirmar com farmacêutico.');
+      }
     }
     ativoGs[ins.k] = g; // salva para cálculo relToActive
     sumAtivosG += g;
@@ -1484,7 +1488,8 @@ function calcRec(rec) {
     // Ajuste16: usar preço de VENDA (pe) como prioritário
     var c = isTopico ? g * (ins.pe||ins.p) : g * qtd * (ins.pe||ins.p);
     custo += c;
-    itens.push({n:ins.n, dose:a.dose+' '+(a.unidade||'mg'), c:c});
+    // g e topico salvos para permitir correção manual do item (§10 Regras Alpha)
+    itens.push({n:ins.n, dose:a.dose+' '+(a.unidade||'mg'), c:c, g:g, topico:isTopico});
   });
 
   // ── 4B. PRODUTOS ASSOCIADOS — custo calculado e somado ao total ──
@@ -2055,8 +2060,16 @@ function renderResult(r, container, idx) {
     }
     return '<div class="warn">⚠ '+a+'</div>';
   }).join('');
-  var rows = r.itens.map(function(it){
-    return '<div class="rrow"><span class="rn">'+it.n+(it.dose?' — '+it.dose:'')+'</span><span class="rv">R$ '+it.c.toFixed(4)+'</span></div>';
+  var rows = r.itens.map(function(it, ii){
+    // Botão ✏️ apenas para ativos com gramas calculados (campo g) — Regras Alpha §10
+    var editBtn = (it.g > 0) ?
+      '<button class="edit-item-btn" data-ii="'+ii+'" title="Corrigir ingrediente" '+
+        'style="background:none;border:none;cursor:pointer;font-size:11px;padding:0 3px;color:#1B5E20;opacity:.65;vertical-align:middle">✏️</button>' : '';
+    return '<div class="rrow" data-ii="'+ii+'">'+
+      '<span class="rn">'+it.n+(it.dose?' — '+it.dose:'')+'</span>'+
+      editBtn+
+      '<span class="rv">R$ '+it.c.toFixed(4)+'</span>'+
+    '</div>';
   }).join('');
   var minLabel = r.pv === PM ? '<span class="tag tr" style="font-size:10px">preço mínimo</span>' : '';
 
@@ -2151,6 +2164,53 @@ function renderResult(r, container, idx) {
     localSim = {qtd:0, pv:0};
     simAtual = {qtd:0, pv:0};
   };
+
+  // ── Corrigir ingrediente manualmente (Regras Alpha §10) ──
+  container.querySelectorAll('.edit-item-btn').forEach(function(editBtn) {
+    editBtn.addEventListener('click', function() {
+      var ii = parseInt(editBtn.getAttribute('data-ii'));
+      var it = r.itens[ii];
+      var rowEl = container.querySelector('.rrow[data-ii="'+ii+'"]');
+      rowEl.innerHTML =
+        '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">'+
+          '<span style="font-size:10px;color:#666;white-space:nowrap">Corrigir:</span>'+
+          '<input type="text" class="_corrInp" placeholder="Nome correto do ingrediente..." autocomplete="off" '+
+            'style="flex:1;min-width:0;padding:4px 8px;border:1.5px solid var(--primary);border-radius:var(--r);font-size:12px;font-family:inherit">'+
+          '<button class="_corrOk" style="padding:3px 10px;background:#1B5E20;color:#fff;border:none;border-radius:var(--r);font-size:12px;cursor:pointer;white-space:nowrap">✓ OK</button>'+
+          '<button class="_corrCancel" style="padding:3px 8px;background:#eee;border:none;border-radius:var(--r);font-size:12px;cursor:pointer">✕</button>'+
+        '</div>';
+      var inp2 = rowEl.querySelector('._corrInp');
+      var okBtn2 = rowEl.querySelector('._corrOk');
+      rowEl.querySelector('._corrCancel').addEventListener('click', function() { renderResult(r, container, idx); });
+      inp2.focus();
+      function _applyCorr() {
+        var newName = inp2.value.trim();
+        if(!newName) { renderResult(r, container, idx); return; }
+        var newIns = busIns(newName, r.fm);
+        if(!newIns || !(newIns.pe||newIns.p)) {
+          inp2.style.borderColor = '#e53935';
+          inp2.value = '';
+          inp2.placeholder = '⚠ Não encontrado — tente outro nome';
+          return;
+        }
+        var newC = it.topico ? it.g*(newIns.pe||newIns.p) : it.g*r.qtd*(newIns.pe||newIns.p);
+        r.custo += (newC - it.c);
+        it.n = newIns.n; it.c = newC;
+        // Recalcular PV com MKP correto para a forma
+        var _fk = normStr(r.fm||'');
+        var _pk = /sach/.test(_fk)?'Sache':/locao|loção/.test(_fk)?'Locao':/gel|creme/.test(_fk)?'Creme':/pomada/.test(_fk)?'Pomada':/xarope|solucao/.test(_fk)?'Xarope':'Capsulas';
+        var _tab = PROG[_pk]||PROG.Capsulas;
+        r.mkp = getMKP(r.custo, _tab);
+        r.pv = Math.round(r.custo*r.mkp+CF); if(r.pv<PM) r.pv=PM;
+        renderResult(r, container, idx);
+      }
+      okBtn2.addEventListener('click', _applyCorr);
+      inp2.addEventListener('keydown', function(e){
+        if(e.key==='Enter') _applyCorr();
+        if(e.key==='Escape') renderResult(r, container, idx);
+      });
+    });
+  });
 }
 
 function calcFormulas() {
