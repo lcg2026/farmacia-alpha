@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.46';
+  var VER = 'v4.47';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -738,13 +738,28 @@ var CGEL=[[210,'4',0.0195,0.05,0.12],[300,'3',0.0195,0.05,0.12],[371,'2',0.0195,
 var CAP_INS_VEGETAL = /\bacetil l carnitina\b|\bacido lipoico\b|\bbiosil\b|\bchronic\b|\bclock\b|\beva 360\b|shatavarinas|\bkeranat\b|\bl carnitina base\b|\blipowheat\b|\bmodutin\b|\boli ola\b|\bormona\b|\breverse\b|tcm para capsula|\btkw\b|\bnutricolin\b/;
 var CAP_INS_ENTERICA = /\balfa amilase\b|\bbiointestil\b|\bduloxetina\b|\blipase\b|\bsulfasalazina\b|\bpancreatina\b/;
 var POTES=[[60,{'3':90,'2':50,'1':30,'0':30,'00':30},2],[80,{'3':120,'2':90,'1':60,'0':45,'00':30},2],[110,{'3':180,'2':120,'1':120,'0':60,'00':60},2],[150,{'3':270,'2':180,'1':150,'0':90,'00':80},2],[230,{'3':480,'2':270,'1':240,'0':180,'00':120},2],[320,{'3':480,'2':390,'1':300,'0':240,'00':180},2],[500,{'3':720,'2':510,'1':480,'0':360,'00':270},2.5]];
-// ── Concentração de probióticos em Blh/g (bilhões de UFC por grama) ──
-// TODO: migrar para campo 'blhg' na Planilha Mestra via build_mestra_v2.py
+// ── Concentração de probióticos em BLH/g (bilhões de UFC por grama) ──
+// Regra §1.7: g = dose_bilhoes / BLH_conc  (ex: 3 BLH ÷ 100 BLH/g = 0,03g)
+// Chaves = normStr(ins.n) — nome normalizado do item no banco
 var BLHG = {
-  'l helveticus':140,'biomamps lactob helveticus':140,
-  'l rhamnosus':100,'l rhamnosus lemma':200,'biomamps lactob rhamnosus':200,
-  'l reuteri':200,
-  'l plantarum':100,
+  // Lactobacillus Helveticus
+  'l helveticus':140,'lactobacillus helveticus':140,
+  'biomamps lactob helveticus':140,
+  // Lactobacillus Rhamnosus
+  'l rhamnosus':100,'lactobacillus rhamnosus':100,
+  'l rhamnosus lemma':200,'lactobacillus rhamnosus lemma':200,
+  'biomamps lactob rhamnosus':200,
+  // Lactobacillus Reuteri
+  'l reuteri':200,'lactobacillus reuteri':200,
+  // Lactobacillus Plantarum
+  'l plantarum':100,'lactobacillus plantarum':100,
+  // Lactobacillus Acidophilus
+  'l acidophilus':100,'lactobacillus acidophilus':100,
+  // Lactobacillus Casei
+  'l casei':100,'lactobacillus casei':100,
+  // Lactobacillus Paracasei
+  'l paracasei':100,'lactobacillus paracasei':100,
+  // Bifidobacterium
   'bifidobacterium longum':100,'bifidobacterium longum lemma':100,
   'bifidobacterium bifidum':100,
   'bifidobacterium animalis':100,
@@ -752,10 +767,11 @@ var BLHG = {
   'bifidobacterium breve':100,
   'bifidobacterium adolescentis':100,
   'bifidobacterium lactis':100,
+  // Abreviações e outros
   'pool de lactobacilos':100,
-  'lactobacilus infantis':100,
-  'lactobacilus gasseri':100,
-  'lactobacilus lactis':100
+  'lactobacilus infantis':100,'lactobacillus infantis':100,
+  'lactobacilus gasseri':100,'lactobacillus gasseri':100,
+  'lactobacilus lactis':100,'lactobacillus lactis':100
 };
 // ── Preços padronizados Minoxidil em Cápsula (item 21408 — Minoxidil 1/10 Cápsula) ──
 var MINOX_PRECO = {
@@ -1397,7 +1413,10 @@ function calcRec(rec) {
 
   // ── 2. Conversor dose → gramas ──
   function doseToG(dose, unidade, insNome) {
-    var u = (unidade||'mg').toLowerCase();
+    var u = (unidade||'mg').toLowerCase().trim();
+    // Normalizar variações da unidade BLH (bilhões de UFC por grama)
+    // aceita: BLH, Bilhões, Bilhoes, Bilhões de UFC, Bilhoes de UFC, Bilhões de CFU
+    if(/^bilh[oõ]/.test(u)) u = 'blh';
     if(u === 'g') return dose;
     if(u === 'mcg') return dose / 1000000;
     if(u === 'ui' || u === 'iu') {
@@ -2061,13 +2080,12 @@ function renderResult(r, container, idx) {
     return '<div class="warn">⚠ '+a+'</div>';
   }).join('');
   var rows = r.itens.map(function(it, ii){
-    // Botão ✏️ apenas para ativos com gramas calculados (campo g) — Regras Alpha §10
+    // Botão ✎ para ativos com gramas — dentro do nome para facilitar clique (§10 Regras Alpha)
     var editBtn = (it.g > 0) ?
-      '<button class="edit-item-btn" data-ii="'+ii+'" title="Corrigir ingrediente" '+
-        'style="background:none;border:none;cursor:pointer;font-size:11px;padding:0 3px;color:#1B5E20;opacity:.65;vertical-align:middle">✏️</button>' : '';
+      ' <button class="edit-item-btn" data-ii="'+ii+'" title="Corrigir ingrediente" '+
+        'style="background:none;border:none;cursor:pointer;font-size:10px;padding:1px 3px;color:#1B5E20;vertical-align:middle;line-height:1;border-radius:3px;outline:none">✎</button>' : '';
     return '<div class="rrow" data-ii="'+ii+'">'+
-      '<span class="rn">'+it.n+(it.dose?' — '+it.dose:'')+'</span>'+
-      editBtn+
+      '<span class="rn">'+it.n+(it.dose?' — '+it.dose:'')+editBtn+'</span>'+
       '<span class="rv">R$ '+it.c.toFixed(4)+'</span>'+
     '</div>';
   }).join('');
@@ -2166,51 +2184,58 @@ function renderResult(r, container, idx) {
   };
 
   // ── Corrigir ingrediente manualmente (Regras Alpha §10) ──
-  container.querySelectorAll('.edit-item-btn').forEach(function(editBtn) {
-    editBtn.addEventListener('click', function() {
-      var ii = parseInt(editBtn.getAttribute('data-ii'));
-      var it = r.itens[ii];
-      var rowEl = container.querySelector('.rrow[data-ii="'+ii+'"]');
-      rowEl.innerHTML =
-        '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">'+
-          '<span style="font-size:10px;color:#666;white-space:nowrap">Corrigir:</span>'+
-          '<input type="text" class="_corrInp" placeholder="Nome correto do ingrediente..." autocomplete="off" '+
-            'style="flex:1;min-width:0;padding:4px 8px;border:1.5px solid var(--primary);border-radius:var(--r);font-size:12px;font-family:inherit">'+
-          '<button class="_corrOk" style="padding:3px 10px;background:#1B5E20;color:#fff;border:none;border-radius:var(--r);font-size:12px;cursor:pointer;white-space:nowrap">✓ OK</button>'+
-          '<button class="_corrCancel" style="padding:3px 8px;background:#eee;border:none;border-radius:var(--r);font-size:12px;cursor:pointer">✕</button>'+
-        '</div>';
-      var inp2 = rowEl.querySelector('._corrInp');
-      var okBtn2 = rowEl.querySelector('._corrOk');
-      rowEl.querySelector('._corrCancel').addEventListener('click', function() { renderResult(r, container, idx); });
-      inp2.focus();
-      function _applyCorr() {
-        var newName = inp2.value.trim();
-        if(!newName) { renderResult(r, container, idx); return; }
-        var newIns = busIns(newName, r.fm);
-        if(!newIns || !(newIns.pe||newIns.p)) {
-          inp2.style.borderColor = '#e53935';
-          inp2.value = '';
-          inp2.placeholder = '⚠ Não encontrado — tente outro nome';
-          return;
-        }
-        var newC = it.topico ? it.g*(newIns.pe||newIns.p) : it.g*r.qtd*(newIns.pe||newIns.p);
-        r.custo += (newC - it.c);
-        it.n = newIns.n; it.c = newC;
-        // Recalcular PV com MKP correto para a forma
-        var _fk = normStr(r.fm||'');
-        var _pk = /sach/.test(_fk)?'Sache':/locao|loção/.test(_fk)?'Locao':/gel|creme/.test(_fk)?'Creme':/pomada/.test(_fk)?'Pomada':/xarope|solucao/.test(_fk)?'Xarope':'Capsulas';
-        var _tab = PROG[_pk]||PROG.Capsulas;
-        r.mkp = getMKP(r.custo, _tab);
-        r.pv = Math.round(r.custo*r.mkp+CF); if(r.pv<PM) r.pv=PM;
-        renderResult(r, container, idx);
+  // Event delegation no container — removeEventListener antes de adicionar evita acúmulo
+  if(container._corrClick) container.removeEventListener('click', container._corrClick);
+  container._corrClick = function(ev) {
+    var btn = ev.target;
+    // Subir pelo DOM até encontrar o botão de edição (seguro em qualquer estrutura)
+    while(btn && btn !== container) {
+      if(btn.classList && btn.classList.contains('edit-item-btn')) break;
+      btn = btn.parentNode;
+    }
+    if(!btn || !btn.classList || !btn.classList.contains('edit-item-btn')) return;
+    var ii = parseInt(btn.getAttribute('data-ii'));
+    var it = r.itens[ii];
+    if(!it || !(it.g > 0)) return;
+    var rowEl = container.querySelector('.rrow[data-ii="'+ii+'"]');
+    if(!rowEl) return;
+    // Substituir linha por formulário inline de correção
+    rowEl.innerHTML =
+      '<div style="display:flex;align-items:center;gap:5px;flex:1;flex-wrap:wrap;padding:2px 0">'+
+        '<span style="font-size:10px;color:#2E7D32;font-weight:600;white-space:nowrap">✎ Corrigir:</span>'+
+        '<input type="text" class="_ci" placeholder="Nome do ingrediente correto..." autocomplete="off" '+
+          'style="flex:1;min-width:120px;padding:3px 7px;border:1.5px solid var(--primary);border-radius:var(--r);font-size:12px;font-family:inherit">'+
+        '<button class="_cok" style="padding:3px 10px;background:#1B5E20;color:#fff;border:none;border-radius:var(--r);font-size:12px;cursor:pointer;white-space:nowrap">✓ OK</button>'+
+        '<button class="_ccancel" style="padding:3px 8px;background:#e0e0e0;border:none;border-radius:var(--r);font-size:12px;cursor:pointer">✕</button>'+
+      '</div>';
+    var ci = rowEl.querySelector('._ci');
+    if(!ci) return;
+    ci.focus();
+    function _corr() {
+      var nm = ci.value.trim();
+      if(!nm) { renderResult(r, container, idx); return; }
+      var ni = busIns(nm, r.fm);
+      if(!ni || !(ni.pe||ni.p)) {
+        ci.style.borderColor = '#e53935';
+        ci.placeholder = '⚠ Não encontrado — tente outro nome';
+        ci.value = ''; ci.focus();
+        return;
       }
-      okBtn2.addEventListener('click', _applyCorr);
-      inp2.addEventListener('keydown', function(e){
-        if(e.key==='Enter') _applyCorr();
-        if(e.key==='Escape') renderResult(r, container, idx);
-      });
-    });
-  });
+      var oldC = it.c;
+      var newC = it.topico ? it.g*(ni.pe||ni.p) : it.g*r.qtd*(ni.pe||ni.p);
+      r.custo = r.custo - oldC + newC;
+      it.n = ni.n; it.c = newC;
+      var fk = normStr(r.fm||'');
+      var pk = /sach/.test(fk)?'Sache':/loca/.test(fk)?'Locao':/gel|creme/.test(fk)?'Creme':/xarope|solucao|solução/.test(fk)?'Xarope':'Capsulas';
+      r.mkp = getMKP(r.custo, PROG[pk]||PROG.Capsulas);
+      r.pv = Math.round(r.custo*r.mkp+CF); if(r.pv<PM) r.pv=PM;
+      renderResult(r, container, idx);
+    }
+    rowEl.querySelector('._cok').onclick = _corr;
+    rowEl.querySelector('._ccancel').onclick = function(){ renderResult(r, container, idx); };
+    ci.onkeydown = function(e){ if(e.key==='Enter') _corr(); if(e.key==='Escape') renderResult(r, container, idx); };
+  };
+  container.addEventListener('click', container._corrClick);
 }
 
 function calcFormulas() {
