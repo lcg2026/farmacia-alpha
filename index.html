@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.48';
+  var VER = 'v4.49';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -773,6 +773,26 @@ var BLHG = {
   'lactobacilus gasseri':100,'lactobacillus gasseri':100,
   'lactobacilus lactis':100,'lactobacillus lactis':100
 };
+// ── Concentração BLH/g — lookup com 3 camadas (tabela → nome → espécie) ──
+function getBLHConc(insNome) {
+  var norm = normStr(insNome||'');
+  // 1. Tabela exata
+  if(BLHG[norm]) return BLHG[norm];
+  // 2. Extrair "BLH X" do próprio nome do item (ex: "L Rhamnosus BLH 100" → 100)
+  var m = norm.match(/\bblh\s*(\d+)/);
+  if(m) return parseFloat(m[1]);
+  // 3. Por espécie — funciona para qualquer nome parcial (ex: "Rhamnosus (Lemma)", "Bifido Longum")
+  var isLemma = /lemma/.test(norm);
+  if(/rhamnosus/.test(norm))  return isLemma ? 200 : 100;
+  if(/reuteri/.test(norm))    return 200;
+  if(/helveticus/.test(norm)) return 140;
+  if(/plantarum/.test(norm))  return 100;
+  if(/acidophilus|casei|paracasei|gasseri|fermentum/.test(norm)) return 100;
+  if(/infantis|lactis|breve|adolesc|animalis/.test(norm)) return 100;
+  if(/bifidobacterium|bifido/.test(norm)) return 100;
+  if(/biomamps|pool\s*de\s*lacto|lactobacil/.test(norm)) return 100;
+  return 0; // concentração desconhecida
+}
 // ── Preços padronizados Minoxidil em Cápsula (item 21408 — Minoxidil 1/10 Cápsula) ──
 var MINOX_PRECO = {
   0.5:  {30:{pix:87, cartao:92 },60:{pix:115,cartao:121},90:{pix:125,cartao:132},120:{pix:140,cartao:147},180:{pix:175,cartao:184}},
@@ -1428,16 +1448,17 @@ function calcRec(rec) {
     }
     if(u === '%') return dose / 100;
     if(u === 'blh') {
-      // Bilhões de UFC: g = dose_bilhoes ÷ BLH/g (§1.7)
-      var _insNk = normStr(insNome||'');
-      var _blhConc = BLHG[_insNk] || 0;
-      // Fallback 1: extrair concentração do próprio nome do item (ex: "L Rhamnosus BLH 100" → 100)
-      if(!_blhConc) {
-        var _blhM = _insNk.match(/\bblh\s*(\d+)/);
-        if(_blhM) _blhConc = parseFloat(_blhM[1]);
-      }
-      if(_blhConc > 0) return dose / _blhConc;
-      return dose / 1000; // sem concentração BLH conhecida — fallback
+      // Dose em bilhões de UFC: g = dose_bilhoes ÷ BLH/g  (ex: 3 BLH ÷ 100 = 0,03g)
+      var _bc = getBLHConc(insNome);
+      if(_bc > 0) return dose / _bc;
+      return dose / 1000; // concentração desconhecida — fallback
+    }
+    // UFC / UF / CFU — dose em unidades brutas (ex: 3.000.000.000 UFC)
+    // g = dose_ufc ÷ (BLH/g × 10^9)   pois BLH/g = bilhões/g = 10^9 UFC/g
+    if(/^ufc|^cfu|^uf$/.test(u)) {
+      var _bcU = getBLHConc(insNome);
+      if(_bcU > 0) return dose / (_bcU * 1e9);
+      return dose / 1e11; // fallback: assume 100 bilhões/g
     }
     return dose / 1000; // mg (padrão)
   }
@@ -1502,11 +1523,10 @@ function calcRec(rec) {
       g = 0; // base qsp é tratada separadamente
     } else {
       g = doseToG(a.dose, a.unidade, ins.n);
-      // §1.7: BLH sem concentração — alertar (só se não há BLHG nem "BLH X" no nome do item)
+      // §1.7: BLH sem concentração — alertar se getBLHConc retornar 0
       var _uuBLH = (a.unidade||'').toLowerCase().trim();
-      if(/^bilh[oõ]/.test(_uuBLH) || _uuBLH === 'blh') {
-        var _nkBLH = normStr(ins.n||'');
-        if(!BLHG[_nkBLH] && !_nkBLH.match(/\bblh\s*\d+/)) {
+      if(/^bilh[oõ]/.test(_uuBLH) || _uuBLH === 'blh' || /^ufc|^cfu/.test(_uuBLH)) {
+        if(getBLHConc(ins.n) === 0) {
           avs.push('⚠️ '+ins.n+': concentração BLH/g não cadastrada — confirmar com farmacêutico.');
         }
       }
