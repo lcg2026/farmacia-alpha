@@ -1,5 +1,5 @@
 // Service Worker — Farmácia Alpha PWA
-var CACHE = 'alpha-v4.51';
+var CACHE = 'alpha-v4.52';
 
 self.addEventListener('install', function(e) {
   self.skipWaiting();

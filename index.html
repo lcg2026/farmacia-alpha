@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.51';
+  var VER = 'v4.52';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1476,7 +1476,7 @@ function calcRec(rec) {
 
   // ── 4. Calcular ativos ──
   // Formas tópicas: NÃO multiplicar por qtd (dose = quantidade total da fórmula)
-  var isTopico = /locao|loção|creme|gel|pomada|shampoo|xampu|hormonio/.test(fml);
+  var isTopico = /locao|loção|creme|gel|pomada|shampoo|xampu|hormonio|peeling/.test(fml);
   var isSolido = fml.indexOf('cap') >= 0 || fml === 'sache' || fml === 'sublingual';
 
   // ── Detectar Minoxidil (Ajuste14) ──
@@ -1485,14 +1485,15 @@ function calcRec(rec) {
   // isMinoxTopico: qualquer forma tópica/líquida que contenha Minoxidil (inclui xarope/solucao)
   var isMinoxTopico = hasMinoxidil && (isTopico || /xarope|solucao|solução/.test(fml));
   var isMinoxCap    = hasMinoxidil && fml.indexOf('cap') >= 0;
-  var isPeeling     = /peeling/.test(fml);
+  var isPeeling     = /peeling|jessner/.test(fml) ||
+    (rec.ativos||[]).some(function(a){ return /jessner/.test(normStr(a.nome||'')); });
 
   // Detectar base qsp declarada na receita (para formas tópicas)
   var qspAtivoIdx = -1, qspTotal = 0;
   if(isTopico) {
     (rec.ativos||[]).forEach(function(a, idx) {
       var nn = normStr(a.nome||'');
-      var isBase = /\b(locao|loção|creme|gel|pomada|base|shampoo|xampu|pentravan|inderm|versapro|solucao|solução|viscosa|hidroalcool|capilar|trichosol|liposol)\b/.test(nn);
+      var isBase = /\b(locao|loção|creme|gel|pomada|base|shampoo|xampu|pentravan|inderm|versapro|solucao|solução|viscosa|hidroalcool|capilar|trichosol|liposol|jessner)\b/.test(nn);
       var u = (a.unidade||'').toLowerCase();
       if(isBase && (u==='g'||u==='ml'||u==='qsp') && qspAtivoIdx < 0) {
         qspAtivoIdx = idx;
@@ -1801,7 +1802,7 @@ function calcRec(rec) {
   }
 
   // ── 5E. CREME / GEL ──
-  if(fml.indexOf('creme')>=0 || fml.indexOf('gel')>=0) {
+  if(!isPeeling && (fml.indexOf('creme')>=0 || fml.indexOf('gel')>=0)) {
     var qspVolC = (qspAtivoIdx >= 0) ? qspTotal : qtd;
     var baseNomeC;
     var hasProgesterona = /progesterona/.test(nomesAtivos);
@@ -1918,8 +1919,18 @@ function calcRec(rec) {
         if(!_hasTrichoX) avs.push('Adicionar TRICHOSOL (item 16257) à formulação');
       } else avs.push('Veículo: Solução Hidroalcóolica (padrão Minoxidil tópico — item 3306)');
     } else if(isPeeling) {
-      // Peeling de Jessner — sem base, cobrar apenas os ativos (Regras Alpha §5.2)
-      avs.push('Peeling de Jessner: sem base — apenas ativos cotados');
+      // Peeling de Jessner — cobrar o produto base (ex: Sol Jessner), sem base adicional
+      if(qspAtivoIdx >= 0) {
+        var insJessner = busIns(rec.ativos[qspAtivoIdx].nome, fml);
+        if(insJessner && (insJessner.pe||insJessner.p) > 0) {
+          var cJ = qspVolX * (insJessner.pe||insJessner.p);
+          custo += cJ;
+          itens.push({n:insJessner.n, dose:qspVolX.toFixed(2)+'ml', c:cJ, g:qspVolX, topico:true});
+        } else {
+          avs.push('Peeling de Jessner: verificar preço do item no cadastro');
+        }
+      }
+      avs.push('Peeling de Jessner: sem base adicional (apenas produto cotado)');
     } else if(qspAtivoIdx >= 0) {
       var insBaseX = busIns(rec.ativos[qspAtivoIdx].nome, fml);
       if(insBaseX && (insBaseX.pe||insBaseX.p) > 0) {
