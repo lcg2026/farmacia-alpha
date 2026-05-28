@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.50';
+  var VER = 'v4.51';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -736,7 +736,7 @@ var PROG = {
 var CGEL=[[210,'4',0.0195,0.05,0.12],[300,'3',0.0195,0.05,0.12],[371,'2',0.0195,0.05,0.12],[481,'1',0.0195,0.05,0.12],[681,'0',0.0195,0.05,0.12],[951,'00',0.03,0.06,0.125]];
 // Insumos com tipo de cápsula fixo — planilha "Insumo X Tipo de Cápsulas" (2026-05-22)
 var CAP_INS_VEGETAL = /\bacetil l carnitina\b|\bacido lipoico\b|\bbiosil\b|\bchronic\b|\bclock\b|\beva 360\b|shatavarinas|\bkeranat\b|\bl carnitina base\b|\blipowheat\b|\bmodutin\b|\boli ola\b|\bormona\b|\breverse\b|tcm para capsula|\btkw\b|\bnutricolin\b/;
-var CAP_INS_ENTERICA = /\balfa amilase\b|\bbiointestil\b|\bduloxetina\b|\blipase\b|\bsulfasalazina\b|\bpancreatina\b/;
+var CAP_INS_ENTERICA = /\balfa amilase\b|\bamilase\b|\bbiointestil\b|\bduloxetina\b|\blipase\b|\bsulfasalazina\b|\bpancreatina\b/;
 var POTES=[[60,{'3':90,'2':50,'1':30,'0':30,'00':30},2],[80,{'3':120,'2':90,'1':60,'0':45,'00':30},2],[110,{'3':180,'2':120,'1':120,'0':60,'00':60},2],[150,{'3':270,'2':180,'1':150,'0':90,'00':80},2],[230,{'3':480,'2':270,'1':240,'0':180,'00':120},2],[320,{'3':480,'2':390,'1':300,'0':240,'00':180},2],[500,{'3':720,'2':510,'1':480,'0':360,'00':270},2.5]];
 // ── Concentração de probióticos em BLH/g (bilhões de UFC por grama) ──
 // Regra §1.7: g = dose_bilhoes / BLH_conc  (ex: 3 BLH ÷ 100 BLH/g = 0,03g)
@@ -1481,10 +1481,11 @@ function calcRec(rec) {
 
   // ── Detectar Minoxidil (Ajuste14) ──
   var hasMinoxidil = /minoxidil/.test(nomesAtivos);
-  var hasFatorCrescimento = /fator afgf|fator bfgf|fator igf|fator vegf|copper peptide/.test(nomesAtivos);
+  var hasFatorCrescimento = /\bafgf\b|\bbfgf\b|\bigf\b|\bvegf\b|\bcopper peptide\b|fator afgf|fator bfgf|fator igf|fator vegf/.test(nomesAtivos);
   // isMinoxTopico: qualquer forma tópica/líquida que contenha Minoxidil (inclui xarope/solucao)
   var isMinoxTopico = hasMinoxidil && (isTopico || /xarope|solucao|solução/.test(fml));
   var isMinoxCap    = hasMinoxidil && fml.indexOf('cap') >= 0;
+  var isPeeling     = /peeling/.test(fml);
 
   // Detectar base qsp declarada na receita (para formas tópicas)
   var qspAtivoIdx = -1, qspTotal = 0;
@@ -1608,6 +1609,10 @@ function calcRec(rec) {
       for(var ci=0;ci<CGEL.length;ci++){if(capDoseMg<=CGEL[ci][0]){cap=CGEL[ci];break;}}
     }
 
+    // Keranat deve ser cotado separadamente em cápsula vegetal (Regras Alpha §1.2)
+    if(/\bkeranat\b/.test(nomesAtivos) && (rec.ativos||[]).filter(function(a){return !(/qsp|base/.test(normStr(a.nome||'')));}).length > 1) {
+      avs.push('⚠ Keranat deve ser cotado SEPARADAMENTE em cápsula vegetal, mesmo junto com outros insumos');
+    }
     // Tipo de cápsula: oleosa → vegetal, entérica → entérica, padrão → gelatinosa
     var isOleosa = /omega|oleo|oil|oleosa|vitamina e|vitamina a\b|retinol/.test(nomesAtivos);
     var fmlNorm = normStr(fml);
@@ -1752,9 +1757,11 @@ function calcRec(rec) {
     // Minoxidil tópico → veículo obrigatório conforme Ajuste14/15
     if(isMinoxTopico) {
       if(hasFatorCrescimento) {
-        // Com fator de crescimento → Loção Capilar sem Álcool (item 10360 / proxy 622)
+        // Com fator de crescimento → Loção Capilar sem Álcool (item 10360) + TRICHOSOL (item 16257)
         baseNomeL = 'locao capilar';
         avs.push('Veículo: Loção Capilar sem Álcool (fator de crescimento detectado — item 10360)');
+        var _hasTrichoL = (rec.ativos||[]).some(function(a){ return /trichosol/.test(normStr(a.nome||'')); });
+        if(!_hasTrichoL) avs.push('Adicionar TRICHOSOL (item 16257) à formulação');
       } else {
         // Sem fator de crescimento → verificar se veículo declarado é válido para Minoxidil
         var _bnNorm = normStr(baseNomeL);
@@ -1887,8 +1894,8 @@ function calcRec(rec) {
     }
   }
 
-  // ── 5H. XAROPE ──
-  if(fml.indexOf('xarope')>=0||fml.indexOf('solucao')>=0||fml.indexOf('solução')>=0) {
+  // ── 5H. XAROPE / PEELING ──
+  if(fml.indexOf('xarope')>=0||fml.indexOf('solucao')>=0||fml.indexOf('solução')>=0||isPeeling) {
     var qspVolX = (qspAtivoIdx >= 0) ? qspTotal : qtd;
     // Minoxidil tópico: determinar veículo correto (não usar base genérica de xarope)
     if(isMinoxTopico) {
@@ -1905,8 +1912,14 @@ function calcRec(rec) {
         custo += _cBaseX;
         itens.push({n:_insBaseX.n+' qsp', dose:_baseGX.toFixed(2)+'ml', c:_cBaseX});
       }
-      if(hasFatorCrescimento) avs.push('Veículo: Loção Capilar sem Álcool (fator de crescimento — item 10360)');
-      else avs.push('Veículo: Solução Hidroalcóolica (padrão Minoxidil tópico — item 3306)');
+      if(hasFatorCrescimento) {
+        avs.push('Veículo: Loção Capilar sem Álcool (fator de crescimento — item 10360)');
+        var _hasTrichoX = (rec.ativos||[]).some(function(a){ return /trichosol/.test(normStr(a.nome||'')); });
+        if(!_hasTrichoX) avs.push('Adicionar TRICHOSOL (item 16257) à formulação');
+      } else avs.push('Veículo: Solução Hidroalcóolica (padrão Minoxidil tópico — item 3306)');
+    } else if(isPeeling) {
+      // Peeling de Jessner — sem base, cobrar apenas os ativos (Regras Alpha §5.2)
+      avs.push('Peeling de Jessner: sem base — apenas ativos cotados');
     } else if(qspAtivoIdx >= 0) {
       var insBaseX = busIns(rec.ativos[qspAtivoIdx].nome, fml);
       if(insBaseX && (insBaseX.pe||insBaseX.p) > 0) {
@@ -1965,6 +1978,7 @@ function calcRec(rec) {
     fml.indexOf('shampoo')>=0||fml.indexOf('xampu')>=0?'Shampoo':
     fml.indexOf('xarope')>=0?'Xarope':
     fml.indexOf('sublingual')>=0||fml.indexOf('orotab')>=0?'Sublingual':
+    isPeeling?'Xarope':
     'Capsulas';
   // Minoxidil tópico → SEMPRE usar aba Loção Hidratante para MKP
   if(isMinoxTopico) progKey = 'Locao';
