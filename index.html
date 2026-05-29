@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.53';
+  var VER = 'v4.54';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -2684,9 +2684,9 @@ function calcFoto() {
       if(!data.content||!data.content[0]) { alert('Erro na API: ' + (data.error ? data.error.message : JSON.stringify(data).substring(0,200))); return; }
       var txt = data.content[0].text;
       var clean = txt.replace(/```json|```/g,'').trim();
-      // Extrair JSON mesmo que a IA retorne texto antes (ex: "Analisando...")
-      var _jS = clean.indexOf('{'), _jE = clean.lastIndexOf('}');
-      if(_jS > 0 && _jE > _jS) clean = clean.substring(_jS, _jE + 1);
+      // Extrair bloco JSON mesmo com texto antes ou depois (ex: "Analisando..." ou notas finais)
+      var _jS = clean.indexOf('{"'), _jE = clean.lastIndexOf('}');
+      if(_jS >= 0 && _jE > _jS) clean = clean.substring(_jS, _jE + 1);
       // Tentar reparar JSON truncado (receita muito longa)
       function tryRepairJSON(s) {
         // Se terminou em meio a uma string ou objeto, tentar fechar
