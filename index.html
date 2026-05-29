@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.52';
+  var VER = 'v4.53';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -398,7 +398,7 @@ var EQUIV = {
   'l theanina':'l theanina','l-theanina':'l theanina','theanina':'l theanina',
   // Hormônios/Bases
   'pentravan':'pentravan','base pentravan':'pentravan',
-  'transcutol':'transcutol p',
+  'transcutol':'transcutol','transcutol p':'transcutol',
   'testosterona micronizada':'testosterona base',
   'progesterona micronizada':'progesterona base',
   // Outros
@@ -548,7 +548,7 @@ var EQUIV = {
   'bht':'bht','bht 1/100':'bht 1/100','bht 1/10':'bht 1/10',
   'antioxidante':'antioxidante',
   'neutrex':'neutrex',
-  'transcutol p':'transcutol p',
+  'transcutol p':'transcutol',
   // Ajuste10 — sinônimos não encontrados
   'naringenina':'naringipure',
   'telodermin':'telodormin',
@@ -2684,6 +2684,9 @@ function calcFoto() {
       if(!data.content||!data.content[0]) { alert('Erro na API: ' + (data.error ? data.error.message : JSON.stringify(data).substring(0,200))); return; }
       var txt = data.content[0].text;
       var clean = txt.replace(/```json|```/g,'').trim();
+      // Extrair JSON mesmo que a IA retorne texto antes (ex: "Analisando...")
+      var _jS = clean.indexOf('{'), _jE = clean.lastIndexOf('}');
+      if(_jS > 0 && _jE > _jS) clean = clean.substring(_jS, _jE + 1);
       // Tentar reparar JSON truncado (receita muito longa)
       function tryRepairJSON(s) {
         // Se terminou em meio a uma string ou objeto, tentar fechar
