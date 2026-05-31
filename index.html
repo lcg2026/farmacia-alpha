@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.56';
+  var VER = 'v4.57';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -2665,28 +2665,25 @@ function calcFoto() {
     var contentBlocks = fileData.map(function(fd) {
       return {type: fd.isPDF ? 'document' : 'image', source:{type:'base64',media_type:fd.mediaType,data:fd.b64}};
     });
-    contentBlocks.push({type:'text', text:'Leia esta receita e extraia todas as fórmulas manipuladas conforme as instruções do sistema.'});
+    contentBlocks.push({type:'text', text:'Leia esta receita e extraia todas as fórmulas manipuladas. Responda SOMENTE com o JSON, sem nenhum texto antes ou depois.'});
 
     var body = {
       model: 'claude-sonnet-4-6',
-      max_tokens: 10000,
-      thinking: {type: 'enabled', budget_tokens: 5000},
+      max_tokens: 6000,
       system: prompt,
       messages: [{role:'user', content: contentBlocks}]
     };
 
     fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-beta':'interleaved-thinking-2025-05-14','anthropic-dangerous-direct-browser-access':'true'},
+      headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify(body)
     })
     .then(function(r){return r.json();})
     .then(function(data){
       btn.disabled=false; btn.textContent='⚙ Calcular preço';
       if(!data.content||!data.content[0]) { alert('Erro na API: ' + (data.error ? data.error.message : JSON.stringify(data).substring(0,200))); return; }
-      // Com thinking ativo, content[0] pode ser bloco de raciocínio — buscar o bloco de texto
-      var textBlock = data.content.find(function(b){ return b.type === 'text'; });
-      var txt = textBlock ? textBlock.text : '';
+      var txt = data.content[0].text || '';
       var clean = txt.replace(/```json|```/g,'').trim();
       // Extrair bloco JSON mesmo com texto antes ou depois (ex: "Analisando..." ou notas finais)
       var _jS = clean.indexOf('{"'), _jE = clean.lastIndexOf('}');
