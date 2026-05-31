@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.55';
+  var VER = 'v4.56';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -2021,7 +2021,7 @@ function calcRec(rec) {
     });
     if(_minoxDoseMg !== null) {
       // Arredondar para chave mais próxima da tabela
-      var _doseKeys = [2.0,2.5,3.0,3.5,4.0,5.0];
+      var _doseKeys = [0.5,1.0,2.0,2.5,3.0,3.5,4.0,5.0];
       var _doseKey = null, _bestDist = 99;
       for(var _di=0;_di<_doseKeys.length;_di++) {
         var _dist = Math.abs(_doseKeys[_di] - _minoxDoseMg);
