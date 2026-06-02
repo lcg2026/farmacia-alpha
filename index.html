@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.60';
+  var VER = 'v4.61';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -2657,24 +2657,31 @@ function calcFoto() {
       var r = new FileReader();
       r.onload = function(e) {
         var dataUrl = e.target.result;
-        var isPDF = f.type === 'application/pdf';
+        // Detectar PDF por tipo OU extensão (f.type pode ser '' em alguns sistemas Windows)
+        var isPDF = f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
         if(isPDF) {
           results[i] = {b64: dataUrl.split(',')[1], isPDF: true, mediaType: 'application/pdf'};
           if(--pending === 0) cb(results);
         } else {
           // Verificar tamanho — comprimir se > 4.5MB
           var b64raw = dataUrl.split(',')[1];
+          var mt = f.type || 'image/jpeg'; // fallback seguro se f.type vier vazio
           var decoded = Math.floor(b64raw.length * 3 / 4);
           if(decoded > 4.5 * 1024 * 1024) {
-            compressImg(dataUrl, function(b64c, mt) {
-              results[i] = {b64: b64c, isPDF: false, mediaType: mt};
+            compressImg(dataUrl, function(b64c, mt2) {
+              results[i] = {b64: b64c, isPDF: false, mediaType: mt2};
               if(--pending === 0) cb(results);
             });
           } else {
-            results[i] = {b64: b64raw, isPDF: false, mediaType: f.type};
+            results[i] = {b64: b64raw, isPDF: false, mediaType: mt};
             if(--pending === 0) cb(results);
           }
         }
+      };
+      r.onerror = function() {
+        console.error('Erro lendo arquivo:', f.name);
+        results[i] = null;
+        if(--pending === 0) cb(results.filter(Boolean));
       };
       r.readAsDataURL(f);
     });
@@ -2691,20 +2698,34 @@ function calcFoto() {
 
     var body = {
       model: 'claude-sonnet-4-6',
-      max_tokens: 6000,
+      max_tokens: 8000,
       system: prompt,
       messages: [{role:'user', content: contentBlocks}]
     };
 
     fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':k,
+        'anthropic-version':'2023-06-01',
+        'anthropic-beta':'pdfs-2024-09-25',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
       body:JSON.stringify(body)
     })
-    .then(function(r){return r.json();})
+    .then(function(r){
+      if(!r.ok) {
+        return r.json().then(function(errData){
+          var msg = errData.error ? errData.error.message : JSON.stringify(errData).substring(0,300);
+          throw new Error('HTTP ' + r.status + ': ' + msg);
+        });
+      }
+      return r.json();
+    })
     .then(function(data){
       btn.disabled=false; btn.textContent='⚙ Calcular preço';
-      if(!data.content||!data.content[0]) { alert('Erro na API: ' + (data.error ? data.error.message : JSON.stringify(data).substring(0,200))); return; }
+      if(!data.content||!data.content[0]) { alert('Erro na API: ' + (data.error ? data.error.message : JSON.stringify(data).substring(0,300))); return; }
       var txt = data.content[0].text || '';
       var clean = txt.replace(/```json|```/g,'').trim();
       // Extrair bloco JSON mesmo com texto antes ou depois (ex: "Analisando..." ou notas finais)
@@ -2765,7 +2786,9 @@ function calcFoto() {
     .catch(function(e){
       btn.disabled=false; btn.textContent='⚙ Calcular preço';
       var msg = e.message||'';
-      if(msg.indexOf('fetch')>=0||msg.indexOf('network')>=0||msg==='Failed to fetch') {
+      if(msg.indexOf('HTTP 4')>=0||msg.indexOf('HTTP 5')>=0) {
+        alert('Erro da API Anthropic:\n\n'+msg+'\n\nSe for "invalid_request_error" com PDF, tente enviar a receita como imagem (foto/screenshot).');
+      } else if(msg.indexOf('fetch')>=0||msg.indexOf('network')>=0||msg==='Failed to fetch') {
         alert('Erro de conexão com a API Anthropic.\n\nVerifique:\n• Internet ativa\n• Extensões do browser (VPN, bloqueadores) desativadas\n• Chave API válida em Configurações\n\nDetalhe: '+msg);
       } else {
         alert('Erro: '+msg);
