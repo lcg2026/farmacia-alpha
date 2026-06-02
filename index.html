@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.58';
+  var VER = 'v4.59';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -797,6 +797,7 @@ function getBLHConc(insNome) {
 var MINOX_PRECO = {
   0.5:  {30:{pix:87, cartao:92 },60:{pix:115,cartao:121},90:{pix:125,cartao:132},120:{pix:140,cartao:147},180:{pix:175,cartao:184}},
   1.0:  {30:{pix:90, cartao:95 },60:{pix:120,cartao:127},90:{pix:130,cartao:137},120:{pix:147,cartao:155},180:{pix:183,cartao:193}},
+  1.5:  {30:{pix:105,cartao:110},60:{pix:139,cartao:146},90:{pix:172,cartao:181},120:{pix:208,cartao:219},180:{pix:275,cartao:289}},
   2.0:  {30:{pix:113,cartao:119},60:{pix:149,cartao:157},90:{pix:185,cartao:195},120:{pix:209,cartao:220},180:{pix:305,cartao:321}},
   2.5:  {30:{pix:113,cartao:119},60:{pix:163,cartao:172},90:{pix:209,cartao:220},120:{pix:219,cartao:229},180:{pix:315,cartao:329}},
   3.0:  {30:{pix:137,cartao:145},60:{pix:169,cartao:179},90:{pix:222,cartao:233},120:{pix:271,cartao:286},180:{pix:349,cartao:369}},
@@ -2021,7 +2022,7 @@ function calcRec(rec) {
     });
     if(_minoxDoseMg !== null) {
       // Arredondar para chave mais próxima da tabela
-      var _doseKeys = [0.5,1.0,2.0,2.5,3.0,3.5,4.0,5.0];
+      var _doseKeys = [0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0];
       var _doseKey = null, _bestDist = 99;
       for(var _di=0;_di<_doseKeys.length;_di++) {
         var _dist = Math.abs(_doseKeys[_di] - _minoxDoseMg);
