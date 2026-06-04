@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.63';
+  var VER = 'v4.64';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1675,21 +1675,28 @@ function calcRec(rec) {
     var isAminoacido = /arginina|carnitina|alanina/.test(nomesAtivos);
     var hasLactoS = /lactobacil|probiotico|bifidobact/.test(nomesAtivos);
     var hasInositol = /inositol/.test(nomesAtivos);
+    // Regras Alpha §3: PEPTISTRONG, Glutamina, Psillium, Polidextrose, Inulina → sem shake
+    var isSemShake = /peptistrong|glutamina|psillium|psyllium|polidextrose|inulina/.test(nomesAtivos);
 
-    // Base obrigatória por ingrediente
-    var basePN = isAminoacido ? 'Base Shake Sub.Amargas 4g/sachê' : 'Base Shake Nutrição 4g/sachê';
-    var basePP = isAminoacido ? 0.046 : 0.097;
-    var cBaseS = 4 * qtd * basePP; custo += cBaseS;
-    itens.push({n:basePN, dose:'', c:cBaseS});
+    if(isSemShake && !isAminoacido) {
+      // Não adicionar shake — apenas aroma (Regras Alpha §3)
+      avs.push('Sachê sem base Shake: fórmula com Peptistrong/Glutamina/Psillium/Polidextrose/Inulina (Regras Alpha §3)');
+    } else {
+      // Base obrigatória por ingrediente
+      var basePN = isAminoacido ? 'Base Shake Sub.Amargas 4g/sachê' : 'Base Shake Nutrição 4g/sachê';
+      var basePP = isAminoacido ? 0.046 : 0.097;
+      var cBaseS = 4 * qtd * basePP; custo += cBaseS;
+      itens.push({n:basePN, dose:'', c:cBaseS});
+    }
 
-    // Aroma obrigatório: 0,5g/sachê
+    // Aroma obrigatório: 0,5g/sachê (item 24332)
     var cAroma = 0.5 * qtd * 0.198; custo += cAroma;
     itens.push({n:'Aroma cotação pó 0,5g/sachê', dose:'', c:cAroma});
 
     // Celulosix Lacto em sachê: NÃO adicionar (só vale para Cápsula — Regras Alpha §3)
 
-    // Escolher tamanho do sachê (peso total por dose = ativos + base + aroma)
-    var pesoTotalDose = totalGCheck + 4 + 0.5;
+    // Escolher tamanho do sachê (peso total por dose = ativos + (base se houver) + aroma)
+    var pesoTotalDose = totalGCheck + (isSemShake && !isAminoacido ? 0 : 4) + 0.5;
     var SACHES=[{n:'7x7 P',cap:4,p:0.1166},{n:'7x9 M',cap:9,p:0.1314},{n:'7x17 G',cap:20,p:0.115}];
     var sache = SACHES[SACHES.length-1];
     for(var si=0;si<SACHES.length;si++){if(pesoTotalDose<=SACHES[si].cap){sache=SACHES[si];break;}}
