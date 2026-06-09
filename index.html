@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.64';
+  var VER = 'v4.65';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1414,6 +1414,7 @@ function calcRec(rec) {
   var fm = (rec.forma || 'Capsulas');
   var fml = fm.toLowerCase();
   var custo = 0, itens = [], avs = [], nf = [];
+  var _simCap=null, _simCapPIdx=2, _simNCaps=1; // dados para calcSimQtd
   var prescritor = normStr(rec.prescritor||'');
 
   // ── 1. Auto-detectar hormônio ──
@@ -1632,6 +1633,7 @@ function calcRec(rec) {
     }
     var capPreco = isEnterica ? cap[4] : (isOleosa || isVegetal) ? cap[3] : cap[2];
     var capTipo = isEnterica ? 'Entérica' : (isOleosa || isVegetal) ? 'Vegetal' : '';
+    _simCap=cap; _simCapPIdx=isEnterica?4:(isOleosa||isVegetal)?3:2; _simNCaps=nCaps;
 
     var cc = capPreco * qtd * nCaps;
     var totalCaps = qtd * nCaps;
@@ -2073,7 +2075,8 @@ function calcRec(rec) {
     }
   }
 
-  return {fm:fm, qtd:qtd, custo:custo, mkp:mkp, pv:pv, itens:itens, avs:avs, nf:nf, pac:rec.paciente||'', pre:rec.prescritor||'', minoxPad:minoxPad};
+  return {fm:fm, qtd:qtd, custo:custo, mkp:mkp, pv:pv, itens:itens, avs:avs, nf:nf, pac:rec.paciente||'', pre:rec.prescritor||'', minoxPad:minoxPad,
+    _cap:_simCap, _capPIdx:_simCapPIdx, _nCaps:_simNCaps};
 }
 
 // ── Simular outra quantidade ───────────────────────────────
@@ -2089,10 +2092,13 @@ function calcSimQtd(r, q) {
   var fml = normStr(r.fm||'');
   // Recalcular embalagem para o novo volume simulado
   if(fml.indexOf('cap')>=0) {
-    var capDoseSimMg = (r.itens.reduce(function(s,it){return it.n.indexOf('psula')>=0?s:s;},0)||300);
-    var capSim=CGEL[CGEL.length-1];
-    custoSim+=capSim[2]*q;
-    var pt=POTES[POTES.length-1];for(var pi=0;pi<POTES.length;pi++){if((POTES[pi][1][capSim[1]]||0)>=q){pt=POTES[pi];break;}}
+    var capSim = r._cap || CGEL[CGEL.length-1];
+    var capPIdx = r._capPIdx !== undefined ? r._capPIdx : 2;
+    var nCapsD = r._nCaps || 1;
+    var totalCapsQ = q * nCapsD;
+    custoSim += capSim[capPIdx] * totalCapsQ;
+    var pt=POTES[POTES.length-1];
+    for(var pi=0;pi<POTES.length;pi++){if((POTES[pi][1][capSim[1]]||0)>=totalCapsQ){pt=POTES[pi];break;}}
     custoSim+=pt[2];
   } else if(fml==='hormonio'||fml.indexOf('horm')>=0) {
     var airH=AIRLESS[AIRLESS.length-1];
