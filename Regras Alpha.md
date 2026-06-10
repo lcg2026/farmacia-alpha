@@ -1,5 +1,5 @@
 # Regras Alpha — Farmácia de Manipulação
-**Versão do Agente:** v4.66 | **Atualizado em:** 2026-06-10
+**Versão do Agente:** v4.67 | **Atualizado em:** 2026-06-10
 
 > Este arquivo é a fonte única de regras de negócio do Agente Alpha.
 > Edite aqui quando uma regra mudar e envie para o Claude atualizar o sistema.
@@ -333,6 +333,7 @@
 
 | Data | Versão | Alteração |
 |------|--------|-----------|
+| 2026-06-10 | v4.67 | Rebuild banco v2: CDSIN com EQUIV≥10 como entradas independentes (123 itens novos — Treonato Magnésio R,282/g, Magnésio Citrato, Malato, etc.); EQUIV treonato corrigido |
 | 2026-06-10 | v4.66 | Ajustes100626: PROD_ASSOC extensivo a sinônimos; aviso n°4 vegetal removido; vegetal individual por fórmula (prompt); Minoxidil tópico→item 54768; K2→item 24602; Treonato ≤160mg→item 22275; rebuild banco Produtos/Sinônimos 1006 |
 | 2026-06-10 | v4.65 | Fix calcSimQtd: cápsula vegetal/entérica e pote corretos na simulação de quantidade |
 | 2026-06-04 | v4.64 | Sachê sem shake para Peptistrong/Glutamina/Psillium/Polidextrose/Inulina |
