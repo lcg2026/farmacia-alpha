@@ -1,5 +1,5 @@
 # Regras Alpha — Farmácia de Manipulação
-**Versão do Agente:** v4.67 | **Atualizado em:** 2026-06-10
+**Versão do Agente:** v4.68 | **Atualizado em:** 2026-06-12
 
 > Este arquivo é a fonte única de regras de negócio do Agente Alpha.
 > Edite aqui quando uma regra mudar e envie para o Claude atualizar o sistema.
@@ -356,3 +356,48 @@
 | 2026-05-21 | v4.39 | Cápsula n°4 Vegetal → usar n°3 |
 | 2026-05-21 | v4.38 | 6 correções Ajuste16 |
 | 2026-05-19 | v4.37 | Fix bug lista vendedoras |
+
+---
+
+## 10. SUBLINGUAL / OROTAB / OUTROS
+
+### 10.1 Tipos de Comprimido Sublingual
+
+| Tipo | Forma (AI) | Capacidade |
+|------|-----------|------------|
+| Sublingual padrão | Sublingual | 200 mg (0,2g) |
+| Orotab Diet | Orotab | 760 mg (0,76g) |
+
+### 10.2 Insumos Obrigatórios por Comprimido
+
+| Insumo | Item | Qtd/comp | Preço/g |
+|--------|------|----------|---------|
+| Aroma para cotação - pó | 24332 | 50 mg | R$ 0,1982 |
+| Orotab Diet (excipiente qsp) | — | volume restante | R$ 0,21 |
+
+- Para sublingual padrão (200mg): excipiente geral (R$ 0,066/g) qsp do volume restante
+- Fórmula: qsp por comprimido = capacidade − ativo(mg) − aroma(50mg)
+
+### 10.3 Embalagem
+
+| Item | Capacidade | Preço |
+|------|-----------|-------|
+| EMB CAIXA PAPELÃO P/ OROTAB FAC (22532) | 30 unidades | R$ 0,92/cx |
+
+- Qtd caixas = Math.ceil(n_comprimidos / 30)
+
+### 10.4 Fórmula de Cálculo
+
+1. Custo ativo = dose(g) × n_comp × preço/g
+2. Custo aroma = 0,050g × n_comp × R/usr/bin/bash,1982/g
+3. Custo excipiente = qsp(g) × n_comp × preço_excipiente/g
+4. Custo embalagem = Math.ceil(n_comp/30) × R/usr/bin/bash,92
+5. MKP = Tabela Progressiva (aba Sublingual — compartilhada com Outros)
+6. PV = Custo × MKP + R7,50 | Mínimo R2
+
+### 10.5 Outros (Pó em Gramas)
+
+- Produtos vendidos em gramas: Carbonato de Cálcio, Colágeno Hidrolisado, Verisol, Psyllium em gramas, etc.
+- Forma AI: **Outros**
+- Sem aroma, excipiente ou embalagem padrão (embalagem informal conforme prescritor/produto)
+- MKP: Tabela Progressiva Sublingual (mesma tabela)

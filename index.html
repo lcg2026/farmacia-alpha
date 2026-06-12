@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.67';
+  var VER = 'v4.68';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1496,7 +1496,7 @@ function calcRec(rec) {
   // ── 4. Calcular ativos ──
   // Formas tópicas: NÃO multiplicar por qtd (dose = quantidade total da fórmula)
   var isTopico = /locao|loção|creme|gel|pomada|shampoo|xampu|hormonio|peeling/.test(fml);
-  var isSolido = fml.indexOf('cap') >= 0 || fml === 'sache' || fml === 'sublingual';
+  var isSolido = fml.indexOf('cap') >= 0 || fml === 'sache' || fml === 'sublingual' || fml.indexOf('orotab') >= 0 || fml === 'outros';
 
   // ── Detectar Minoxidil (Ajuste14) ──
   var hasMinoxidil = /minoxidil/.test(nomesAtivos);
@@ -2019,27 +2019,30 @@ function calcRec(rec) {
     custo += cEmbX;
   }
 
-  // ── 5I. SUBLINGUAL / OROTAB (comprimidos — não cápsulas) ──
-  if(!isCapSublingual && (fml.indexOf('sublingual')>=0||fml.indexOf('orotab')>=0||fml.indexOf('oro')>=0)) {
-    // Tamanho: orotab diet = 760mg; padrão = 200mg
-    var isOrotab = /orotab|760|orodis/.test(fml+' '+nomesAtivos);
-    var capSublMg = isOrotab ? 760 : 200;
-    var aromaMg = 50;
-    var ativosSubl = totalGCheck * 1000; // por comprimido em mg
-    var qspMg = capSublMg - ativosSubl - aromaMg;
-    if(qspMg < 0) qspMg = 0;
-    // Aroma
-    var cArSub = (aromaMg/1000) * qtd * 0.198; custo += cArSub;
-    itens.push({n:'Aroma cotação pó 50mg/comp', dose:'', c:cArSub});
-    // Excipiente orotab
-    var excipSublP = isOrotab ? 0.21 : 0.066;
-    var excipSublNome = isOrotab ? 'Orotab Diet (qsp)' : 'Excipiente Geral (qsp)';
-    var cExcSub = (qspMg/1000) * qtd * excipSublP; custo += cExcSub;
-    itens.push({n:excipSublNome, dose:'', c:cExcSub});
-    // Embalagem: caixa 30un = R$0,92
-    var nCaixas = Math.ceil(qtd / 30);
-    var cEmbSub = nCaixas * 0.92; custo += cEmbSub;
-    itens.push({n:'Caixa Papelão Orotab ('+nCaixas+'cx)', dose:'', c:cEmbSub});
+  // ── 5I. SUBLINGUAL / OROTAB / OUTROS ──
+  if(!isCapSublingual && (fml.indexOf('sublingual')>=0||fml.indexOf('orotab')>=0||fml.indexOf('oro')>=0||fml==='outros')) {
+    if(fml !== 'outros') {
+      // Tamanho: orotab diet = 760mg; padrão = 200mg
+      var isOrotab = /orotab|orodis|oro.?dispersivel|oro.?diet/.test(fml+' '+nomesAtivos+' '+normStr(rec.descricao||''));
+      var capSublMg = isOrotab ? 760 : 200;
+      var aromaMg = 50;
+      var ativosSubl = totalGCheck * 1000; // mg por comprimido
+      var qspMg = capSublMg - ativosSubl - aromaMg;
+      if(qspMg < 0) qspMg = 0;
+      // Aroma 50mg/comp (item 24332)
+      var cArSub = (aromaMg/1000) * qtd * 0.1982; custo += cArSub;
+      itens.push({n:'Aroma cotação pó 50mg/comp', dose:'', c:cArSub});
+      // Excipiente qsp
+      var excipSublP = isOrotab ? 0.21 : 0.066;
+      var excipSublNome = isOrotab ? 'Orotab Diet (qsp)' : 'Excipiente Geral (qsp)';
+      var cExcSub = (qspMg/1000) * qtd * excipSublP; custo += cExcSub;
+      itens.push({n:excipSublNome, dose:'', c:cExcSub});
+      // Embalagem: caixa 30un = R$0,92 (item 22532)
+      var nCaixas = Math.ceil(qtd / 30);
+      var cEmbSub = nCaixas * 0.92; custo += cEmbSub;
+      itens.push({n:'Caixa Papelão Orotab ('+nCaixas+'cx)', dose:'', c:cEmbSub});
+    }
+    // Outros (pó em gramas): sem embalagem/excipiente padrão — MKP via Sublingual table (progKey abaixo)
   }
 
   // ── 6. MKP e Preço ──
@@ -2052,7 +2055,7 @@ function calcRec(rec) {
     fml.indexOf('pomada')>=0?'Pomada':
     fml.indexOf('shampoo')>=0||fml.indexOf('xampu')>=0?'Shampoo':
     fml.indexOf('xarope')>=0?'Xarope':
-    fml.indexOf('sublingual')>=0||fml.indexOf('orotab')>=0?'Sublingual':
+    fml.indexOf('sublingual')>=0||fml.indexOf('orotab')>=0||fml==='outros'?'Sublingual':
     isPeeling?'Xarope':
     'Capsulas';
   // Minoxidil tópico → SEMPRE usar aba Loção Hidratante para MKP
@@ -2164,7 +2167,7 @@ function updateResumo() {
   if(!ar || !el) return;
   var total = ar.reduce(function(s,x){return s+x.pv;},0);
   var linhasRes = ar.map(function(x,i){
-    var unid = /cap|sach|sublingual/.test(normStr(x.fm||'')) ? 'doses' : 'mL/g';
+    var unid = /cap|sach|sublingual|orotab|outros/.test(normStr(x.fm||'')) ? 'doses' : 'mL/g';
     return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px">' +
       '<span>'+(ar.length>1?'<strong>'+(i+1)+'.</strong> ':'')+x.fm+' &bull; '+x.qtd+' '+unid+'</span>' +
       '<span style="font-weight:700;color:var(--primary)">R$ '+x.pv.toFixed(2)+'</span></div>';
@@ -2180,7 +2183,7 @@ function renderResult(r, container, idx) {
   qtdsFixadas = [];
   simAtual = {qtd:0, pv:0};
 
-  var isSolid = /cap|sach|sublingual/.test(normStr(r.fm||''));
+  var isSolid = /cap|sach|sublingual|orotab|outros/.test(normStr(r.fm||''));
   var unidLabel = isSolid ? 'doses' : 'mL/g';
   var simLbl = isSolid ? 'Simular outra quantidade:' : 'Simular outro volume (mL/g):';
   var simPh  = isSolid ? 'Ex: 60' : 'Ex: 100';
@@ -2427,7 +2430,7 @@ function calcFormulas() {
     var pac = parsed.paciente || '';
     var pre = parsed.prescritor || '';
     var total = allResults.reduce(function(s,r){return s+r.pv;}, 0);
-    var isSolArr = allResults.map(function(r){return /cap|sach|sublingual/.test(normStr(r.fm||''));});
+    var isSolArr = allResults.map(function(r){return /cap|sach|sublingual|orotab|outros/.test(normStr(r.fm||''));});
     var linhasRes = allResults.map(function(r,i){
       var unid = isSolArr[i] ? 'doses' : 'mL/g';
       // Ajuste16: adicionar nome do primeiro ativo para identificar fórmula
@@ -2480,7 +2483,7 @@ function envWA() {
   // Linhas de cada fórmula — usa activeRes para qtd/pv atualizados pela simulação
   var linhasFormulas = allRes.map(function(r, i) {
     var active = activeRes[i] || r;
-    var isSol = /cap|sach|sublingual/.test(normStr(active.fm||''));
+    var isSol = /cap|sach|sublingual|orotab|outros/.test(normStr(active.fm||''));
     var unid = isSol ? 'doses' : 'mL/g';
     var prefixo = allRes.length > 1 ? (i+1)+') ' : '';
     // Se este resultado tem simulações fixadas, listá-las
@@ -2506,7 +2509,7 @@ function envWA() {
 function copiarOrcamento(btn) {
   if(!last) { alert('Nenhum orçamento calculado.'); return; }
   var r = last;
-  var isSol = /cap|sach|sublingual/.test(normStr(r.fm||''));
+  var isSol = /cap|sach|sublingual|orotab|outros/.test(normStr(r.fm||''));
   var unid = isSol ? 'doses' : 'mL/g';
   var linhas = [];
   if(r.orc) linhas.push('📋 Orçamento ' + r.orc);
@@ -2543,7 +2546,7 @@ function copiarOrcamentoGeral(btn) {
   linhas.push('');
   allRes.forEach(function(r, i) {
     var active = activeRes[i] || r;
-    var isSol = /cap|sach|sublingual/.test(normStr(active.fm||''));
+    var isSol = /cap|sach|sublingual|orotab|outros/.test(normStr(active.fm||''));
     var unid = isSol ? 'doses' : 'mL/g';
     var prefixo = allRes.length > 1 ? (i+1)+') ' : '';
     var pAtivo = r.itens && r.itens[0] && r.itens[0].dose ? ' ('+r.itens[0].n+')' : '';
@@ -2734,7 +2737,7 @@ function calcFoto() {
   }
 
   readAllFiles(fileList, function(fileData) {
-    var prompt ='Voce e um especialista em leitura de receitas de farmacia de manipulacao brasileira. Sua tarefa e extrair TODAS as formulas manipuladas presentes na receita com precisao maxima.\n\nPASSO 1 — ANTES DE EXTRAIR: Leia a receita inteira e identifique quantas formulas manipuladas existem. Anote mentalmente cada formula. Garanta que NENHUMA seja esquecida.\n\nPASSO 2 — EXTRAIA CADA FORMULA com nome, dose e forma correta.\n\nIGNORE completamente: (1) medicamentos com fabricante/marca comercial EXPLICITA no texto (Myralis, Marjan, Central Nutrition, Besins, Pharma, Sandoz, Puran, Euthyrox, Synthroid, etc.); (2) itens com unidades totais industriais como "(12un)", "(90un)", "(180un)"; (3) codigos CID (ex: CID N95, CID F32); (4) orientacoes de uso. ATENCAO: mencionar um nome comercial na INSTRUCAO DE USO (ex: "tomar junto com o Puran") NAO torna o item industrial — ignore apenas quando o nome comercial está NA formula em si.\n\nREGRA CRITICA — LEVOTIROXINA / T3 / T4: Doses como 37,5mcg, 12,5mcg, 62,5mcg, 87,5mcg ou qualquer dose diferente de 25/50/75/88/100/112/125/150/175/200mcg NAO existem industrialmente — sao SEMPRE capsulas manipuladas. T3 (liotironina) em qualquer dose custom tambem e sempre manipulado. Extraia normalmente como forma="Capsulas", sem qtd informada use qtd=30.\n\nREGRA CRITICA — RECEITAS COM MULTIPLAS FORMULAS: Se a receita tiver 3, 4, 5 ou mais formulas, voce DEVE extrair TODAS. Percorra a receita do inicio ao fim. Cada formula separada por linha em branco, numeracao (F1, F2, 1), 2), etc.) OU asterisco (*) e uma formula independente. Receitas do sistema MEMED usam "*" como separador entre formulas — trate cada bloco entre "*" como uma formula separada. NAO pare na primeira formula encontrada.\n\nREGRA CRITICA — DOSES NUMERICAS: Leia os numeros COM ATENCAO MAXIMA. Especialmente para MINOXIDIL: 1mg e DIFERENTE de 2mg, e 2,5mg e DIFERENTE de 5mg. NUNCA altere a dose escrita na receita. Se estiver escrito 1mg, use dose:1. Se estiver escrito 2mg, use dose:2. Leia o numero exato sem arredondar ou "corrigir".\n\nREGRA CRITICA — NOMES DE ATIVOS: Copie o nome do principio ativo EXATAMENTE como esta na receita, sem inventar, sem completar, sem trocar por nome similar. Se nao conseguir ler com certeza, use o nome mais proximo legivel.\n\nREGRAS DE FORMA:\n- Presenca de Pentravan/Transcutol/Lipoderm/INDERM/Versapro como ingrediente (qsp ou com dose) + hormonio (estradiol/testosterona/estriol) = forma HORMONIO\n- Progesterona ORAL (comprimido/capsula) = Capsulas. Progesterona GEL ou CREME (topica/transdermico) = HORMONIO (mesmo sem mencionar Pentravan — o veiculo e implicito).\n- Capsulas/comprimido = Capsulas | Sache/Envelope = Sache | Locao = Locao | Creme = Creme | Gel = Gel | Pomada = Pomada | Shampoo/Xampu = Shampoo | Xarope/Solucao = Xarope | Sublingual/Orotab (comprimido) = Sublingual | Capsula sublingual/TAPIOCAPS = Sublingual Capsula\n- ATENCAO: Bupropiona NAO e Buspirona — sao medicamentos DIFERENTES. Leia com atencao: se estiver escrito Bupropiona, use EXATAMENTE esse nome.\n- ATENCAO nomes facilmente confundidos: "Verisol" (NAO Versiol), "Picnogenol" (NAO Plenogenol), "Hydroxiprolisilane C" (NAO Hydroxiprostiane C). Se ler algo parecido, use o nome correto listado aqui.\n- MINOXIDIL: (a) Se CAPSULAS: forma="Capsulas", nome="Minoxidil" com dose em mg (ex: 2,5mg) — NAO use percentual em capsulas. (b) Se USO TOPICO (uso externo, pingar, loção capilar, frasco): forma="Locao", nome="Minoxidil" com unidade="%" e dose = concentracao (ex: Minoxidil 10% → dose:10, unidade:"%"). Para o veiculo: se a receita especificar "Solucao Hidroalcoolica" ou "Locao Capilar", inclua como ativo com unidade="qsp" e dose=volume; se NAO especificar veiculo (apenas "Qsp Xml" ou "frasco"), NAO adicione nenhum ativo de veiculo — o sistema escolhe automaticamente. NUNCA invente veiculos como "Solucao Viscosa", "Gel Base", "Locao Base Hidratante" para Minoxidil. (c) Presenca de "pingar", "uso externo", "uso local", "frasco", "aplicar" indica uso TOPICO.\n- REGRA CRITICA DE FORMA POR UNIDADE: Se todos os ativos de uma formula tiverem doses em mg/mcg/UI/g (sem nenhum "%" e sem base/veiculo topico qsp), a forma OBRIGATORIAMENTE e Capsulas ou Sache — NUNCA Creme, Gel, Locao ou Pomada. Ingredientes com "%" so aparecem em formas topicas.\n- REGRA ATA (Acido Tricloroacetico): "Solucao de ATA X%" ou "ATA X%" → forma="Solucao", ativo nome="Acido Tricloroacetico" dose=X unidade="%" e base nome="Agua Purificada" dose=volume unidade="qsp". NUNCA use Locao Base ou qualquer outro veiculo para solucao de ATA. Exemplo: "ATA 30% / Agua Purificada qsp 5ml" → {"forma":"Solucao","qtd":5,"ativos":[{"nome":"Acido Tricloroacetico","dose":30,"unidade":"%"},{"nome":"Agua Purificada","dose":5,"unidade":"qsp"}]}\n\nREGRA DE QUANTIDADE (campo qtd):\n- Capsulas/Saches/Sublingual: qtd = NUMERO DE UNIDADES (ex: 60 capsulas, 30 saches)\n- Locao/Creme/Gel/Pomada/Hormonio/Shampoo/Xarope: qtd = VOLUME OU PESO TOTAL DA FORMULA em mL ou g (ex: "Locao base qsp 100ml" → qtd=100; "Creme qsp 30g" → qtd=30)\n- Sem duracao informada = 30 para capsulas e saches; manter volume prescrito para topicos\n- ATENCAO SACHE: "Maneira: 1 sache com Xml de agua" ou "tomar 1 sache ao dia" e INSTRUCAO DE USO — NAO e a quantidade total. Se a receita nao indicar o total de saches a preparar, use qtd=30.\n\nATIVOS: Para cada ativo preencha {nome, dose, unidade} separados. REGRAS DO CAMPO "nome": (1) somente o nome do principio ativo — SEM dose, SEM unidade, SEM parenteses de liberacao; (2) Melatonina com qualificador de liberacao (lenta/prolongada/dual/duo/SR/retard) → nome SEMPRE = "Melatonina SR"; (3) NUNCA adicione ativos que nao estejam literalmente escritos na receita — nao invente, nao complete, nao sugira ingredientes ausentes; (4) NUNCA extraia instrucoes de preparo ou modo de uso como ativos — exemplos do que IGNORAR como ativo: "1 sachê com 150ml de agua", "dissolver em agua", "1 dose com agua", "tomar com liquido"; (5) "Sachet", "Envelope", "Sache" isolados como nome de ativo sao ERRO — sao formas farmaceuticas, nao ativos. Para formas topicas, inclua a base/veiculo como ativo com unidade "qsp" e dose = volume total.\n\nEXEMPLO locao: "PUREGENE PDRN 0,2% / Locao base hidratante qsp 100ml" → {"forma":"Locao","qtd":100,"ativos":[{"nome":"PUREGENE PDRN","dose":0.2,"unidade":"%"},{"nome":"Locao base hidratante","dose":100,"unidade":"qsp"}]}\nREGRA ESPECIAL — HORMONIO "X mg POR DOSE / N DOSES": quando a receita informa dose POR DOSE (ex: "20mg por dose, 30 doses"), o campo qtd = N doses, e a dose do ativo deve ser expressa como PORCENTAGEM de concentracao no veiculo: dose_pct = X_mg / 1000 * 100 (ex: 20mg/dose em veiculo de 1g = 2%). Use unidade="%" para que o calculo seja correto. NUNCA use unidade="mg" com a dose por dose unitaria — sempre converta para %.\nEXEMPLO hormonal POR DOSE: "PROGESTERONA GEL 20mg POR DOSE / 30 DOSES" → {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Progesterona","dose":2,"unidade":"%"}]}\nEXEMPLO hormonal: "Estradiol 0.5mg / Pentravan qsp 30g" → {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Estradiol","dose":0.5,"unidade":"mg"},{"nome":"Pentravan","dose":30,"unidade":"qsp"}]}\nEXEMPLO capsulas: "Progesterona micronizada 100mg / Comprimido q.s.p. 30 capsulas" → {"forma":"Capsulas","qtd":30,"ativos":[{"nome":"Progesterona micronizada","dose":100,"unidade":"mg"}]}\nREGRA CAPSULA VEGETAL: quando a receita mencionar "capsula vegetal", "capsula vegetal incolor", "capsula vegetal transparente" ou qualquer variacao de capsula vegetal como embalagem/excipiente, use forma="Capsulas Vegetal" (nao inclua a capsula vegetal como ativo — ela e a embalagem).\nEXEMPLO capsulas vegetal: "Dutasterida 0,5mg / Capsula Vegetal Incolor qsp 1 cap / 90 capsulas" → {"forma":"Capsulas Vegetal","qtd":90,"ativos":[{"nome":"Dutasterida","dose":0.5,"unidade":"mg"}]}\nEXEMPLO capsulas SR: "Mulungu 200mg / Passiflora 200mg / Melatonina (liberacao lenta) 2mg / 30 capsulas" → {"forma":"Capsulas","qtd":30,"ativos":[{"nome":"Mulungu","dose":200,"unidade":"mg"},{"nome":"Passiflora","dose":200,"unidade":"mg"},{"nome":"Melatonina SR","dose":2,"unidade":"mg"}]}\n\nREGRA CRITICA — DOSE POR GRAMA (escalonamento): Quando a receita informa a dose de um ativo EM 1g de base topica (ex: "Vitamina C 200mg em 1g de Creme Base, total 30g"), voce DEVE multiplicar a dose pelo total de gramas prescrito: dose_total = 200mg x 30 = 6000mg. Use dose:6000 e unidade:"mg". EXCECAO: se a dose ja estiver em porcentagem (ex: "Ativo X 2% em 1g") a porcentagem e a concentracao — use dose=2, unidade="%" diretamente, sem multiplicar. Identifique esta situacao por expressoes como "em 1g de", "por grama", "cada grama".\n\nATENCAO VEICULOS — QSP: "qsp" (ou "q.s.p.") significa "quantidade suficiente para" e NAO faz parte do nome do veiculo/base. Exemplos: "Creme Vaginal qsp 30g" → nome="Creme Vaginal" (sem qsp), dose=30, unidade="qsp". "Locao Base qsp 100ml" → nome="Locao Base", dose=100, unidade="qsp". Nunca inclua "qsp" como parte do nome do ativo.\n\nATENCAO MULTIPLAS FORMULAS EM CAPSULA: Quando a receita tiver mais de uma formula em Capsula, identifique o tipo de capsula (Vegetal, Enterica ou gelatinosa padrao) individualmente para cada formula. NAO aplique o tipo de uma formula para as demais. Exemplo: Formula 1 "Capsulas Vegetais" → forma="Capsula Vegetal"; Formula 2 "Capsulas" sem especificacao → forma="Capsulas" (gelatinosa).\n\nResponda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":30,"descricao":"","ativos":[{"nome":"nome","dose":0,"unidade":"mg"}]}]}';
+    var prompt ='Voce e um especialista em leitura de receitas de farmacia de manipulacao brasileira. Sua tarefa e extrair TODAS as formulas manipuladas presentes na receita com precisao maxima.\n\nPASSO 1 — ANTES DE EXTRAIR: Leia a receita inteira e identifique quantas formulas manipuladas existem. Anote mentalmente cada formula. Garanta que NENHUMA seja esquecida.\n\nPASSO 2 — EXTRAIA CADA FORMULA com nome, dose e forma correta.\n\nIGNORE completamente: (1) medicamentos com fabricante/marca comercial EXPLICITA no texto (Myralis, Marjan, Central Nutrition, Besins, Pharma, Sandoz, Puran, Euthyrox, Synthroid, etc.); (2) itens com unidades totais industriais como "(12un)", "(90un)", "(180un)"; (3) codigos CID (ex: CID N95, CID F32); (4) orientacoes de uso. ATENCAO: mencionar um nome comercial na INSTRUCAO DE USO (ex: "tomar junto com o Puran") NAO torna o item industrial — ignore apenas quando o nome comercial está NA formula em si.\n\nREGRA CRITICA — LEVOTIROXINA / T3 / T4: Doses como 37,5mcg, 12,5mcg, 62,5mcg, 87,5mcg ou qualquer dose diferente de 25/50/75/88/100/112/125/150/175/200mcg NAO existem industrialmente — sao SEMPRE capsulas manipuladas. T3 (liotironina) em qualquer dose custom tambem e sempre manipulado. Extraia normalmente como forma="Capsulas", sem qtd informada use qtd=30.\n\nREGRA CRITICA — RECEITAS COM MULTIPLAS FORMULAS: Se a receita tiver 3, 4, 5 ou mais formulas, voce DEVE extrair TODAS. Percorra a receita do inicio ao fim. Cada formula separada por linha em branco, numeracao (F1, F2, 1), 2), etc.) OU asterisco (*) e uma formula independente. Receitas do sistema MEMED usam "*" como separador entre formulas — trate cada bloco entre "*" como uma formula separada. NAO pare na primeira formula encontrada.\n\nREGRA CRITICA — DOSES NUMERICAS: Leia os numeros COM ATENCAO MAXIMA. Especialmente para MINOXIDIL: 1mg e DIFERENTE de 2mg, e 2,5mg e DIFERENTE de 5mg. NUNCA altere a dose escrita na receita. Se estiver escrito 1mg, use dose:1. Se estiver escrito 2mg, use dose:2. Leia o numero exato sem arredondar ou "corrigir".\n\nREGRA CRITICA — NOMES DE ATIVOS: Copie o nome do principio ativo EXATAMENTE como esta na receita, sem inventar, sem completar, sem trocar por nome similar. Se nao conseguir ler com certeza, use o nome mais proximo legivel.\n\nREGRAS DE FORMA:\n- Presenca de Pentravan/Transcutol/Lipoderm/INDERM/Versapro como ingrediente (qsp ou com dose) + hormonio (estradiol/testosterona/estriol) = forma HORMONIO\n- Progesterona ORAL (comprimido/capsula) = Capsulas. Progesterona GEL ou CREME (topica/transdermico) = HORMONIO (mesmo sem mencionar Pentravan — o veiculo e implicito).\n- Capsulas/comprimido = Capsulas | Sache/Envelope = Sache | Locao = Locao | Creme = Creme | Gel = Gel | Pomada = Pomada | Shampoo/Xampu = Shampoo | Xarope/Solucao = Xarope | Sublingual (comprimido padrao 200mg) = Sublingual | Orotab Diet/Orotab/Oro dispersivel (comprimido 760mg) = Orotab | Capsula sublingual/TAPIOCAPS = Sublingual Capsula | Po/Granulado vendido em gramas (ex: Colageno, Carbonate Calcio, Verisol, Psyllium em gramas) = Outros\n- ATENCAO: Bupropiona NAO e Buspirona — sao medicamentos DIFERENTES. Leia com atencao: se estiver escrito Bupropiona, use EXATAMENTE esse nome.\n- ATENCAO nomes facilmente confundidos: "Verisol" (NAO Versiol), "Picnogenol" (NAO Plenogenol), "Hydroxiprolisilane C" (NAO Hydroxiprostiane C). Se ler algo parecido, use o nome correto listado aqui.\n- MINOXIDIL: (a) Se CAPSULAS: forma="Capsulas", nome="Minoxidil" com dose em mg (ex: 2,5mg) — NAO use percentual em capsulas. (b) Se USO TOPICO (uso externo, pingar, loção capilar, frasco): forma="Locao", nome="Minoxidil" com unidade="%" e dose = concentracao (ex: Minoxidil 10% → dose:10, unidade:"%"). Para o veiculo: se a receita especificar "Solucao Hidroalcoolica" ou "Locao Capilar", inclua como ativo com unidade="qsp" e dose=volume; se NAO especificar veiculo (apenas "Qsp Xml" ou "frasco"), NAO adicione nenhum ativo de veiculo — o sistema escolhe automaticamente. NUNCA invente veiculos como "Solucao Viscosa", "Gel Base", "Locao Base Hidratante" para Minoxidil. (c) Presenca de "pingar", "uso externo", "uso local", "frasco", "aplicar" indica uso TOPICO.\n- REGRA CRITICA DE FORMA POR UNIDADE: Se todos os ativos de uma formula tiverem doses em mg/mcg/UI/g (sem nenhum "%" e sem base/veiculo topico qsp), a forma OBRIGATORIAMENTE e Capsulas ou Sache — NUNCA Creme, Gel, Locao ou Pomada. Ingredientes com "%" so aparecem em formas topicas.\n- REGRA ATA (Acido Tricloroacetico): "Solucao de ATA X%" ou "ATA X%" → forma="Solucao", ativo nome="Acido Tricloroacetico" dose=X unidade="%" e base nome="Agua Purificada" dose=volume unidade="qsp". NUNCA use Locao Base ou qualquer outro veiculo para solucao de ATA. Exemplo: "ATA 30% / Agua Purificada qsp 5ml" → {"forma":"Solucao","qtd":5,"ativos":[{"nome":"Acido Tricloroacetico","dose":30,"unidade":"%"},{"nome":"Agua Purificada","dose":5,"unidade":"qsp"}]}\n\nREGRA DE QUANTIDADE (campo qtd):\n- Capsulas/Saches/Sublingual: qtd = NUMERO DE UNIDADES (ex: 60 capsulas, 30 saches)\n- Locao/Creme/Gel/Pomada/Hormonio/Shampoo/Xarope: qtd = VOLUME OU PESO TOTAL DA FORMULA em mL ou g (ex: "Locao base qsp 100ml" → qtd=100; "Creme qsp 30g" → qtd=30)\n- Sem duracao informada = 30 para capsulas e saches; manter volume prescrito para topicos\n- ATENCAO SACHE: "Maneira: 1 sache com Xml de agua" ou "tomar 1 sache ao dia" e INSTRUCAO DE USO — NAO e a quantidade total. Se a receita nao indicar o total de saches a preparar, use qtd=30.\n\nATIVOS: Para cada ativo preencha {nome, dose, unidade} separados. REGRAS DO CAMPO "nome": (1) somente o nome do principio ativo — SEM dose, SEM unidade, SEM parenteses de liberacao; (2) Melatonina com qualificador de liberacao (lenta/prolongada/dual/duo/SR/retard) → nome SEMPRE = "Melatonina SR"; (3) NUNCA adicione ativos que nao estejam literalmente escritos na receita — nao invente, nao complete, nao sugira ingredientes ausentes; (4) NUNCA extraia instrucoes de preparo ou modo de uso como ativos — exemplos do que IGNORAR como ativo: "1 sachê com 150ml de agua", "dissolver em agua", "1 dose com agua", "tomar com liquido"; (5) "Sachet", "Envelope", "Sache" isolados como nome de ativo sao ERRO — sao formas farmaceuticas, nao ativos. Para formas topicas, inclua a base/veiculo como ativo com unidade "qsp" e dose = volume total.\n\nEXEMPLO locao: "PUREGENE PDRN 0,2% / Locao base hidratante qsp 100ml" → {"forma":"Locao","qtd":100,"ativos":[{"nome":"PUREGENE PDRN","dose":0.2,"unidade":"%"},{"nome":"Locao base hidratante","dose":100,"unidade":"qsp"}]}\nREGRA ESPECIAL — HORMONIO "X mg POR DOSE / N DOSES": quando a receita informa dose POR DOSE (ex: "20mg por dose, 30 doses"), o campo qtd = N doses, e a dose do ativo deve ser expressa como PORCENTAGEM de concentracao no veiculo: dose_pct = X_mg / 1000 * 100 (ex: 20mg/dose em veiculo de 1g = 2%). Use unidade="%" para que o calculo seja correto. NUNCA use unidade="mg" com a dose por dose unitaria — sempre converta para %.\nEXEMPLO hormonal POR DOSE: "PROGESTERONA GEL 20mg POR DOSE / 30 DOSES" → {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Progesterona","dose":2,"unidade":"%"}]}\nEXEMPLO hormonal: "Estradiol 0.5mg / Pentravan qsp 30g" → {"forma":"Hormonio","qtd":30,"ativos":[{"nome":"Estradiol","dose":0.5,"unidade":"mg"},{"nome":"Pentravan","dose":30,"unidade":"qsp"}]}\nEXEMPLO capsulas: "Progesterona micronizada 100mg / Comprimido q.s.p. 30 capsulas" → {"forma":"Capsulas","qtd":30,"ativos":[{"nome":"Progesterona micronizada","dose":100,"unidade":"mg"}]}\nREGRA CAPSULA VEGETAL: quando a receita mencionar "capsula vegetal", "capsula vegetal incolor", "capsula vegetal transparente" ou qualquer variacao de capsula vegetal como embalagem/excipiente, use forma="Capsulas Vegetal" (nao inclua a capsula vegetal como ativo — ela e a embalagem).\nEXEMPLO capsulas vegetal: "Dutasterida 0,5mg / Capsula Vegetal Incolor qsp 1 cap / 90 capsulas" → {"forma":"Capsulas Vegetal","qtd":90,"ativos":[{"nome":"Dutasterida","dose":0.5,"unidade":"mg"}]}\nEXEMPLO capsulas SR: "Mulungu 200mg / Passiflora 200mg / Melatonina (liberacao lenta) 2mg / 30 capsulas" → {"forma":"Capsulas","qtd":30,"ativos":[{"nome":"Mulungu","dose":200,"unidade":"mg"},{"nome":"Passiflora","dose":200,"unidade":"mg"},{"nome":"Melatonina SR","dose":2,"unidade":"mg"}]}\n\nREGRA CRITICA — DOSE POR GRAMA (escalonamento): Quando a receita informa a dose de um ativo EM 1g de base topica (ex: "Vitamina C 200mg em 1g de Creme Base, total 30g"), voce DEVE multiplicar a dose pelo total de gramas prescrito: dose_total = 200mg x 30 = 6000mg. Use dose:6000 e unidade:"mg". EXCECAO: se a dose ja estiver em porcentagem (ex: "Ativo X 2% em 1g") a porcentagem e a concentracao — use dose=2, unidade="%" diretamente, sem multiplicar. Identifique esta situacao por expressoes como "em 1g de", "por grama", "cada grama".\n\nATENCAO VEICULOS — QSP: "qsp" (ou "q.s.p.") significa "quantidade suficiente para" e NAO faz parte do nome do veiculo/base. Exemplos: "Creme Vaginal qsp 30g" → nome="Creme Vaginal" (sem qsp), dose=30, unidade="qsp". "Locao Base qsp 100ml" → nome="Locao Base", dose=100, unidade="qsp". Nunca inclua "qsp" como parte do nome do ativo.\n\nATENCAO MULTIPLAS FORMULAS EM CAPSULA: Quando a receita tiver mais de uma formula em Capsula, identifique o tipo de capsula (Vegetal, Enterica ou gelatinosa padrao) individualmente para cada formula. NAO aplique o tipo de uma formula para as demais. Exemplo: Formula 1 "Capsulas Vegetais" → forma="Capsula Vegetal"; Formula 2 "Capsulas" sem especificacao → forma="Capsulas" (gelatinosa).\n\nResponda APENAS em JSON sem markdown: {"paciente":"nome","prescritor":"nome CRM","formulas":[{"forma":"Capsulas","qtd":30,"descricao":"","ativos":[{"nome":"nome","dose":0,"unidade":"mg"}]}]}';
 
     // Construir conteúdo com todas as imagens/PDFs recebidos
     var contentBlocks = fileData.map(function(fd) {
