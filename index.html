@@ -123,7 +123,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.68';
+  var VER = 'v4.69';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -707,7 +707,7 @@ function getProdAssoc(nomeAtivo, formaCode, extraSk) {
 // Mapeia forma farmacêutica para código numérico usado em PROD_ASSOC
 function formaToCode(fml) {
   fml = (fml||'').toLowerCase();
-  if(/cap|sache|sublingual/.test(fml)) return 1;
+  if(/cap|sache|sublingual|orotab|outros/.test(fml)) return 1;
   if(/creme/.test(fml)) return 2;
   if(/locao|loção/.test(fml)) return 3;
   if(/gel/.test(fml)) return 4;
@@ -1258,73 +1258,67 @@ function busIns(nome, formaCtx) {
 // Escolhe o melhor insumo de uma lista, considerando a forma farmacêutica
 function _pickBest(candidates, formaCtx) {
   if(candidates.length === 1) return candidates[0];
-  
+
   var formNorm = (formaCtx || '').toLowerCase();
   var isCapsula = /cap/.test(formNorm);
-  // Uso interno (UI): cápsulas, sachês, xaropes, soluções, gotas
-  var isUI = isCapsula || /sache|envel|xarope|solucao|solução|gota|sublingual|orotab/.test(formNorm);
-  // Uso externo (UE): cremes, loções, géis, pomadas, shampoos, hormônios
-  var isUE = /creme|locao|loção|gel|pomada|shampoo|xampu|locao|locão|hormonio|hormônio/.test(formNorm) && !isUI;
-  
-  // Helper: detecta se um insumo tem marcador "UI" no nome ou sinônimos
+  // sólido: cápsulas + sachês + sublingual + orotab + outros
+  var isSolidoForm = isCapsula || /sache|sublingual|orotab|outros/.test(formNorm);
+  // UI: uso interno (sólidos + xaropes + soluções + gotas)
+  var isUI = isSolidoForm || /envel|xarope|solucao|solução|gota/.test(formNorm);
+  // UE: uso externo (tópicos)
+  var isUE = /creme|locao|loção|gel|pomada|shampoo|xampu|hormonio|hormônio/.test(formNorm) && !isUI;
+  var isLiquido = !isSolidoForm && /envel|xarope|solucao|solu.ao|gota/.test(formNorm);
+
   function hasMarker(c, marker) {
     var rgx = new RegExp('\\b' + marker + '\\b\\s*$', 'i');
     if(rgx.test(c.n)) return true;
-    if(c.s) {
-      for(var i=0; i<c.s.length; i++) {
-        if(rgx.test(c.s[i])) return true;
-      }
-    }
+    if(c.s) { for(var i=0;i<c.s.length;i++){if(rgx.test(c.s[i])) return true;} }
     return false;
   }
-  
-  // Anotar candidatos com flags
+
   for(var i=0;i<candidates.length;i++) {
     var c = candidates[i];
     var nl = c.n.toUpperCase();
-    
-    // Rejeitar Taste Free para cápsulas
-    if(isCapsula && /TASTE FREE|TASTE-FREE/.test(nl)) {
-      c._reject = true;
-    }
-    // Preferir Taste Free para soluções (xarope, gotas, etc.)
-    if(isUI && !isCapsula && /TASTE FREE|TASTE-FREE/.test(nl)) {
-      c._prefer = true;
-    }
-    
-    // UE/UI scoring
+    var ck = c.k || '';
+    // Rejeitar Taste Free para sólidos (cápsula/sache/sublingual/orotab)
+    if(isSolidoForm && /TASTE FREE|TASTE-FREE/.test(nl)) c._reject = true;
+    // Rejeitar líquidos/tinturas para sólidos
+    if(isSolidoForm && (LIQUID_KEYS[ck] || /^tint\s/.test(ck))) { c._liquid = true; c._reject = true; }
+    // Preferir Taste Free para líquidos orais (xarope, gotas, etc.)
+    if(isLiquido && /TASTE FREE|TASTE-FREE/.test(nl)) c._prefer = true;
+    // UI/UE marker scoring
     if(isUI && hasMarker(c, 'UI')) c._uiMatch = true;
     if(isUE && hasMarker(c, 'UE')) c._ueMatch = true;
-    // Mismatch (penalize): UE quando precisa UI, ou UI quando precisa UE
     if(isUI && hasMarker(c, 'UE')) c._mismatch = true;
     if(isUE && hasMarker(c, 'UI')) c._mismatch = true;
   }
-  
-  // Filtrar
+
   var preferred = candidates.filter(function(c){return c._prefer;});
-  if(preferred.length === 1) {
+  if(preferred.length >= 1) {
     _clearFlags(candidates);
+    if(preferred.length === 1) return preferred[0];
+    var wp2 = preferred.filter(function(c){return c.p > 0;});
+    if(wp2.length > 0) { wp2.sort(function(a,b){return a.p-b.p;}); return wp2[0]; }
     return preferred[0];
   }
-  
-  // Filtro 1: nada que tenha mismatch grave
+
   var pool = candidates.filter(function(c){return !c._reject && !c._mismatch;});
-  if(pool.length === 0) pool = candidates.filter(function(c){return !c._reject;});
+  if(pool.length === 0) {
+    if(isSolidoForm && candidates.every(function(c){return c._liquid;})) { _clearFlags(candidates); return null; }
+    pool = candidates.filter(function(c){return !c._reject;});
+  }
   if(pool.length === 0) pool = candidates;
-  
-  // Preferir os que casam com forma (UE/UI match)
+
   var matched = pool.filter(function(c){return c._uiMatch || c._ueMatch;});
   if(matched.length >= 1) pool = matched;
-  
-  if(pool.length === 1) {
-    _clearFlags(candidates);
-    return pool[0];
-  }
-  
-  // Desempate: preferir o de MENOR preço (geralmente o "padrão")
+  if(pool.length === 1) { _clearFlags(candidates); return pool[0]; }
+
+  // Desempate: UE hormonal → maior preço; demais → menor preço
+  var isHormUE = /hormonio|hormônio|creme|locao|loção|gel|pomada|shampoo/.test(formNorm) && !isSolidoForm && !isLiquido;
   var withPrice = pool.filter(function(c){return c.p > 0;});
   if(withPrice.length > 0) {
-    withPrice.sort(function(a,b){return a.p - b.p;});
+    if(isHormUE) { withPrice.sort(function(a,b){return b.p-a.p;}); }
+    else { withPrice.sort(function(a,b){return a.p-b.p;}); }
     _clearFlags(candidates);
     return withPrice[0];
   }
@@ -1335,72 +1329,10 @@ function _pickBest(candidates, formaCtx) {
 function _clearFlags(candidates) {
   for(var i=0;i<candidates.length;i++) {
     var c = candidates[i];
-    delete c._reject;
-    delete c._prefer;
-    delete c._uiMatch;
-    delete c._ueMatch;
-    delete c._mismatch;
-    delete c._liquid;
+    delete c._reject; delete c._prefer;
+    delete c._uiMatch; delete c._ueMatch;
+    delete c._mismatch; delete c._liquid;
   }
-}
-
-// Escolhe o melhor insumo de uma lista, considerando a forma farmacêutica
-// Não faz early-return para candidato único: aplica sempre o filtro Taste Free
-function _pickBest(candidates, formaCtx) {
-  var formNorm = (formaCtx || '').toLowerCase();
-  var isCapsula = /cap|sache/.test(formNorm);
-  var isLiquido = /envel|xarope|solucao|solu.ao|gota/.test(formNorm);
-
-  // Marcar candidatos com flags de preferência/rejeição por forma
-  for(var i=0; i<candidates.length; i++) {
-    var nl = candidates[i].n.toUpperCase();
-    var ck = candidates[i].k || '';
-    // Para CÁPSULAS: rejeitar Taste Free e insumos líquidos/tinturas
-    if(isCapsula && /TASTE FREE|TASTE-FREE/.test(nl)) {
-      candidates[i]._reject = true;
-    }
-    if(isCapsula && (LIQUID_KEYS[ck] || /^tint\s/.test(ck))) {
-      candidates[i]._liquid = true;
-      candidates[i]._reject = true;
-    }
-    // Para LÍQUIDOS: preferir Taste Free
-    if(isLiquido && /TASTE FREE|TASTE-FREE/.test(nl)) {
-      candidates[i]._prefer = true;
-    }
-  }
-
-  var preferred = candidates.filter(function(c){return c._prefer;});
-  var nonRejected = candidates.filter(function(c){return !c._reject;});
-
-  // Preferred tem prioridade máxima
-  if(preferred.length >= 1) {
-    if(preferred.length === 1) return preferred[0];
-    var pool2 = preferred;
-    var wp2 = pool2.filter(function(c){return c.p > 0;});
-    if(wp2.length > 0) { wp2.sort(function(a,b){return a.p-b.p;}); return wp2[0]; }
-    return pool2[0];
-  }
-
-  // nonRejected: sem taste free para cápsulas
-  // Para cápsulas: se todos os candidatos foram rejeitados por serem líquidos/tinturas, retornar null
-  if(nonRejected.length === 0 && isCapsula) {
-    var allLiquid = candidates.every(function(c){return c._liquid;});
-    if(allLiquid) return null;
-  }
-  var pool = nonRejected.length > 0 ? nonRejected : candidates;
-
-  // Desempate final: forma hormonal/UE → preferir maior preço (base pura concentrada)
-  var isHormUE = /hormonio|hormônio|creme|locao|loção|gel|pomada|shampoo/.test(formNorm) && !isCapsula && !isLiquido;
-  var withPrice = pool.filter(function(c){return c.p > 0;});
-  if(withPrice.length > 0) {
-    if(isHormUE) {
-      withPrice.sort(function(a,b){return b.p - a.p;}); // maior preço = forma pura/concentrada
-    } else {
-      withPrice.sort(function(a,b){return a.p - b.p;});
-    }
-    return withPrice[0];
-  }
-  return pool[0];
 }
 
 // ── MKP ───────────────────────────────────────────────────
