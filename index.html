@@ -2195,6 +2195,10 @@ function renderResult(r, container, idx) {
       '<span class="rv">R$ '+it.c.toFixed(4)+'</span>'+
     '</div>';
   }).join('');
+  var custoTotal = '<div class="rrow" style="border-top:1px solid var(--border);margin-top:4px;padding-top:6px;font-weight:700">'+
+    '<span class="rn">Custo total</span>'+
+    '<span class="rv">R$ '+r.custo.toFixed(4)+'</span>'+
+  '</div>';
   var minLabel = r.pv === PM ? '<span class="tag tr" style="font-size:10px">preço mínimo</span>' : '';
 
   // Bloco de preço — Minoxidil padronizado mostra Pix e Cartão separados
@@ -2214,7 +2218,7 @@ function renderResult(r, container, idx) {
   var orcBadge = r.orc ? '<span style="float:right;font-size:10px;font-weight:500;color:#4A6A4A;background:#C8E6C9;border-radius:4px;padding:2px 7px;letter-spacing:.03em">'+r.orc+'</span>' : '';
   var html = '<div class="rcard">' +
     '<h3>' + r.fm + ' • ' + r.qtd + ' ' + unidLabel + orcBadge + '</h3>' +
-    avHtml + rows +
+    avHtml + rows + custoTotal +
     precoHtml +
     '<div class="sim-box">' +
       '<label>' + simLbl + '</label>' +
