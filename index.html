@@ -1276,7 +1276,50 @@ function busIns(nome, formaCtx) {
     }
     if(matches.length > 0) return _pickBest(matches, formaCtx);
   }
-  
+
+  // ── PRIORIDADE 6: Fuzzy — erros de grafia do prescritor
+  // Bigrama Dice + Levenshtein. Pré-filtra por prefixo de 3 chars para performance.
+  function _bigrams(s){ var t={}; for(var i=0;i<s.length-1;i++) t[s.slice(i,i+2)]=1; return t; }
+  function _dice(a,b){ var ta=_bigrams(a),tb=_bigrams(b),ia=Object.keys(ta).length,ib=Object.keys(tb).length,inter=0; for(var kk in ta) if(tb[kk]) inter++; return ia+ib>0?2*inter/(ia+ib):0; }
+  function _lev(a,b){ var m=a.length,n=b.length,dp=[]; if(Math.abs(m-n)>3) return 99; for(var i=0;i<=m;i++){dp[i]=[i];for(var j=1;j<=n;j++)dp[i][j]=0;} for(var j=0;j<=n;j++)dp[0][j]=j; for(var i=1;i<=m;i++)for(var j=1;j<=n;j++){dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);} return dp[m][n]; }
+  var DICE_MIN=0.55, LEV_MAX=2;
+  var fzBest=null, fzScore=0;
+  for(var v=0;v<variants.length;v++){
+    var q=variants[v];
+    if(q.length<4) continue;
+    var pre=q.slice(0,3); // pré-filtro: mesmo prefixo de 3 chars
+    for(var i=0;i<INS.length;i++){
+      if(!INS[i]) continue;
+      var kk=INS[i].k||'';
+      // Testa k principal
+      if(kk.slice(0,3)===pre || Math.abs(kk.length-q.length)<=3){
+        var sc=_dice(q,kk);
+        if(sc>fzScore){fzScore=sc;fzBest=INS[i];}
+        if(sc<DICE_MIN && q.length>=5){
+          var lv=_lev(q,kk);
+          var lvSc=lv<=LEV_MAX?1-(lv/(Math.max(q.length,kk.length))):0;
+          if(lvSc>fzScore){fzScore=lvSc;fzBest=INS[i];}
+        }
+      }
+      // Testa sinônimos
+      if(INS[i].sk){
+        for(var j=0;j<INS[i].sk.length;j++){
+          var sk=INS[i].sk[j]||'';
+          if(sk.slice(0,3)===pre || Math.abs(sk.length-q.length)<=2){
+            var sc2=_dice(q,sk);
+            if(sc2>fzScore){fzScore=sc2;fzBest=INS[i];}
+            if(sc2<DICE_MIN && q.length>=5){
+              var lv2=_lev(q,sk);
+              var lvSc2=lv2<=LEV_MAX?1-(lv2/(Math.max(q.length,sk.length))):0;
+              if(lvSc2>fzScore){fzScore=lvSc2;fzBest=INS[i];}
+            }
+          }
+        }
+      }
+    }
+  }
+  if(fzBest && fzScore>=DICE_MIN) return fzBest;
+
   return null;
 }
 
