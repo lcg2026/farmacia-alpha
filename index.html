@@ -1153,9 +1153,26 @@ function busIns(nome, formaCtx) {
     for(var i=0; i<INS.length; i++) {
       if(INS[i] && _matches(INS[i].k, variants[v])) matches.push(INS[i]);
     }
-    if(matches.length > 0) return _pickBest(matches, formaCtx);
+    if(matches.length > 0) {
+      // Se todos têm preço zero, combinar com matches de sinônimos (P2) antes de decidir
+      var todosZero = matches.every(function(c){ return !(c.pe||c.p); });
+      if(todosZero) {
+        var p2 = [];
+        for(var v2=0; v2<variants.length; v2++) {
+          for(var i2=0; i2<INS.length; i2++) {
+            if(!INS[i2] || !INS[i2].sk) continue;
+            for(var j2=0; j2<INS[i2].sk.length; j2++) {
+              if(_matches(normStr(INS[i2].sk[j2]||''), variants[v2])) { p2.push(INS[i2]); break; }
+            }
+          }
+        }
+        var comPreco = p2.filter(function(c){ return c.pe||c.p; });
+        if(comPreco.length > 0) return _pickBest(comPreco, formaCtx);
+      }
+      return _pickBest(matches, formaCtx);
+    }
   }
-  
+
   // ── PRIORIDADE 2: Match EXATO em qualquer sinônimo (sk)
   for(var v=0; v<variants.length; v++) {
     var matches = [];
