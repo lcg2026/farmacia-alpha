@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.83</title>
+<title>Farmácia Alpha v4.84</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -28,9 +28,11 @@
 // Para revogar:  trocar ativa:true por ativa:false
 var USUARIOS = {
   'ALPHA-ADM':  {nome:'Administrador', ativa:true},
-  'ALPHA-ANA':  {nome:'Ana',           ativa:true},
-  'ALPHA-LU':   {nome:'Lucia',         ativa:true},
-  'ALPHA-MAR':  {nome:'Maria',         ativa:true}
+  'ALPHA-CIN':  {nome:'Cinthia',       ativa:true},
+  'ALPHA-DAN':  {nome:'Daniela',       ativa:true},
+  'ALPHA-TAT':  {nome:'Tatiana',       ativa:true},
+  'ALPHA-ISA':  {nome:'Isabella',      ativa:true},
+  'ALPHA-KEK':  {nome:'Keka',          ativa:true}
 };
 
 (function(){
@@ -150,7 +152,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.83';
+  var VER = 'v4.84';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
