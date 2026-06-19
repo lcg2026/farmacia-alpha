@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.84</title>
+<title>Farmácia Alpha v4.85</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -24,33 +24,55 @@
 <!-- ── Controle de Acesso Alpha — Login por Vendedora ──────── -->
 <script>
 // ── Cadastro de vendedoras ──────────────────────────────────
-// Para adicionar: {'CODIGO': {nome:'Nome', ativa:true}}
-// Para revogar:  trocar ativa:true por ativa:false
+// dispositivo: null  → aguardando 1º registro (qualquer PC entra uma vez)
+// dispositivo: 'ID'  → somente aquele PC específico pode entrar
+// Para revogar acesso: ativa:false
+// Para trocar de PC:  dispositivo:null → vendedora loga no novo PC → atualiza o ID
 var USUARIOS = {
-  'ALPHA-ADM':  {nome:'Administrador', ativa:true},
-  'ALPHA-CIN':  {nome:'Cinthia',       ativa:true},
-  'ALPHA-DAN':  {nome:'Daniela',       ativa:true},
-  'ALPHA-TAT':  {nome:'Tatiana',       ativa:true},
-  'ALPHA-ISA':  {nome:'Isabella',      ativa:true},
-  'ALPHA-KEK':  {nome:'Keka',          ativa:true}
+  'ALPHA-ADM':  {nome:'Administrador', ativa:true,  dispositivo:null},
+  'ALPHA-CIN':  {nome:'Cinthia',       ativa:true,  dispositivo:null},
+  'ALPHA-DAN':  {nome:'Daniela',       ativa:true,  dispositivo:null},
+  'ALPHA-TAT':  {nome:'Tatiana',       ativa:true,  dispositivo:null},
+  'ALPHA-ISA':  {nome:'Isabella',      ativa:true,  dispositivo:null},
+  'ALPHA-KEK':  {nome:'Keka',          ativa:true,  dispositivo:null}
 };
+
+// Gera/recupera ID único e permanente deste navegador/computador
+function _getDeviceId(){
+  var k='alphaDevId';
+  var id=localStorage.getItem(k);
+  if(!id){
+    id='D'+Math.random().toString(36).slice(2,7).toUpperCase()+
+        Math.random().toString(36).slice(2,7).toUpperCase();
+    localStorage.setItem(k,id);
+  }
+  return id;
+}
 
 (function(){
   try{
-    var sess = sessionStorage.getItem('alphaUser');
+    var sess=sessionStorage.getItem('alphaUser');
     if(sess){
       var u=JSON.parse(sess);
-      if(USUARIOS[u.cod] && USUARIOS[u.cod].ativa){
+      var reg=USUARIOS[u.cod];
+      if(reg && reg.ativa){
+        // Re-validar dispositivo a cada reload
+        var devId=_getDeviceId();
+        if(reg.dispositivo && reg.dispositivo!==devId){
+          sessionStorage.removeItem('alphaUser');
+          document.addEventListener('DOMContentLoaded',function(){ _showLogin('Acesso negado: este dispositivo não está autorizado.'); });
+          return;
+        }
         window._alphaOK=true; window._alphaUser=u;
         document.documentElement.classList.add('alpha-ok');
         return;
       }
-      sessionStorage.removeItem('alphaUser'); // usuário desativado
+      sessionStorage.removeItem('alphaUser');
     }
-    document.addEventListener('DOMContentLoaded',_showLogin);
+    document.addEventListener('DOMContentLoaded',function(){ _showLogin(''); });
   }catch(e){}
 
-  function _showLogin(){
+  function _showLogin(errMsg){
     document.body.setAttribute('style','margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1B5E20,#2E7D32);font-family:Arial,sans-serif;visibility:visible');
     document.body.innerHTML=
       '<div style="background:#fff;border-radius:20px;padding:44px 36px;max-width:360px;width:90%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.35)">'
@@ -61,11 +83,12 @@ var USUARIOS = {
       +' style="width:100%;padding:13px;border:2px solid #ddd;border-radius:10px;font-size:15px;outline:none;text-align:center;margin-bottom:12px;letter-spacing:2px"'
       +' onkeydown="if(event.key===\'Enter\')_tryLogin()">'
       +'<button onclick="_tryLogin()" style="width:100%;padding:13px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">Entrar</button>'
-      +'<p id="lErr" style="color:#e53935;font-size:12px;margin-top:12px;min-height:16px"></p>'
+      +'<p id="lErr" style="color:#e53935;font-size:12px;margin-top:12px;min-height:16px">'+(errMsg||'')+'</p>'
       +'<p style="color:#ccc;font-size:11px;margin-top:20px">Acesso individual — não compartilhe seu código</p>'
       +'</div>';
     setTimeout(function(){var el=document.getElementById('lCod');if(el)el.focus();},100);
   }
+  window._showLogin=_showLogin;
 })();
 
 function _tryLogin(){
@@ -73,16 +96,23 @@ function _tryLogin(){
   if(!el) return;
   var cod=el.value.trim().toUpperCase();
   var u=USUARIOS[cod];
-  if(u && u.ativa){
-    sessionStorage.setItem('alphaUser', JSON.stringify({cod:cod, nome:u.nome}));
-    location.reload();
-  } else if(u && !u.ativa){
-    document.getElementById('lErr').textContent='Acesso suspenso. Fale com o administrador.';
-    el.value=''; el.focus();
-  } else {
+  if(!u){
     document.getElementById('lErr').textContent='Código inválido. Tente novamente.';
-    el.value=''; el.focus();
+    el.value=''; el.focus(); return;
   }
+  if(!u.ativa){
+    document.getElementById('lErr').textContent='Acesso suspenso. Fale com o administrador.';
+    el.value=''; el.focus(); return;
+  }
+  var devId=_getDeviceId();
+  // Dispositivo cadastrado: verificar se é o mesmo
+  if(u.dispositivo && u.dispositivo!==devId){
+    document.getElementById('lErr').textContent='Este dispositivo não está autorizado para este código.';
+    el.value=''; el.focus(); return;
+  }
+  // Primeiro acesso (dispositivo:null): conceder e mostrar ID ao admin
+  sessionStorage.setItem('alphaUser', JSON.stringify({cod:cod, nome:u.nome, devId:devId, primeiroAcesso:!u.dispositivo}));
+  location.reload();
 }
 
 function _logout(){
@@ -152,7 +182,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.84';
+  var VER = 'v4.85';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -888,13 +918,23 @@ var EMB_XAROPE_PET=[[30,0.95],[60,1.64],[100,1.924],[150,3.25],[200,3.83],[250,4
 var EMB_XAROPE_VIDRO=[[15,0.41],[30,0.99],[60,1.60],[100,2.99],[150,3.83],[200,4.18],[250,3.25],[500,9.0],[1000,7.5],[9999,7.5]];
 
 // ── Estado ─────────────────────────────────────────────────
-// Preencher badge com nome da vendedora logada
+// Preencher badge com nome da vendedora logada + banner primeiro acesso
 (function(){
   try{
     var u=window._alphaUser||(JSON.parse(sessionStorage.getItem('alphaUser')||'null'));
     if(u && u.nome){
       var el=document.getElementById('userName');
       if(el) el.textContent='🧑 '+u.nome;
+    }
+    // Primeiro acesso: mostrar banner com ID do dispositivo para o admin
+    if(u && u.primeiroAcesso && u.devId){
+      var b=document.createElement('div');
+      b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#E65100;color:#fff;padding:10px 16px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:12px';
+      b.innerHTML='<span>&#128274; <strong>Primeiro acesso detectado.</strong> Informe ao administrador o ID deste dispositivo: '
+        +'<strong style="font-family:monospace;background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:4px">'+u.devId+'</strong>'
+        +' (vendedora: '+u.nome+')</span>'
+        +'<span onclick="this.parentNode.remove()" style="cursor:pointer;font-size:18px;opacity:0.7">×</span>';
+      document.body.prepend(b);
     }
   }catch(e){}
 })();
