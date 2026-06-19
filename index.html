@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.82</title>
+<title>Farmácia Alpha v4.83</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -21,44 +21,71 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Alpha">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<!-- ── Controle de Acesso Alpha ─────────────────────────────── -->
+<!-- ── Controle de Acesso Alpha — Login por Vendedora ──────── -->
 <script>
-var ACCESS_KEY='ALPHA2026';
+// ── Cadastro de vendedoras ──────────────────────────────────
+// Para adicionar: {'CODIGO': {nome:'Nome', ativa:true}}
+// Para revogar:  trocar ativa:true por ativa:false
+var USUARIOS = {
+  'ALPHA-ADM':  {nome:'Administrador', ativa:true},
+  'ALPHA-ANA':  {nome:'Ana',           ativa:true},
+  'ALPHA-LU':   {nome:'Lucia',         ativa:true},
+  'ALPHA-MAR':  {nome:'Maria',         ativa:true}
+};
+
 (function(){
   try{
-    var p=new URLSearchParams(location.search);
-    if(p.get('k')===ACCESS_KEY) sessionStorage.setItem('alphaAuth','1');
-    window._alphaOK=sessionStorage.getItem('alphaAuth')==='1';
-    if(window._alphaOK) document.documentElement.classList.add('alpha-ok');
-    else document.addEventListener('DOMContentLoaded',_showLock);
+    var sess = sessionStorage.getItem('alphaUser');
+    if(sess){
+      var u=JSON.parse(sess);
+      if(USUARIOS[u.cod] && USUARIOS[u.cod].ativa){
+        window._alphaOK=true; window._alphaUser=u;
+        document.documentElement.classList.add('alpha-ok');
+        return;
+      }
+      sessionStorage.removeItem('alphaUser'); // usuário desativado
+    }
+    document.addEventListener('DOMContentLoaded',_showLogin);
   }catch(e){}
-  function _showLock(){
+
+  function _showLogin(){
     document.body.setAttribute('style','margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1B5E20,#2E7D32);font-family:Arial,sans-serif;visibility:visible');
     document.body.innerHTML=
-      '<div style="background:#fff;border-radius:20px;padding:44px 36px;max-width:380px;width:90%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.35)">'
-      +'<div style="font-size:52px;margin-bottom:12px">🔒</div>'
-      +'<h2 style="color:#1B5E20;margin:0 0 8px;font-size:22px">Farmácia Alpha</h2>'
-      +'<p style="color:#666;font-size:13px;margin:0 0 24px;line-height:1.6">Acesso interno restrito.<br>Use o atalho instalado no seu computador.</p>'
-      +'<input id="lockKey" type="password" placeholder="Chave de acesso" autocomplete="off"'
-      +' style="width:100%;padding:12px;border:2px solid #ddd;border-radius:10px;font-size:15px;outline:none;text-align:center;margin-bottom:10px"'
-      +' onkeydown="if(event.key===\'Enter\')_tryKey()">'
-      +'<button onclick="_tryKey()" style="width:100%;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.5px">Entrar</button>'
-      +'<p id="lockErr" style="color:#e53935;font-size:12px;margin-top:10px;min-height:16px"></p>'
-      +'<p style="color:#bbb;font-size:11px;margin-top:16px">Farmácia Alpha — Acesso Interno</p>'
+      '<div style="background:#fff;border-radius:20px;padding:44px 36px;max-width:360px;width:90%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.35)">'
+      +'<div style="font-size:48px;margin-bottom:12px">🌿</div>'
+      +'<h2 style="color:#1B5E20;margin:0 0 6px;font-size:22px">Farmácia Alpha</h2>'
+      +'<p style="color:#888;font-size:12px;margin:0 0 28px">Identifique-se para continuar</p>'
+      +'<input id="lCod" type="password" placeholder="Seu código de acesso" autocomplete="off"'
+      +' style="width:100%;padding:13px;border:2px solid #ddd;border-radius:10px;font-size:15px;outline:none;text-align:center;margin-bottom:12px;letter-spacing:2px"'
+      +' onkeydown="if(event.key===\'Enter\')_tryLogin()">'
+      +'<button onclick="_tryLogin()" style="width:100%;padding:13px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">Entrar</button>'
+      +'<p id="lErr" style="color:#e53935;font-size:12px;margin-top:12px;min-height:16px"></p>'
+      +'<p style="color:#ccc;font-size:11px;margin-top:20px">Acesso individual — não compartilhe seu código</p>'
       +'</div>';
-    setTimeout(function(){var el=document.getElementById('lockKey');if(el)el.focus();},100);
+    setTimeout(function(){var el=document.getElementById('lCod');if(el)el.focus();},100);
   }
 })();
-function _tryKey(){
-  var el=document.getElementById('lockKey');
+
+function _tryLogin(){
+  var el=document.getElementById('lCod');
   if(!el) return;
-  if(el.value===ACCESS_KEY){
-    sessionStorage.setItem('alphaAuth','1');
+  var cod=el.value.trim().toUpperCase();
+  var u=USUARIOS[cod];
+  if(u && u.ativa){
+    sessionStorage.setItem('alphaUser', JSON.stringify({cod:cod, nome:u.nome}));
     location.reload();
+  } else if(u && !u.ativa){
+    document.getElementById('lErr').textContent='Acesso suspenso. Fale com o administrador.';
+    el.value=''; el.focus();
   } else {
-    document.getElementById('lockErr').textContent='Chave incorreta. Tente novamente.';
+    document.getElementById('lErr').textContent='Código inválido. Tente novamente.';
     el.value=''; el.focus();
   }
+}
+
+function _logout(){
+  sessionStorage.removeItem('alphaUser');
+  location.reload();
 }
 </script>
 <style>html:not(.alpha-ok) body{visibility:hidden}</style>
@@ -123,7 +150,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.82';
+  var VER = 'v4.83';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -147,7 +174,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <div id="ver-badge" style="position:fixed;bottom:10px;right:10px;background:#1565C0;color:#fff;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:9999">v4.37 ✓</div>
 
 <nav class="side">
-  <div class="logo"><h1>Farmácia Alpha <span id="ver-logo" style="font-weight:400;font-size:11px;opacity:0.5">v4.37</span></h1><p id="inscount">Carregando...</p></div>
+  <div class="logo"><h1>Farmácia Alpha <span id="ver-logo" style="font-weight:400;font-size:11px;opacity:0.5">v4.37</span></h1><p id="inscount">Carregando...</p><div id="userBadge" style="margin-top:8px;padding:6px 8px;background:rgba(255,255,255,0.1);border-radius:6px;font-size:11px;color:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:space-between"><span id="userName">—</span><span onclick="_logout()" style="cursor:pointer;opacity:0.6;font-size:10px;padding:2px 6px;background:rgba(255,255,255,0.15);border-radius:4px" title="Sair">Sair</span></div></div>
   <div class="nsec">ORÇAMENTO</div>
   <div class="ni on" id="n0">&#128247; <span>Foto / PDF</span></div>
   <div class="ni" id="n1">&#10010; <span>Cálculo manual</span></div>
@@ -859,6 +886,16 @@ var EMB_XAROPE_PET=[[30,0.95],[60,1.64],[100,1.924],[150,3.25],[200,3.83],[250,4
 var EMB_XAROPE_VIDRO=[[15,0.41],[30,0.99],[60,1.60],[100,2.99],[150,3.83],[200,4.18],[250,3.25],[500,9.0],[1000,7.5],[9999,7.5]];
 
 // ── Estado ─────────────────────────────────────────────────
+// Preencher badge com nome da vendedora logada
+(function(){
+  try{
+    var u=window._alphaUser||(JSON.parse(sessionStorage.getItem('alphaUser')||'null'));
+    if(u && u.nome){
+      var el=document.getElementById('userName');
+      if(el) el.textContent='🧑 '+u.nome;
+    }
+  }catch(e){}
+})();
 var hist = [], last = null, arq = null;
 var simAtual = {qtd:0,pv:0}, qtdsFixadas = [];
 
