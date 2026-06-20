@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.88</title>
+<title>Farmácia Alpha v4.89</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -182,7 +182,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.88';
+  var VER = 'v4.89';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1201,6 +1201,9 @@ function busIns(nome, formaCtx) {
       }
     }
   }
+  // Fallback para item bloqueado com match exato: só retornado se nenhuma
+  // alternativa não-bloqueada for encontrada em nenhum nível (P1-P6)
+  var blkFallback = null;
   nome = stripQualifiers(nome);
 
   // Gerar todas as variantes da query: normalizada, abreviada (acido→ac, etc.),
@@ -1236,22 +1239,28 @@ function busIns(nome, formaCtx) {
       if(INS[i] && _matches(INS[i].k, variants[v])) matches.push(INS[i]);
     }
     if(matches.length > 0) {
-      // Se todos têm preço zero, combinar com matches de sinônimos (P2) antes de decidir
-      var todosZero = matches.every(function(c){ return !(c.pe||c.p); });
-      if(todosZero) {
-        var p2 = [];
-        for(var v2=0; v2<variants.length; v2++) {
-          for(var i2=0; i2<INS.length; i2++) {
-            if(!INS[i2] || !INS[i2].sk) continue;
-            for(var j2=0; j2<INS[i2].sk.length; j2++) {
-              if(_matches(normStr(INS[i2].sk[j2]||''), variants[v2])) { p2.push(INS[i2]); break; }
+      var p1nonBlk = matches.filter(function(c){ return !c.blk; });
+      if(p1nonBlk.length === 0) {
+        // Todos bloqueados — guarda como fallback e continua buscando
+        if(!blkFallback) blkFallback = _pickBest(matches, formaCtx);
+      } else {
+        // Há candidatos não-bloqueados — lógica normal de todosZero
+        var todosZero = p1nonBlk.every(function(c){ return !(c.pe||c.p); });
+        if(todosZero) {
+          var p2 = [];
+          for(var v2=0; v2<variants.length; v2++) {
+            for(var i2=0; i2<INS.length; i2++) {
+              if(!INS[i2] || !INS[i2].sk || INS[i2].blk) continue;
+              for(var j2=0; j2<INS[i2].sk.length; j2++) {
+                if(_matches(normStr(INS[i2].sk[j2]||''), variants[v2])) { p2.push(INS[i2]); break; }
+              }
             }
           }
+          var comPreco = p2.filter(function(c){ return c.pe||c.p; });
+          if(comPreco.length > 0) return _pickBest(comPreco, formaCtx);
         }
-        var comPreco = p2.filter(function(c){ return c.pe||c.p; });
-        if(comPreco.length > 0) return _pickBest(comPreco, formaCtx);
+        return _pickBest(p1nonBlk, formaCtx);
       }
-      return _pickBest(matches, formaCtx);
     }
   }
 
@@ -1265,14 +1274,17 @@ function busIns(nome, formaCtx) {
         if(_matches(_skn, variants[v])) { matches.push(INS[i]); break; }
       }
     }
-    if(matches.length > 0) return _pickBest(matches, formaCtx);
+    if(matches.length > 0) {
+      var p2nonBlk = matches.filter(function(c){ return !c.blk; });
+      if(p2nonBlk.length === 0) { if(!blkFallback) blkFallback = _pickBest(matches, formaCtx); }
+      else return _pickBest(p2nonBlk, formaCtx);
+    }
   }
-  
+
   // ── PRIORIDADE 3: Stripped query (sem dose) — re-tenta sem números
   for(var v=0; v<variants.length; v++) {
     var stripped = variants[v].replace(/\s*\d+([.,]\d+)?\s*(mg|g|mcg|ui|ml|%)?\s*$/gi, '').trim();
     if(stripped !== variants[v] && stripped.length >= 3) {
-      // Também expande EQUIV na forma sem dose (ex: "mulungu 200mg" → strip → "mulungu" → EQUIV → "mulungu ext seco")
       var strippedList = [stripped];
       for(var eq in EQUIV) {
         if(stripped === normStr(eq)) { var ev=EQUIV[eq]; if(strippedList.indexOf(ev)<0) strippedList.push(ev); }
@@ -1280,11 +1292,11 @@ function busIns(nome, formaCtx) {
       var matches = [];
       for(var sl=0; sl<strippedList.length && matches.length===0; sl++) {
         for(var i=0; i<INS.length; i++) {
-          if(INS[i] && _matches(INS[i].k, strippedList[sl])) matches.push(INS[i]);
+          if(INS[i] && !INS[i].blk && _matches(INS[i].k, strippedList[sl])) matches.push(INS[i]);
         }
         if(matches.length === 0) {
           for(var i=0; i<INS.length; i++) {
-            if(!INS[i] || !INS[i].sk) continue;
+            if(!INS[i] || INS[i].blk || !INS[i].sk) continue;
             for(var j=0; j<INS[i].sk.length; j++) {
               var _skn3 = normStr(INS[i].sk[j] || '');
               if(_matches(_skn3, strippedList[sl])) { matches.push(INS[i]); break; }
@@ -1402,15 +1414,17 @@ function busIns(nome, formaCtx) {
   }
   if(fzBest && fzScore>=DICE_MIN) return fzBest;
 
-  return null;
+  // Nenhuma alternativa não-bloqueada encontrada em nenhum nível —
+  // retorna o match exato bloqueado (P1/P2) para que calcRec mostre BLOQUEADO
+  return blkFallback || null;
 }
 
 // Escolhe o melhor insumo de uma lista, considerando a forma farmacêutica
 function _pickBest(candidates, formaCtx) {
-  if(candidates.length === 1) return candidates[0];
   // Preferir itens não bloqueados quando há opções
   var naoBlk = candidates.filter(function(c){ return !c.blk; });
   if(naoBlk.length > 0) candidates = naoBlk;
+  if(candidates.length === 1) return candidates[0];
 
   var formNorm = (formaCtx || '').toLowerCase();
   var isCapsula = /cap/.test(formNorm);
