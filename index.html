@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.87</title>
+<title>Farmácia Alpha v4.88</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -182,7 +182,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.87';
+  var VER = 'v4.88';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1301,19 +1301,19 @@ function busIns(nome, formaCtx) {
   if(paren) {
     var inside = normStr(paren[1]).trim();
     for(var i=0; i<INS.length; i++) {
-      if(INS[i] && _matches(INS[i].k, inside)) return INS[i];
+      if(INS[i] && !INS[i].blk && _matches(INS[i].k, inside)) return INS[i];
     }
     for(var i=0; i<INS.length; i++) {
-      if(INS[i] && INS[i].k && INS[i].k.indexOf(inside) === 0) return INS[i];
+      if(INS[i] && !INS[i].blk && INS[i].k && INS[i].k.indexOf(inside) === 0) return INS[i];
     }
     for(var i=0; i<INS.length; i++) {
-      if(!INS[i] || !INS[i].sk) continue;
+      if(!INS[i] || INS[i].blk || !INS[i].sk) continue;
       for(var j=0; j<INS[i].sk.length; j++) {
         if(_matches(INS[i].sk[j], inside)) return INS[i];
       }
     }
   }
-  
+
   // ── PRIORIDADE 3.8: todos os tokens da query presentes no banco (qualquer ordem)
   // Resolve casos como "Zinco Quelado" vs "Quelado de Zinco", "Extrato de Romã" vs "Roma Ext Seco"
   for(var v=0; v<variants.length; v++) {
@@ -1322,7 +1322,7 @@ function busIns(nome, formaCtx) {
     if(tokens.length < 2) continue;
     var matches = [];
     for(var i=0; i<INS.length; i++) {
-      if(!INS[i]) continue;
+      if(!INS[i] || INS[i].blk) continue;
       var kb = INS[i].k || '';
       var kb2 = stripUEUI(kb);
       var allTok = tokens.every(function(t){ return kb.indexOf(t) >= 0 || kb2.indexOf(t) >= 0; });
@@ -1337,29 +1337,29 @@ function busIns(nome, formaCtx) {
     if(matches.length > 0) return _pickBest(matches, formaCtx);
   }
 
-  // ── PRIORIDADE 4: k começa com a query (busca parcial)
+  // ── PRIORIDADE 4: k começa com a query (busca parcial) — ignora bloqueados
   for(var v=0; v<variants.length; v++) {
     var q = variants[v];
     var matches = [];
     for(var i=0; i<INS.length; i++) {
-      if(INS[i] && INS[i].k && (INS[i].k.indexOf(q) === 0 || stripUEUI(INS[i].k).indexOf(q) === 0)) {
+      if(INS[i] && !INS[i].blk && INS[i].k && (INS[i].k.indexOf(q) === 0 || stripUEUI(INS[i].k).indexOf(q) === 0)) {
         matches.push(INS[i]);
       }
     }
     if(matches.length > 0) return _pickBest(matches, formaCtx);
   }
 
-  // ── PRIORIDADE 5: k contém a query (último recurso)
+  // ── PRIORIDADE 5: k contém a query — ignora bloqueados
   for(var v=0; v<variants.length; v++) {
     var q = variants[v];
     var matches = [];
     for(var i=0; i<INS.length; i++) {
-      if(INS[i] && INS[i].k && INS[i].k.indexOf(q) >= 0) matches.push(INS[i]);
+      if(INS[i] && !INS[i].blk && INS[i].k && INS[i].k.indexOf(q) >= 0) matches.push(INS[i]);
     }
     if(matches.length > 0) return _pickBest(matches, formaCtx);
   }
 
-  // ── PRIORIDADE 6: Fuzzy — erros de grafia do prescritor
+  // ── PRIORIDADE 6: Fuzzy — erros de grafia do prescritor — ignora bloqueados
   // Bigrama Dice + Levenshtein. Pré-filtra por prefixo de 3 chars para performance.
   function _bigrams(s){ var t={}; for(var i=0;i<s.length-1;i++) t[s.slice(i,i+2)]=1; return t; }
   function _dice(a,b){ var ta=_bigrams(a),tb=_bigrams(b),ia=Object.keys(ta).length,ib=Object.keys(tb).length,inter=0; for(var kk in ta) if(tb[kk]) inter++; return ia+ib>0?2*inter/(ia+ib):0; }
@@ -1371,7 +1371,7 @@ function busIns(nome, formaCtx) {
     if(q.length<4) continue;
     var pre=q.slice(0,3); // pré-filtro: mesmo prefixo de 3 chars
     for(var i=0;i<INS.length;i++){
-      if(!INS[i]) continue;
+      if(!INS[i] || INS[i].blk) continue; // ignora bloqueados no fuzzy
       var kk=INS[i].k||'';
       // Testa k principal
       if(kk.slice(0,3)===pre || Math.abs(kk.length-q.length)<=3){
@@ -1408,6 +1408,9 @@ function busIns(nome, formaCtx) {
 // Escolhe o melhor insumo de uma lista, considerando a forma farmacêutica
 function _pickBest(candidates, formaCtx) {
   if(candidates.length === 1) return candidates[0];
+  // Preferir itens não bloqueados quando há opções
+  var naoBlk = candidates.filter(function(c){ return !c.blk; });
+  if(naoBlk.length > 0) candidates = naoBlk;
 
   var formNorm = (formaCtx || '').toLowerCase();
   var isCapsula = /cap/.test(formNorm);
