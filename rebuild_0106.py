@@ -1,12 +1,16 @@
 """
 rebuild_0106.py
-Reconstrói var _D no index.html a partir de Produtos 0106.xlsx + Sinonimos 0106.xlsx.
+Reconstrói var _D no index.html a partir de Produtos DDMM.xlsx + Sinonimos DDMM.xlsx.
 normStr alinhada com JavaScript: remove acentos, hifens→espaço, PONTOS→espaço.
 
-Correções vs rebuild_2705.py:
+Regras de inclusão e bloqueio:
+  - SITUA='A' (Ativo): item pode voltar ao estoque → incluir no banco
+  - SITUA='I' (Inativo): item descontinuado → EXCLUIR do banco
+  - Bloqueado (blk:1): sem estoque, não calcula preço, pede avaliação do farmacêutico
+      · Se coluna INDBLOQUEIO existir: INDBLOQUEIO in ('S','O') → blk:1
+      · Se não existir: PRVEN=0 (sem preço = sem estoque) → blk:1
   - EQUIV numérico NÃO é sinônimo — é fator de conversão, ignorado na lista de s[]
   - Sinônimos lixo filtrados: XXXXX*, SEM USO, CAMPO SEM USO
-  - EQUIV salvo como campo 'eq' quando diferente de 0 (uso futuro)
 """
 import json, base64, re, unicodedata, warnings
 import pandas as pd
@@ -14,8 +18,8 @@ import pandas as pd
 warnings.filterwarnings('ignore')
 
 HTML_PATH = r'C:\Agente Alpha\index.html'
-PROD_PATH = r'C:\Agente Alpha\Produtos 0106.xlsx'
-SIN_PATH  = r'C:\Agente Alpha\Sinonimos 0106.xlsx'
+PROD_PATH = r'C:\Agente Alpha\produtos 2206 (1).xlsx'
+SIN_PATH  = r'C:\Agente Alpha\Sinonimos 1506.xlsx'
 
 # ── normStr alinhada com JS (inclui dots→space) ─────────────────
 def normStr(s):
@@ -69,12 +73,17 @@ def conv_fator(v):
     return round(v, 4)
 
 # ── 1. Ler Excel ─────────────────────────────────────────────────
-print("Lendo Produtos 0106.xlsx...")
-df_prod = pd.read_excel(PROD_PATH, header=0)
-print(f"  {len(df_prod)} produtos")
-print(f"  Ativos: {len(df_prod[df_prod['SITUA']=='A'])} | Inativos: {len(df_prod[df_prod['SITUA']=='I'])}")
+print(f"Lendo {PROD_PATH}...")
+df_prod_raw = pd.read_excel(PROD_PATH, header=0)
+print(f"  {len(df_prod_raw)} produtos (total)")
+print(f"  Ativos (A): {len(df_prod_raw[df_prod_raw['SITUA']=='A'])} | Inativos (I): {len(df_prod_raw[df_prod_raw['SITUA']=='I'])}")
+# Apenas SITUA='A' — inativos são descontinuados, excluir do banco
+df_prod = df_prod_raw[df_prod_raw['SITUA']=='A'].copy()
+print(f"  Usando apenas ativos: {len(df_prod)} itens")
+tem_indbloqueio = 'INDBLOQUEIO' in df_prod.columns
+print(f"  Coluna INDBLOQUEIO: {'SIM' if tem_indbloqueio else 'NAO — usando PRVEN=0 como bloqueado'}")
 
-print("Lendo Sinonimos 0106.xlsx...")
+print(f"Lendo {SIN_PATH}...")
 df_sin = pd.read_excel(SIN_PATH, header=0)
 print(f"  {len(df_sin)} registros de sinônimos")
 
@@ -142,9 +151,20 @@ for _, row in df_prod.iterrows():
     s_names = [x[0] for x in syns]
     sk_keys = [x[1] for x in syns]
 
+    # Bloqueado = sem estoque, não calcula preço, pede avaliação do farmacêutico
+    # · Se INDBLOQUEIO existir: usar 'S' ou 'O'
+    # · Se não existir: PRVEN=0 indica sem estoque → bloqueado
+    if tem_indbloqueio:
+        bloqueado = str(row.get('INDBLOQUEIO', 'N')).strip().upper() in ('S', 'O')
+    else:
+        bloqueado = (pe == 0.0)
+
     ins = {'n': nome, 'k': k}
     ins['pe'] = pe
-    ins['p']  = pe   # pe e p apontam para o mesmo valor (preço de venda = prioridade)
+    ins['p']  = pe
+
+    if bloqueado:
+        ins['blk'] = 1  # sem estoque — não calcula preço
 
     if f != 1.0:
         ins['f'] = f
