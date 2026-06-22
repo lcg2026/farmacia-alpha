@@ -19,7 +19,7 @@ warnings.filterwarnings('ignore')
 
 HTML_PATH = r'C:\Agente Alpha\index.html'
 PROD_PATH = r'C:\Agente Alpha\produtos 2206 (1).xlsx'
-SIN_PATH  = r'C:\Agente Alpha\Sinonimos 1506.xlsx'
+SIN_PATH  = r'C:\Agente Alpha\Sinonimos 2206.xlsx'
 
 # ── normStr alinhada com JS (inclui dots→space) ─────────────────
 def normStr(s):
