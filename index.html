@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.13</title>
+<title>Farmácia Alpha v5.14</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.13';
+  var VER = 'v5.14';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -985,7 +985,7 @@ function getBLHConc(insNome) {
   if(/reuteri/.test(norm))    return 200;
   if(/helveticus/.test(norm)) return 140;
   if(/plantarum/.test(norm))  return 100;
-  if(/acidophilus|casei|paracasei|gasseri|fermentum/.test(norm)) return 100;
+  if(/acidophilus|casei|paracasei|gasseri|fermentum|bulgar|thermophil|termofil/.test(norm)) return 100;
   if(/infantis|lactis|breve|adolesc|animalis/.test(norm)) return 100;
   if(/bifidobacterium|bifido/.test(norm)) return 100;
   if(/biomamps|pool\s*de\s*lacto|lactobacil/.test(norm)) return 100;
