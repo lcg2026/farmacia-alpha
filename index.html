@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.92</title>
+<title>Farmácia Alpha v4.93</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -182,7 +182,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.92';
+  var VER = 'v4.93';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -820,6 +820,7 @@ var CGEL=[[210,'4',0.0195,0.05,0.12],[300,'3',0.0195,0.05,0.12],[371,'2',0.0195,
 // Insumos com tipo de cápsula fixo — planilha "Insumo X Tipo de Cápsulas" (2026-05-22)
 var CAP_INS_VEGETAL = /\bacetil l carnitina\b|\bacido lipoico\b|\bbiosil\b|\bchronic\b|\bclock\b|\beva 360\b|shatavarinas|\bkeranat\b|\bl carnitina base\b|\blipowheat\b|\bmodutin\b|\boli ola\b|\bormona\b|\breverse\b|tcm para capsula|\btkw\b|\bnutricolin\b/;
 var CAP_INS_ENTERICA = /\balfa amilase\b|\bamilase\b|\bbiointestil\b|\bduloxetina\b|\blipase\b|\bsulfasalazina\b|\bpancreatina\b/;
+var CAP_INS_SEPARADO = /\bpantoprazol\b|\bomeprazol\b|\bitraconazol\b|\besomeprazol\b|\bbiointestil\b/;
 var POTES=[[60,{'3':90,'2':50,'1':30,'0':30,'00':30},2],[80,{'3':120,'2':90,'1':60,'0':45,'00':30},2],[110,{'3':180,'2':120,'1':120,'0':60,'00':60},2],[150,{'3':270,'2':180,'1':150,'0':90,'00':80},2],[230,{'3':480,'2':270,'1':240,'0':180,'00':120},2],[320,{'3':480,'2':390,'1':300,'0':240,'00':180},2],[500,{'3':720,'2':510,'1':480,'0':360,'00':270},2.5]];
 // ── Concentração de probióticos em BLH/g (bilhões de UFC por grama) ──
 // Regra §1.7: g = dose_bilhoes / BLH_conc  (ex: 3 BLH ÷ 100 BLH/g = 0,03g)
@@ -1541,6 +1542,12 @@ function calcRec(rec) {
 
   // ── 1. Auto-detectar hormônio ──
   var nomesAtivos = (rec.ativos||[]).map(function(a){return normStr(a.nome||'');}).join(' ');
+  // Seção 2.2 — insumos que devem ser manipulados separadamente (monodroga)
+  if(CAP_INS_SEPARADO.test(nomesAtivos) && (rec.ativos||[]).length > 1) {
+    var _sepMatch = nomesAtivos.match(/pantoprazol|omeprazol|itraconazol|esomeprazol|biointestil/);
+    var _sepNome = _sepMatch ? _sepMatch[0] : 'item';
+    avs.push('⚠️ ' + _sepNome.charAt(0).toUpperCase() + _sepNome.slice(1) + ' deve ser manipulado SEPARADAMENTE (monodroga). Calcule como fórmula independente na mesma quantidade.');
+  }
   var hasTopicBase = /pentravan|transcutol|lipoderm|inderm|versapro/.test(nomesAtivos);
   var hasEstradiol = /estradiol/.test(nomesAtivos) && (rec.ativos||[]).some(function(a){
     return /estradiol/.test(normStr(a.nome||'')) && (a.dose||0) <= 5;
