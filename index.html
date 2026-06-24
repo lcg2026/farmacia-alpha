@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.93</title>
+<title>Farmácia Alpha v4.94</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -182,7 +182,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.93';
+  var VER = 'v4.94';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -2161,11 +2161,11 @@ function calcRec(rec) {
   // ── 5I. SUBLINGUAL / OROTAB / OUTROS ──
   if(!isCapSublingual && (fml.indexOf('sublingual')>=0||fml.indexOf('pastilha')>=0||fml.indexOf('orotab')>=0||fml.indexOf('oro')>=0||fml==='outros')) {
     if(fml !== 'outros') {
-      // Tamanho: orotab diet = 760mg; padrão = 200mg
-      var isOrotab = /orotab|orodis|oro.?dispersivel|oro.?diet/.test(fml+' '+nomesAtivos+' '+normStr(rec.descricao||''));
-      var capSublMg = isOrotab ? 760 : 200;
+      // Tamanho: selecionar por volume — se ativos+aroma não cabe em 200mg, usa Orotab Diet 760mg
       var aromaMg = 50;
       var ativosSubl = totalGCheck * 1000; // mg por comprimido
+      var isOrotab = (ativosSubl + aromaMg) > 200 || /orotab|orodis|oro.?dispersivel|oro.?diet/.test(fml+' '+nomesAtivos+' '+normStr(rec.descricao||''));
+      var capSublMg = isOrotab ? 760 : 200;
       var qspMg = capSublMg - ativosSubl - aromaMg;
       if(qspMg < 0) qspMg = 0;
       // +5 comprimidos de segurança
