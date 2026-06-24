@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.11</title>
+<title>Farmácia Alpha v5.12</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.11';
+  var VER = 'v5.12';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -2624,41 +2624,49 @@ function renderResult(r, container, idx) {
 
   container.innerHTML = html;
 
-  // ── Handler dose acima do máximo: recalcular com dose corrigida ──
-  if(r.doseAlerts && r.doseAlerts.length && r._rec) {
-    container.querySelectorAll('._daok').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var ai = parseInt(btn.getAttribute('data-dai'));
-        var row = btn.closest('.rrow[data-da]');
-        var dInp = row ? row.querySelector('._dainp') : null;
-        var dSel = row ? row.querySelector('._dasel') : null;
-        if(!dInp || !dSel) return;
-        var newDose = parseFloat(dInp.value);
-        var newUnit = dSel.value;
-        if(!newDose || newDose <= 0) { dInp.focus(); return; }
-        // Atualizar dose no rec original e recalcular
-        var newRec = JSON.parse(JSON.stringify(r._rec));
-        if(newRec.ativos && newRec.ativos[ai]) {
-          newRec.ativos[ai].dose    = newDose;
-          newRec.ativos[ai].unidade = newUnit;
-        }
-        var newR = calcRec(newRec);
-        newR.orc = r.orc || null;
-        newR._rec = newRec;
-        container.innerHTML = '';
-        renderResult(newR, container, idx);
-      });
+  // ── Handler dose acima do máximo: event delegation (igual a _corrClick) ──
+  container._r = r; // guardar r no elemento para acesso pelo handler
+  if(container._daClick) container.removeEventListener('click', container._daClick);
+  container._daClick = function(ev) {
+    // Detectar clique no botão ✓ Recalcular
+    var btn = ev.target;
+    while(btn && btn !== container) {
+      if(btn.classList && btn.classList.contains('_daok')) break;
+      btn = btn.parentNode;
+    }
+    if(!btn || !btn.classList || !btn.classList.contains('_daok')) return;
+    var stored = container._r;
+    if(!stored || !stored._rec) return;
+    var ai = parseInt(btn.getAttribute('data-dai'));
+    var row = btn.closest ? btn.closest('.rrow[data-da]') : null;
+    if(!row) { row = btn.parentNode; while(row && row !== container){ if(row.getAttribute && row.getAttribute('data-da')!==null) break; row=row.parentNode; } }
+    var dInp = row ? row.querySelector('._dainp') : null;
+    var dSel = row ? row.querySelector('._dasel') : null;
+    if(!dInp || !dSel) return;
+    var newDose = parseFloat(dInp.value);
+    var newUnit = dSel.value;
+    if(!newDose || newDose <= 0) { dInp.focus(); return; }
+    var newRec = JSON.parse(JSON.stringify(stored._rec));
+    if(newRec.ativos && newRec.ativos[ai]) {
+      newRec.ativos[ai].dose    = newDose;
+      newRec.ativos[ai].unidade = newUnit;
+    }
+    var newR = calcRec(newRec);
+    newR.orc = stored.orc || null;
+    newR._rec = newRec;
+    container.innerHTML = '';
+    renderResult(newR, container, idx);
+  };
+  container.addEventListener('click', container._daClick);
+  // Enter no campo dispara o botão
+  container.querySelectorAll('._dainp').forEach(function(inp) {
+    inp.addEventListener('keydown', function(e) {
+      if(e.key === 'Enter') {
+        var row = inp.closest ? inp.closest('.rrow[data-da]') : null;
+        if(row) { var ok = row.querySelector('._daok'); if(ok) ok.click(); }
+      }
     });
-    // Enter no input dispara o botão
-    container.querySelectorAll('._dainp').forEach(function(inp) {
-      inp.addEventListener('keydown', function(e) {
-        if(e.key === 'Enter') {
-          var row = inp.closest('.rrow[data-da]');
-          if(row) { var ok = row.querySelector('._daok'); if(ok) ok.click(); }
-        }
-      });
-    });
-  }
+  });
 
   // ── Closures por card — cada resultado tem seu próprio estado ──
   var inp  = container.querySelector('._sinp');
