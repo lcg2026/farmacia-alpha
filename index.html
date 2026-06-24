@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.01</title>
+<title>Farmácia Alpha v5.02</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.01';
+  var VER = 'v5.02';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -3130,7 +3130,7 @@ function calcManual() {
 // ── Autocomplete correção de "Não encontrado" ──────────────
 function acNF(inp, nomeOrig) {
   var q = normStr(inp.value);
-  var drop = inp.nextSibling;
+  var drop = inp.nextElementSibling;
   if(!q || q.length < 2) { drop.classList.remove('show'); return; }
   var res = [], count = 0;
   for(var i=0;i<INS.length&&count<8;i++) {
@@ -3162,7 +3162,7 @@ function selNF(nomeOrig, insKey, el) {
 function showAC(inp) {
   var q = normStr(inp.value);
   if(!q || q.length < 2) { hideAC(inp); return; }
-  var drop = inp.nextSibling;
+  var drop = inp.nextElementSibling;
   var res = [], count = 0;
   for(var i=0;i<INS.length&&count<8;i++) {
     if(INS[i] && INS[i].k && INS[i].k.indexOf(q) >= 0) { res.push(INS[i]); count++; continue; }
@@ -3180,7 +3180,7 @@ function showAC(inp) {
 }
 
 function hideAC(inp) {
-  if(inp && inp.nextSibling) inp.nextSibling.classList.remove('show');
+  if(inp && inp.nextElementSibling) inp.nextElementSibling.classList.remove('show');
 }
 
 function selAC(nome, preco, el) {
