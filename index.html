@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.09</title>
+<title>Farmácia Alpha v5.10</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.09';
+  var VER = 'v5.10';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1661,7 +1661,7 @@ function calcRec(rec) {
   var qtd = parseInt(rec.qtd) || 60;
   var fm = (rec.forma || 'Capsulas');
   var fml = fm.toLowerCase();
-  var custo = 0, itens = [], avs = [], nf = [];
+  var custo = 0, itens = [], avs = [], nf = [], doseAlerts = [];
   var _simCap=null, _simCapPIdx=2, _simNCaps=1; // dados para calcSimQtd
   var prescritor = normStr(rec.prescritor||'');
 
@@ -1837,6 +1837,7 @@ function calcRec(rec) {
             ' — prescrita: ' + _doseMg.toFixed(2) + ' mg' +
             ' | máximo: ' + _dmMaxVal + ' ' + _dmUnit +
             ' — Fale com o Farmacêutico.');
+          doseAlerts.push({nome: ins.n, ativoNome: a.nome, maxVal: _dmMaxVal, maxUnit: _dmUnit});
         }
       }
     })();
@@ -2446,7 +2447,7 @@ function calcRec(rec) {
   }
 
   return {fm:fm, qtd:qtd, custo:custo, mkp:mkp, pv:pv, itens:itens, avs:avs, nf:nf, pac:rec.paciente||'', pre:rec.prescritor||'', minoxPad:minoxPad, maxsolvePad:maxsolvePad, manitolPad:manitolPad,
-    _cap:_simCap, _capPIdx:_simCapPIdx, _nCaps:_simNCaps};
+    _cap:_simCap, _capPIdx:_simCapPIdx, _nCaps:_simNCaps, doseAlerts:doseAlerts};
 }
 
 // ── Simular outra quantidade ───────────────────────────────
@@ -3267,11 +3268,48 @@ function calcManual() {
   });
   if(!ativos.length) { alert('Adicione pelo menos um insumo!'); return; }
   window._currentOrcNum = getNextOrcNum(); // novo cálculo manual = novo ORC
+  // limpar destaques anteriores
+  rows.forEach(function(row) {
+    var dInp = row.querySelectorAll('input')[1];
+    if(dInp) { dInp.style.borderColor=''; dInp.style.background=''; dInp.style.color=''; }
+    var lbl = row.querySelector('.dose-alerta-lbl');
+    if(lbl) lbl.remove();
+  });
   var r = calcRec({paciente:pac, forma:forma, qtd:qtd, ativos:ativos});
   r.orc = window._currentOrcNum;
   var container = document.getElementById('rmanual');
   container.innerHTML = '';
   renderResult(r, container);
+  // destacar ativos com dose acima do máximo
+  if(r.doseAlerts && r.doseAlerts.length) {
+    rows.forEach(function(row) {
+      var nomeInp = row.querySelectorAll('input')[0];
+      var doseInp = row.querySelectorAll('input')[1];
+      if(!nomeInp || !doseInp) return;
+      var nomeVal = nomeInp.value.trim().toLowerCase();
+      r.doseAlerts.forEach(function(al) {
+        if(al.ativoNome.toLowerCase().indexOf(nomeVal) >= 0 || nomeVal.indexOf(al.ativoNome.toLowerCase()) >= 0) {
+          doseInp.style.borderColor = '#C62828';
+          doseInp.style.background  = '#FFEBEE';
+          doseInp.style.color       = '#C62828';
+          // label abaixo do campo
+          var lbl = document.createElement('div');
+          lbl.className = 'dose-alerta-lbl';
+          lbl.style.cssText = 'color:#C62828;font-size:11px;margin-top:2px;grid-column:1/-1';
+          lbl.textContent = '⚠️ Dose acima do máximo (' + al.maxVal + ' ' + al.maxUnit + '). Corrija e o preço atualiza automaticamente.';
+          row.appendChild(lbl);
+          doseInp.focus();
+          // recalcular ao alterar dose ou unidade
+          if(!doseInp._dmListener) {
+            doseInp._dmListener = true;
+            doseInp.addEventListener('change', calcManual);
+            var sel = row.querySelector('select');
+            if(sel && !sel._dmListener) { sel._dmListener = true; sel.addEventListener('change', calcManual); }
+          }
+        }
+      });
+    });
+  }
 }
 
 // ── Autocomplete correção de "Não encontrado" ──────────────
