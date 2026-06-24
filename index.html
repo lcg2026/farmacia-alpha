@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.04</title>
+<title>Farmácia Alpha v5.05</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.04';
+  var VER = 'v5.05';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -2193,11 +2193,14 @@ function calcRec(rec) {
       // Aroma 50mg/comp (item 24332)
       var cArSub = (aromaMg/1000) * qtdSubl * 0.1982; custo += cArSub;
       itens.push({n:'Aroma cotação pó 50mg/comp', dose:'', c:cArSub});
-      // Excipiente qsp — diferenciado por tipo
-      var excipSublP = isOrotab ? 0.21 : 0.066;
-      var excipSublNome = isOrotab ? 'Orotab Diet (qsp)' : 'Excipiente Geral (qsp)';
+      // Excipiente qsp — Orotab Diet padrao; Orotab Limao se vier na receita
+      var _descSubl = normStr((rec.descricao||'') + ' ' + (rec.forma||''));
+      var isLimao = /limao|lemon/.test(_descSubl);
+      var excipSublP = isLimao ? 0.21 : 0.21; // Orotab Limao item 15861 mesmo preco por ora
+      var excipSublNome = isLimao ? 'Orotab Limao (qsp) item 15861' : 'Orotab Diet (qsp) item 14995';
       var cExcSub = (qspMg/1000) * qtdSubl * excipSublP; custo += cExcSub;
       itens.push({n:excipSublNome, dose:'', c:cExcSub});
+      if(isLimao) avs.push('\u26a0\ufe0f Orotab Limao (item 15861) aplicado por indicacao na receita.');
       // Embalagem: caixa 30un = R$0,92 + Blista Fácil a cada 10un = R$1,13
       var nCaixas = Math.ceil(qtdSubl / 30);
       var cEmbSub = nCaixas * 0.92; custo += cEmbSub;
