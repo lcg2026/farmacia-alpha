@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.98</title>
+<title>Farmácia Alpha v4.99</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -29,7 +29,7 @@
 // Para revogar acesso: ativa:false
 // Para trocar de PC:  dispositivo:null → vendedora loga no novo PC → atualiza o ID
 var USUARIOS = {
-  'ALPHA-ADM':  {nome:'Administrador', ativa:true,  dispositivo:null},
+  'ALPHA-ADM':  {nome:'Administrador', ativa:true,  dispositivo:'DT6FD4GLWT8'},
   'ALPHA-CIN':  {nome:'Cinthia',       ativa:true,  dispositivo:null},
   'ALPHA-DAI':  {nome:'Daiane',        ativa:true,  dispositivo:null},
   'ALPHA-TAT':  {nome:'Tatiana',       ativa:true,  dispositivo:null},
@@ -182,7 +182,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.98';
+  var VER = 'v4.99';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
