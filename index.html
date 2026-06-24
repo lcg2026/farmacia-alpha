@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v4.91</title>
+<title>Farmácia Alpha v4.92</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -182,7 +182,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v4.91';
+  var VER = 'v4.92';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -2161,20 +2161,26 @@ function calcRec(rec) {
       var ativosSubl = totalGCheck * 1000; // mg por comprimido
       var qspMg = capSublMg - ativosSubl - aromaMg;
       if(qspMg < 0) qspMg = 0;
+      // +5 comprimidos de segurança
+      var qtdSubl = qtd + 5;
+      var custoExtraAtivos = qtd > 0 ? (custo / qtd) * 5 : 0;
+      custo += custoExtraAtivos;
+      if(custoExtraAtivos > 0) itens.push({n:'+5 comp. segurança (ativos)', dose:'', c:custoExtraAtivos});
+      avs.push('ℹ️ Calculado com +5 comprimidos de segurança (total: ' + qtdSubl + ' unidades)');
       // Aroma 50mg/comp (item 24332)
-      var cArSub = (aromaMg/1000) * qtd * 0.1982; custo += cArSub;
+      var cArSub = (aromaMg/1000) * qtdSubl * 0.1982; custo += cArSub;
       itens.push({n:'Aroma cotação pó 50mg/comp', dose:'', c:cArSub});
-      // Excipiente qsp — sempre Orotab Diet (sublingual e orotab)
-      var excipSublP = 0.21;
-      var excipSublNome = 'Orotab Diet (qsp)';
-      var cExcSub = (qspMg/1000) * qtd * excipSublP; custo += cExcSub;
+      // Excipiente qsp — diferenciado por tipo
+      var excipSublP = isOrotab ? 0.21 : 0.066;
+      var excipSublNome = isOrotab ? 'Orotab Diet (qsp)' : 'Excipiente Geral (qsp)';
+      var cExcSub = (qspMg/1000) * qtdSubl * excipSublP; custo += cExcSub;
       itens.push({n:excipSublNome, dose:'', c:cExcSub});
-      // Embalagem: caixa 30un = R$0,92 + Blista Fácil a cada 10un = R$1,18
-      var nCaixas = Math.ceil(qtd / 30);
+      // Embalagem: caixa 30un = R$0,92 + Blista Fácil a cada 10un = R$1,13
+      var nCaixas = Math.ceil(qtdSubl / 30);
       var cEmbSub = nCaixas * 0.92; custo += cEmbSub;
       itens.push({n:'Caixa Papelão Orotab ('+nCaixas+'cx)', dose:'', c:cEmbSub});
-      var nBlistas = Math.ceil(qtd / 10);
-      var cBlista = nBlistas * 1.18; custo += cBlista;
+      var nBlistas = Math.ceil(qtdSubl / 10);
+      var cBlista = nBlistas * 1.13; custo += cBlista;
       itens.push({n:'Blista Fácil ('+nBlistas+'un)', dose:'', c:cBlista});
     }
     // Outros (pó em gramas): sem embalagem/excipiente padrão — MKP via Sublingual table (progKey abaixo)
