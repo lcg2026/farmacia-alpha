@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.08</title>
+<title>Farmácia Alpha v5.09</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.08';
+  var VER = 'v5.09';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -418,105 +418,110 @@ var _D = 'W3sibiI6IkNJTUlDSUZVR0EiLCJrIjoiY2ltaWNpZnVnYSIsInBlIjowLjA5NCwicCI6MC
 
 
 var DOSE_MAX={
-"5 hidroxi l triptofan":[0.6, "MG", "5-HIDROXI L TRIPTOFAN"],
-"ac acetil salicilico":[0.82, "MG", "AC ACETIL SALICILICO"],
-"ac azelaico":[0.44, "G", "AC AZELAICO"],
-"ac benzoico":[1.27, "G", "AC BENZOICO"],
-"ac borico":[0.73, "G", "AC BORICO"],
-"ac glutamico":[0.79, "G", "AC GLUTAMICO"],
-"acafrao po ui":[1.0, "G", "ACAFRAO PO UI"],
-"alopurinol":[0.45, "MG", "ALOPURINOL"],
-"belladona extrato sec":[0.28, "MG", "BELLADONA EXTRATO SEC"],
-"benzbromarona":[0.6, "MG", "BENZBROMARONA"],
-"betaina cloridrato":[0.67, "G", "BETAINA CLORIDRATO"],
-"biotina":[0.6, "MG", "BIOTINA"],
-"bitartarato colina*":[0.745, "MG", "BITARTARATO COLINA*"],
-"bromopride":[0.7, "MG", "BROMOPRIDE"],
-"buclisina cloridrato":[0.268, "MG", "BUCLISINA CLORIDRATO"],
+"5 hidroxi l triptofan":[200.0, "MG", "5-HIDROXI L TRIPTOFAN"],
+"ac acetil salicilico":[500.0, "MG", "AC ACETIL SALICILICO"],
+"ac azelaico":[30.0, "G", "AC AZELAICO"],
+"ac benzoico":[12.0, "G", "AC BENZOICO"],
+"ac borico":[10.0, "G", "AC BORICO"],
+"ac glutamico":[1.0, "G", "AC GLUTAMICO"],
+"alopurinol":[300.0, "MG", "ALOPURINOL"],
+"belladona extrato sec":[15.0, "MG", "BELLADONA EXTRATO SEC"],
+"benzbromarona":[100.0, "MG", "BENZBROMARONA"],
+"biotina":[20.0, "MG", "BIOTINA"],
+"bitartarato colina*":[500.0, "MG", "BITARTARATO COLINA*"],
+"bromopride":[30.0, "MG", "BROMOPRIDE"],
+"buclisina cloridrato":[100.0, "MG", "BUCLISINA CLORIDRATO"],
 "bumetanida*":[1.0, "MG", "BUMETANIDA*"],
-"capsiate":[0.54, "MG", "CAPSIATE"],
-"carboximetil celulose":[0.55, "MG", "CARBOXIMETIL CELULOSE"],
-"ciclobenzaprina hcl":[0.5, "MG", "CICLOBENZAPRINA HCL"],
-"cinarizina":[0.64, "MG", "CINARIZINA"],
-"ciproterona acetato (":[0.4, "MG", "CIPROTERONA ACETATO ("],
-"citr potassio":[0.85, "G", "CITR POTASSIO"],
-"clor papaverina":[0.7, "MG", "CLOR PAPAVERINA"],
-"clortalidona":[0.402, "MG", "CLORTALIDONA"],
+"canabidiol":[1.0, "MG", "CANABIDIOL"],
+"capsiate":[15.0, "MG", "CAPSIATE"],
+"carboximetil celulose":[500.0, "MG", "CARBOXIMETIL CELULOSE"],
+"ceramida iii po":[0.5, "MG", "CERAMIDA III PO"],
+"ciclobenzaprina hcl":[20.0, "MG", "CICLOBENZAPRINA HCL"],
+"cinarizina":[250.0, "MG", "CINARIZINA"],
+"ciproterona acetato (":[50.0, "MG", "CIPROTERONA ACETATO ("],
+"citr potassio":[2.0, "G", "CITR POTASSIO"],
+"clor papaverina":[300.0, "MG", "CLOR PAPAVERINA"],
+"clortalidona":[51.0, "MG", "CLORTALIDONA"],
 "colchicina uso extern":[1.0, "MG", "COLCHICINA USO EXTERN"],
+"dapoxetina hcl":[1.12, "MG", "DAPOXETINA HCL"],
 "dapsone ue":[1.0, "MG", "DAPSONE UE"],
-"diclofenaco sodico":[0.6, "MG", "DICLOFENACO SODICO"],
-"dihidroergocristina":[1.0, "MG", "DIHIDROERGOCRISTINA"],
-"dipirona sodica":[0.58, "MG", "DIPIRONA SODICA"],
-"dl metionina":[0.5, "G", "DL METIONINA"],
-"dutasterida (pura)":[0.65, "MG", "DUTASTERIDA (PURA)"],
-"estriol micronizado":[0.3, "MG", "ESTRIOL MICRONIZADO"],
-"ext seco abacateiro":[0.5, "MG", "EXT SECO ABACATEIRO"],
-"fadogia black":[0.75, "MG", "FADOGIA BLACK"],
-"fenilalanina l":[0.5, "G", "FENILALANINA-L"],
-"flunitrazepam":[0.53, "MG", "FLUNITRAZEPAM"],
-"flutamida":[0.5, "MG", "FLUTAMIDA"],
-"gaba":[0.69, "MG", "GABA"],
+"diclofenaco sodico":[101.0, "MG", "DICLOFENACO SODICO"],
+"dihidroergocristina":[6.0, "MG", "DIHIDROERGOCRISTINA"],
+"dipirona sodica":[1000.0, "MG", "DIPIRONA SODICA"],
+"dl metionina":[1.0, "G", "DL METIONINA"],
+"duloxetina cloridrato":[1.12, "MG", "DULOXETINA CLORIDRATO"],
+"dutasterida (pura)":[2.0, "MG", "DUTASTERIDA (PURA)"],
+"edta dissodico":[5.0, "MG", "EDTA DISSODICO"],
+"estearato magnesio":[5.0, "MG", "ESTEARATO MAGNESIO"],
+"estearato zinco":[5.0, "MG", "ESTEARATO ZINCO"],
+"ext seco abacateiro":[400.0, "MG", "EXT SECO ABACATEIRO"],
+"fadogia black":[201.0, "MG", "FADOGIA BLACK"],
+"fenilalanina l":[2.0, "G", "FENILALANINA-L"],
+"flunitrazepam":[2.0, "MG", "FLUNITRAZEPAM"],
+"flutamida":[250.0, "MG", "FLUTAMIDA"],
 "gabapentine":[1.0, "MG", "GABAPENTINE"],
-"gelatina":[0.6, "MG", "GELATINA"],
-"glicina":[0.8, "MG", "GLICINA"],
-"glucomannan":[0.79, "MG", "GLUCOMANNAN"],
-"griseofulvina":[0.51, "MG", "GRISEOFULVINA"],
-"guarana":[0.5, "MG", "GUARANA"],
-"hidroclorotiazida":[0.57, "MG", "HIDROCLOROTIAZIDA"],
-"hidroxido aluminio":[0.35, "G", "HIDROXIDO ALUMINIO"],
-"hidroxizine dicloridr":[0.29, "MG", "HIDROXIZINE DICLORIDR"],
-"hioscina":[0.6, "MG", "HIOSCINA"],
-"histidina":[0.5, "G", "HISTIDINA"],
-"huperzina a 1%":[0.5, "MG", "HUPERZINA A 1%"],
-"ibuprofeno":[0.55, "MG", "IBUPROFENO"],
-"indometacina":[0.7, "MG", "INDOMETACINA"],
-"inositol":[0.75, "MG", "INOSITOL"],
-"isoleucina":[0.7, "G", "ISOLEUCINA"],
-"ivermectina":[0.54, "MG", "IVERMECTINA"],
+"gestrinona":[1.0, "MG", "GESTRINONA"],
+"glicina":[1000.0, "MG", "GLICINA"],
+"glucomannan":[2000.0, "MG", "GLUCOMANNAN"],
+"griseofulvina":[501.0, "MG", "GRISEOFULVINA"],
+"guarana":[501.0, "MG", "GUARANA"],
+"hidroclorotiazida":[101.0, "MG", "HIDROCLOROTIAZIDA"],
+"hidroxido aluminio":[11.0, "G", "HIDROXIDO ALUMINIO"],
+"hidroxizine dicloridr":[100.0, "MG", "HIDROXIZINE DICLORIDR"],
+"hioscina":[20.0, "MG", "HIOSCINA"],
+"histidina":[1.0, "G", "HISTIDINA"],
+"huperzina a 1%":[25.0, "MG", "HUPERZINA A 1%"],
+"ibuprofeno":[600.0, "MG", "IBUPROFENO"],
+"indometacina":[100.0, "MG", "INDOMETACINA"],
+"inositol":[1.0, "MG", "INOSITOL"],
+"isoleucina":[2.0, "G", "ISOLEUCINA"],
+"ivermectina":[6.0, "MG", "IVERMECTINA"],
 "kelp iodine extract 1":[300.0, "MCG", "KELP IODINE EXTRACT 1"],
-"ketoprofeno":[0.36, "MG", "KETOPROFENO"],
-"l arginina cloridrato":[0.7, "G", "L ARGININA CLORIDRATO"],
-"l triptofano":[0.43, "G", "L-TRIPTOFANO"],
-"leucina l":[0.4, "G", "LEUCINA L"],
-"licopeno":[0.6, "MG", "LICOPENO"],
+"ketoprofeno":[200.0, "MG", "KETOPROFENO"],
+"l arginina cloridrato":[7.0, "G", "L ARGININA CLORIDRATO"],
+"l triptofano":[1.0, "G", "L-TRIPTOFANO"],
+"licopeno":[50.0, "MG", "LICOPENO"],
+"lisdexanfetamina":[1.0, "MG", "LISDEXANFETAMINA"],
+"meloxicam":[1.0, "MG", "MELOXICAM"],
 "mesterolona":[1.0, "MG", "MESTEROLONA"],
-"metformina ui capsu":[0.6, "MG", "METFORMINA UI - CAPSU"],
-"naproxeno base":[0.33, "MG", "NAPROXENO BASE"],
-"niacina":[0.6, "MG", "NIACINA"],
-"nicotinamida":[0.6, "MG", "NICOTINAMIDA"],
-"nimesulide":[0.77, "MG", "NIMESULIDE"],
-"oxalato potassio":[1.0, "G", "OXALATO POTASSIO"],
-"oxido de magnesio":[0.55, "G", "OXIDO DE MAGNESIO"],
-"pancreatina 4nf":[0.7, "MG", "PANCREATINA 4NF"],
-"papaina 6000 u/mg":[0.55, "MG", "PAPAINA 6000 U/MG"],
-"paracetamol":[0.35, "MG", "PARACETAMOL"],
-"pectina":[0.79, "MG", "PECTINA"],
-"pentoxifilina":[0.42, "MG", "PENTOXIFILINA"],
-"pfafia paniculata ui":[0.6, "MG", "PFAFIA PANICULATA UI"],
-"piracetam":[0.8, "MG", "PIRACETAM"],
-"piroxicam":[1.0, "MG", "PIROXICAM"],
-"policosanol":[0.45, "MG", "POLICOSANOL"],
-"potaba":[0.54, "MG", "POTABA"],
-"prednisona base micro":[0.3, "MG", "PREDNISONA BASE MICRO"],
-"progesterona base mic":[0.5, "MG", "PROGESTERONA BASE MIC"],
-"prolina l":[0.68, "G", "PROLINA L"],
-"propantelina brometo":[0.5, "MG", "PROPANTELINA BROMETO"],
-"propranolol":[0.5, "MG", "PROPRANOLOL"],
-"sacarina":[0.941, "G", "SACARINA"],
-"sais biliares":[0.63, "MG", "SAIS BILIARES"],
-"spirulina":[0.65, "MG", "SPIRULINA"],
-"sulfasalazina":[0.591, "MG", "SULFASALAZINA"],
-"taurina":[0.9, "G", "TAURINA"],
+"metformina ui capsu":[850.0, "MG", "METFORMINA UI - CAPSU"],
+"naltrexona cloridrato":[1.0, "MG", "NALTREXONA CLORIDRATO"],
+"naproxeno base":[560.0, "MG", "NAPROXENO BASE"],
+"niacina":[35.0, "MG", "NIACINA"],
+"nimesulide":[200.0, "MG", "NIMESULIDE"],
+"octopirox":[5.0, "MG", "OCTOPIROX"],
+"ol alho 250 mg":[1.0, "MG", "OL ALHO 250 MG"],
+"oxido de magnesio":[31.0, "G", "OXIDO DE MAGNESIO"],
+"papaina 6000 u/mg":[200.0, "MG", "PAPAINA 6000 U/MG"],
+"paracetamol":[750.0, "MG", "PARACETAMOL"],
+"pectina":[5000.0, "MG", "PECTINA"],
+"pentoxifilina":[400.0, "MG", "PENTOXIFILINA"],
+"piracetam":[800.0, "MG", "PIRACETAM"],
+"piroxicam":[50.0, "MG", "PIROXICAM"],
+"policosanol":[50.0, "MG", "POLICOSANOL"],
+"potaba":[500.0, "MG", "POTABA"],
+"prasterona":[1.0, "MG", "PRASTERONA"],
+"prednisona base micro":[20.0, "MG", "PREDNISONA BASE MICRO"],
+"pregabalina":[1.0, "MG", "PREGABALINA"],
+"progesterona base mic":[200.0, "MG", "PROGESTERONA BASE MIC"],
+"prolina l":[1.0, "G", "PROLINA L"],
+"propantelina brometo":[15.0, "MG", "PROPANTELINA BROMETO"],
+"propranolol":[250.0, "MG", "PROPRANOLOL"],
+"resorcina":[10.0, "MG", "RESORCINA"],
+"sacarina":[1.0, "G", "SACARINA"],
+"sais biliares":[500.0, "MG", "SAIS BILIARES"],
+"sucralose":[2.5, "MG", "SUCRALOSE"],
+"sulfasalazina":[500.0, "MG", "SULFASALAZINA"],
+"taurina":[2.0, "G", "TAURINA"],
 "tetraiodotironina sod":[100.0, "MCG", "TETRAIODOTIRONINA SOD"],
-"tirosina":[0.777, "G", "TIROSINA"],
-"treonina":[0.58, "G", "TREONINA"],
-"trissoralem puro":[0.381, "MG", "TRISSORALEM PURO"],
-"valina l":[0.676, "G", "VALINA L"],
-"violeta genciana":[1.0, "G", "VIOLETA GENCIANA"],
-"vit b1 (tiamina)":[0.4, "G", "VIT B1 (TIAMINA)"],
-"vit b12 pura(cianocob":[0.6, "MG", "VIT B12 PURA(CIANOCOB"],
-"vit b2":[0.5, "MG", "VIT B2"],
-"vit b6 hcl pura(pirid":[0.9, "MG", "VIT B6 HCL PURA(PIRID"],
+"tirosina":[1.0, "G", "TIROSINA"],
+"treonina":[2.0, "G", "TREONINA"],
+"trissoralem puro":[60.0, "MG", "TRISSORALEM PURO"],
+"valina l":[2.0, "G", "VALINA L"],
+"vit b1 (tiamina)":[0.3, "G", "VIT B1 (TIAMINA)"],
+"vit b12 pura(cianocob":[5.0, "MG", "VIT B12 PURA(CIANOCOB"],
+"vit b2":[200.0, "MG", "VIT B2"],
+"vit b6 hcl pura(pirid":[500.0, "MG", "VIT B6 HCL PURA(PIRID"],
 "vitamina k2":[100.0, "MCG", "VITAMINA K2"]
 };
 // ── Equivalências ──────────────────────────────────────────
@@ -1820,13 +1825,17 @@ function calcRec(rec) {
         _dmEntry = DOSE_MAX[ins.k] || null;
       }
       if(_dmEntry) {
-        var _dmMaxMg = _dmEntry[0];
-        var _dmUnit  = _dmEntry[1];
-        var _doseMg  = g * 1000; // g por unidade → mg
-        if(_doseMg > _dmMaxMg) {
+        var _dmMaxVal = _dmEntry[0];
+        var _dmUnit   = _dmEntry[1];
+        var _doseMg   = g * 1000; // dose prescrita em mg
+        // converter limite para mg para comparação uniforme
+        var _dmLimMg  = _dmUnit==='MCG' ? _dmMaxVal/1000
+                      : _dmUnit==='G'   ? _dmMaxVal*1000
+                      : _dmMaxVal; // MG, UI, etc
+        if(_doseMg > _dmLimMg) {
           avs.push('\u{1F534} DOSE ACIMA DO MÁXIMO: ' + ins.n +
             ' — prescrita: ' + _doseMg.toFixed(2) + ' mg' +
-            ' | máximo: ' + _dmMaxMg + ' ' + _dmUnit +
+            ' | máximo: ' + _dmMaxVal + ' ' + _dmUnit +
             ' — Fale com o Farmacêutico.');
         }
       }
