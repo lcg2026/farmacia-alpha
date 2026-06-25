@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.16</title>
+<title>Farmácia Alpha v5.17</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.16';
+  var VER = 'v5.17';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1720,9 +1720,7 @@ function calcRec(rec) {
   }
 
   // ── 3. Auto-detectar sachê (dose total > 10g em cápsula) ──
-  // Cap de qtd: máx 120 para cápsulas/sachês; sem cap para formas tópicas (volume mL)
   var isTopicForm = /locao|loção|creme|gel|pomada|shampoo|xampu|hormonio|xarope|solucao|serum|soro/.test(fml);
-  if(!isTopicForm && qtd > 120) qtd = 120;
   // Sachê com qtd=1 indica instrução de uso ("1 sachê com 150ml") — corrigir para 30
   if((fml === 'sache' || fml === 'Sache') && qtd <= 2) { qtd = 30; avs.push('Qtd ajustada para 30 sachês (instrução de uso detectada como quantidade)'); }
   var totalGCheck = (rec.ativos||[]).reduce(function(s,a){
