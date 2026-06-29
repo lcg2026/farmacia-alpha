@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.27</title>
+<title>Farmácia Alpha v5.28</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.27';
+  var VER = 'v5.28';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -2260,6 +2260,13 @@ function calcRec(rec) {
       itens.push({n:'Blista Fácil ('+nBlistas+'un)', dose:'', c:cBlista});
     }
     // Outros (pó em gramas): sem embalagem/excipiente padrão — MKP via Sublingual table (progKey abaixo)
+  }
+
+  // ── 5Z. Alerta de preço suspeito ──
+  var itensCaros = itens.filter(function(it){ return it.c > 200 && it.dose !== 'emb'; });
+  if(itensCaros.length > 0) {
+    var nomes = itensCaros.map(function(it){ return it.n.split(' ').slice(0,3).join(' ') + ' (R$'+it.c.toFixed(2)+')'; }).join(', ');
+    avs.push('⚠️ VERIFIQUE O PREÇO: ' + nomes + ' — custo elevado, confirme com o Farmacêutico antes de enviar ao paciente.');
   }
 
   // ── 6. MKP e Preço ──
