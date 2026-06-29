@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.22</title>
+<title>Farmácia Alpha v5.23</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.22';
+  var VER = 'v5.23';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -319,40 +319,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
       </div>
       <p style="font-size:11px;color:var(--text3);margin-top:6px">Chave salva apenas neste navegador.<br>Obter em: <strong>console.anthropic.com</strong> → API Keys → Create Key</p>
     </div>
-    <!-- Seção Gerenciar Vendedoras -->
-    <div class="card" style="margin-top:12px">
-      <strong style="font-size:14px;display:block;margin-bottom:4px">👥 Gerenciar Vendedoras</strong>
-      <p style="font-size:12px;color:var(--text3);margin-bottom:12px">Cada vendedora tem nome e senha individuais. Use <strong>🔗 Link</strong> para enviar digitalmente ou <strong>📥 .bat</strong> para instalar via pendrive/pasta compartilhada.</p>
-      <!-- Formulário de cadastro -->
-      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:flex-end;flex-wrap:wrap">
-        <div style="flex:1;min-width:110px">
-          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Nome</label>
-          <input class="inp" id="v-add-nome" type="text" placeholder="Ex: Ana">
-        </div>
-        <div style="flex:1;min-width:110px">
-          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Senha</label>
-          <input class="inp" id="v-add-pin" type="password" placeholder="Senha">
-        </div>
-        <button class="btn btnp" style="white-space:nowrap;align-self:flex-end" onclick="addVendedora()">+ Adicionar</button>
-      </div>
-      <!-- Lista -->
-      <div id="vend-lista" style="margin-bottom:8px"></div>
-      <!-- Backup / Restaurar -->
-      <div style="display:flex;gap:8px;margin-top:8px;margin-bottom:4px">
-        <button class="btn" style="font-size:12px;background:#37474F;color:#fff;border-color:#37474F;flex:1" onclick="backupVendedoras()" title="Salvar lista de vendedoras em arquivo">💾 Backup</button>
-        <button class="btn" style="font-size:12px;background:#6A1B9A;color:#fff;border-color:#6A1B9A;flex:1" onclick="document.getElementById('inp-restore-vend').click()" title="Restaurar lista a partir de backup">📂 Restaurar</button>
-        <input type="file" id="inp-restore-vend" accept=".json" style="display:none" onchange="restaurarVendedoras(this)">
-      </div>
-      <!-- Link gerado -->
-      <div id="link-vend-area" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <strong style="font-size:12px;display:block;margin-bottom:6px" id="link-vend-label">🔗 Link de acesso</strong>
-        <div style="display:flex;gap:8px;margin-bottom:6px">
-          <input id="link-vendedora-box" type="text" class="inp" style="flex:1;font-size:11px;color:#555;background:#f9f9f9" readonly onclick="this.select()">
-          <button id="btn-copiar-link" class="btn btnp" style="white-space:nowrap;font-size:12px" onclick="copiarLinkVendedora()">📋 Copiar</button>
-        </div>
-        <p style="font-size:11px;color:#C62828;margin:0">⚠ Envie apenas para a vendedora indicada. Quem tiver o link terá acesso ao app.</p>
-      </div>
-    </div>
     <!-- Seção Atalho / Incógnito -->
     <div class="card" style="margin-top:12px">
       <strong style="font-size:14px;display:block;margin-bottom:4px">📲 Atalhos de acesso</strong>
@@ -394,21 +360,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   </div>
 </div>
 
-<!-- Overlay de acesso PIN — exibido quando senha está configurada e sessão não autenticada -->
-<div id="pin-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#1565C0;z-index:99999;align-items:center;justify-content:center;flex-direction:column">
-  <div style="text-align:center;margin-bottom:24px">
-    <div style="font-size:32px;margin-bottom:8px">💊</div>
-    <h2 style="color:#fff;margin:0;font-size:22px">Farmácia Alpha</h2>
-    <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:13px" id="pin-nome-label"></p>
-  </div>
-  <div style="background:#fff;border-radius:16px;padding:28px 32px;min-width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
-    <p style="margin:0 0 14px;font-weight:600;font-size:15px;text-align:center">Digite sua senha de acesso</p>
-    <input id="pin-inp" type="password" class="inp" placeholder="Senha..." style="width:100%;margin-bottom:10px;font-size:16px;text-align:center;letter-spacing:4px"
-      onkeydown="if(event.key==='Enter')checkPIN()">
-    <button class="btn btnp" style="width:100%;justify-content:center;padding:12px" onclick="checkPIN()">Acessar →</button>
-    <p id="pin-err" style="color:#e53935;font-size:12px;text-align:center;margin:8px 0 0;min-height:16px"></p>
-  </div>
-</div>
 
 <script>
 // ── Dados ──────────────────────────────────────────────────
@@ -1067,58 +1018,31 @@ if('serviceWorker' in navigator) {
 }
 
 window.onload = function() {
-  // ── Configuração automática via link (?cfg=BASE64) ──
-  // Admin gera link em Configurações → envia para vendedora → abre 1 vez → configurado
-  (function applyConfigLink() {
-    try {
-      var params = new URLSearchParams(location.search);
-      var cfg = params.get('cfg');
-      if(!cfg) return;
-      var data = JSON.parse(decodeURIComponent(escape(atob(cfg))));
-      if(data.p) localStorage.setItem('alphaVendPIN',  data.p);
-      if(data.n) localStorage.setItem('alphaVendNome', data.n);
-      if(data.k) localStorage.setItem('cak', data.k); // chave API (opcional)
-      // Remover ?cfg= da URL sem recarregar
-      history.replaceState({}, '', location.pathname);
-      // Feedback visual
-      var toast = document.createElement('div');
-      toast.textContent = '✅ Acesso configurado com sucesso!';
-      toast.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1B5E20;color:#fff;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:600;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,.3)';
-      document.body.appendChild(toast);
-      setTimeout(function(){ toast.remove(); }, 3500);
-    } catch(e) { /* link inválido — ignorar */ }
-  })();
 
   // ── Controle de horário de acesso para vendedoras ──
   (function checkHorario() {
-    var pin = localStorage.getItem('alphaVendPIN');
-    if(!pin) return; // sem PIN = admin, sem restrição
-    if(localStorage.getItem('alphaVendedoras') !== null) return; // dispositivo admin
+    var u = JSON.parse(sessionStorage.getItem('alphaUser') || 'null');
+    if(!u || u.cod === 'ALPHA-ADM') return;
     var now = new Date();
-    var day = now.getDay(); // 0=dom,1=seg,...,6=sab
+    var day = now.getDay();
     var mins = now.getHours() * 60 + now.getMinutes();
     var ok = false;
-    if(day >= 1 && day <= 5) ok = mins >= 7*60 && mins < 19*60;      // seg-sex 07:00–19:00
-    else if(day === 6)        ok = mins >= 7*60 && mins < 12*60+30;   // sab 07:00–12:30
+    if(day >= 1 && day <= 5) ok = mins >= 7*60 && mins < 19*60;
+    else if(day === 6)        ok = mins >= 7*60 && mins < 12*60+30;
     if(!ok) {
-      var ov = document.getElementById('pin-overlay');
-      ov.innerHTML = '<div style="background:#fff;border-radius:12px;padding:32px 28px;max-width:320px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.15)">' +
-        '<div style="font-size:40px;margin-bottom:12px">🔒</div>' +
-        '<h3 style="margin:0 0 8px;color:#1565C0">Fora do horário</h3>' +
-        '<p style="color:#555;font-size:13px;margin-bottom:4px">Atendimento disponível:</p>' +
-        '<p style="font-weight:600;font-size:13px;color:#333">Seg–Sex: 07:00 às 19:00</p>' +
-        '<p style="font-weight:600;font-size:13px;color:#333">Sábado: 07:00 às 12:30</p>' +
-      '</div>';
-      ov.style.display = 'flex';
-      ov.style.pointerEvents = 'all';
-      return; // não verificar PIN — acesso completamente bloqueado
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#1B5E20"><div style="background:#fff;border-radius:12px;padding:32px 28px;max-width:320px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.15)"><div style="font-size:40px;margin-bottom:12px">🔒</div><h3 style="margin:0 0 8px;color:#1565C0">Fora do horário</h3><p style="color:#555;font-size:13px;margin-bottom:4px">Atendimento disponível:</p><p style="font-weight:600;font-size:13px;color:#333">Seg–Sex: 07:00 às 19:00</p><p style="font-weight:600;font-size:13px;color:#333">Sábado: 07:00 às 12:30</p></div></div>';
     }
   })();
-  // Ocultar "Limpar" para vendedoras (só supervisor/admin pode excluir)
-  if(localStorage.getItem('alphaVendPIN')) {
-    var bl = document.getElementById('btn-limpar');
-    if(bl) bl.style.display = 'none';
-  }
+  // Ocultar "Limpar" para vendedoras (só admin pode excluir)
+  (function() {
+    var u = JSON.parse(sessionStorage.getItem('alphaUser') || 'null');
+    if(u && u.cod !== 'ALPHA-ADM') {
+      var bl = document.getElementById('btn-limpar');
+      if(bl) bl.style.display = 'none';
+      var apiSec = document.getElementById('api-section');
+      if(apiSec) apiSec.style.display = 'none';
+    }
+  })();
   // Carregar insumos
   try {
     INS = JSON.parse(atob(_D));
@@ -1126,24 +1050,6 @@ window.onload = function() {
   } catch(e) {
     document.getElementById('inscount').textContent = 'Erro ao carregar';
     console.error('Erro insumos:', e);
-  }
-
-  // ── Verificação de PIN de vendedoras ──
-  var vendPIN  = localStorage.getItem('alphaVendPIN');
-  var vendNome = localStorage.getItem('alphaVendNome') || '';
-  // Dispositivo admin: tem lista de vendedoras → sem PIN para o próprio admin
-  var _isAdminDevice = localStorage.getItem('alphaVendedoras') !== null;
-  if(vendPIN && !_isAdminDevice) {
-    if(sessionStorage.getItem('alphaUnlocked') === '1') {
-      // Sessão já autenticada — ocultar seção de API para vendedoras
-      document.getElementById('api-section').style.display = 'none';
-    } else {
-      // Mostrar overlay de PIN
-      var overlay = document.getElementById('pin-overlay');
-      overlay.style.display = 'flex';
-      if(vendNome) document.getElementById('pin-nome-label').textContent = 'Olá, ' + vendNome + '!';
-      document.getElementById('pin-inp').focus();
-    }
   }
 
   // API key
@@ -3450,161 +3356,6 @@ function selAC(nome, preco, el) {
   drop.classList.remove('show');
 }
 
-// ── API ────────────────────────────────────────────────────
-// ── Sistema de vendedoras (múltiplas, com senha individual) ────
-function getVendedoras() {
-  try { return JSON.parse(localStorage.getItem('alphaVendedoras') || '[]'); } catch(e) { return []; }
-}
-function _saveVendedorasList(list) {
-  localStorage.setItem('alphaVendedoras', JSON.stringify(list));
-}
-function addVendedora() {
-  var nome = (document.getElementById('v-add-nome').value || '').trim();
-  var pin  = (document.getElementById('v-add-pin').value  || '').trim();
-  if(!nome || !pin) { alert('Preencha nome e senha.'); return; }
-  var list = getVendedoras();
-  if(list.some(function(v){ return v.nome.toLowerCase() === nome.toLowerCase(); })) {
-    alert('Já existe uma vendedora com o nome "' + nome + '".'); return;
-  }
-  list.push({id: 'V' + Date.now(), nome: nome, pin: pin});
-  _saveVendedorasList(list);
-  document.getElementById('v-add-nome').value = '';
-  document.getElementById('v-add-pin').value  = '';
-  renderVendedorasList();
-}
-function removeVendedora(idx) {
-  var list = getVendedoras();
-  var nome = list[idx] ? list[idx].nome : '?';
-  if(!confirm('Remover ' + nome + '?')) return;
-  list.splice(idx, 1);
-  _saveVendedorasList(list);
-  renderVendedorasList();
-  document.getElementById('link-vend-area').style.display = 'none';
-}
-function backupVendedoras() {
-  var list = getVendedoras();
-  if(list.length === 0) { alert('Nenhuma vendedora cadastrada para fazer backup.'); return; }
-  var data = JSON.stringify({vendedoras: list, data: new Date().toISOString()}, null, 2);
-  var blob = new Blob([data], {type: 'application/json'});
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  var hoje = new Date().toISOString().slice(0,10).replace(/-/g,'');
-  a.href = url; a.download = 'alpha-vendedoras-' + hoje + '.json';
-  a.click(); URL.revokeObjectURL(url);
-}
-function restaurarVendedoras(inp) {
-  var file = inp.files[0];
-  if(!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      var obj = JSON.parse(e.target.result);
-      var list = obj.vendedoras || obj;
-      if(!Array.isArray(list) || list.length === 0) { alert('Arquivo inválido ou sem vendedoras.'); return; }
-      var atual = getVendedoras();
-      if(atual.length > 0 && !confirm('Substituir as ' + atual.length + ' vendedoras atuais pelas ' + list.length + ' do backup?')) return;
-      _saveVendedorasList(list);
-      renderVendedorasList();
-      alert('✅ ' + list.length + ' vendedora(s) restaurada(s) com sucesso!');
-    } catch(err) { alert('Erro ao ler arquivo: ' + err.message); }
-    inp.value = '';
-  };
-  reader.readAsText(file);
-}
-function renderVendedorasList() {
-  var el = document.getElementById('vend-lista');
-  if(!el) return;
-  var list = getVendedoras();
-  if(list.length === 0) {
-    el.innerHTML = '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:8px;padding:12px;text-align:center">'
-      + '<p style="font-size:13px;color:#E65100;margin:0 0 4px;font-weight:600">Nenhuma vendedora cadastrada</p>'
-      + '<p style="font-size:12px;color:#777;margin:0">Preencha Nome + Senha acima e clique <strong>+ Adicionar</strong>.<br>'
-      + 'Depois clique <strong>🔗 Link</strong> na linha da vendedora para gerar o link de acesso.</p>'
-      + '</div>';
-    return;
-  }
-  var h = '<table style="width:100%;border-collapse:collapse;font-size:13px">'
-    + '<tr style="border-bottom:2px solid var(--border)">'
-    + '<th style="text-align:left;padding:5px 4px">Nome</th>'
-    + '<th style="text-align:left;padding:5px 4px">Senha</th>'
-    + '<th></th></tr>';
-  list.forEach(function(v, i) {
-    var stars = '•'.repeat(Math.min((v.pin||'').length, 8));
-    h += '<tr style="border-bottom:1px solid var(--border)">'
-      + '<td style="padding:8px 4px;font-weight:600">' + v.nome + '</td>'
-      + '<td style="padding:8px 4px;color:var(--text3);letter-spacing:2px">' + stars + '</td>'
-      + '<td style="padding:8px 4px;text-align:right;white-space:nowrap">'
-      + '<button class="btn" style="font-size:11px;padding:4px 8px;margin-right:3px;background:#1565C0;color:#fff;border-color:#1565C0" onclick="gerarLinkVendedora(' + i + ')" title="Gerar link para enviar digitalmente">🔗 Link</button>'
-      + '<button class="btn" style="font-size:11px;padding:4px 8px;margin-right:3px;background:#2E7D32;color:#fff;border-color:#2E7D32" onclick="baixarBatVendedora(' + i + ')" title="Baixar .bat para instalar no computador da vendedora">📥 .bat</button>'
-      + '<button class="btn" style="font-size:11px;padding:4px 8px;background:#e53935;color:#fff;border-color:#e53935" onclick="removeVendedora(' + i + ')">🗑</button>'
-      + '</td></tr>';
-  });
-  h += '</table>';
-  el.innerHTML = h;
-}
-function _b64utf8(str) {
-  return btoa(unescape(encodeURIComponent(str)));
-}
-function gerarLinkVendedora(idx) {
-  var v = getVendedoras()[idx];
-  if(!v) { alert('Vendedora não encontrada.'); return; }
-  var api = localStorage.getItem('cak') || '';
-  if(!api) { alert('Configure e salve a Chave de API antes de gerar o link.'); return; }
-  var cfg  = _b64utf8(JSON.stringify({p: v.pin, n: v.nome, k: api}));
-  var base = location.origin + location.pathname.replace(/\/$/, '');
-  var url  = base + '?k=' + ACCESS_KEY + '&cfg=' + cfg;
-  var area = document.getElementById('link-vend-area');
-  var box  = document.getElementById('link-vendedora-box');
-  var lbl  = document.getElementById('link-vend-label');
-  if(lbl)  lbl.textContent = '🔗 Link — ' + v.nome;
-  if(box)  box.value = url;
-  if(area) area.style.display = 'block';
-  setTimeout(function(){ if(box){ box.focus(); box.select(); } }, 50);
-}
-function copiarLinkVendedora() {
-  var box = document.getElementById('link-vendedora-box');
-  var btn = document.getElementById('btn-copiar-link');
-  if(!box || !box.value) return;
-  var url = box.value;
-  function marcarCopiado() {
-    if(btn) { btn.textContent='✅ Copiado!'; btn.style.background='#2E7D32'; }
-    setTimeout(function(){ if(btn){ btn.textContent='📋 Copiar'; btn.style.background=''; } }, 3000);
-  }
-  // Tentar API moderna
-  if(navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(url).then(marcarCopiado).catch(function() {
-      // Fallback: seleção + execCommand
-      box.select(); box.setSelectionRange(0, 99999);
-      try { document.execCommand('copy'); marcarCopiado(); }
-      catch(e) { alert('Não foi possível copiar automaticamente.\nSelecione o link acima e copie manualmente (Ctrl+C).'); }
-    });
-  } else {
-    // Fallback direto
-    box.select(); box.setSelectionRange(0, 99999);
-    try { document.execCommand('copy'); marcarCopiado(); }
-    catch(e) { alert('Não foi possível copiar automaticamente.\nSelecione o link acima e copie manualmente (Ctrl+C).'); }
-  }
-}
-
-// ── Instalador personalizado por vendedora ────────────────────
-function baixarBatVendedora(idx) {
-  var v = getVendedoras()[idx];
-  if(!v) { alert('Vendedora não encontrada.'); return; }
-  var api = localStorage.getItem('cak') || '';
-  if(!api) { alert('Configure e salve a Chave de API antes de gerar o instalador.'); return; }
-  var cfg = _b64utf8(JSON.stringify({p: v.pin, n: v.nome, k: api}));
-  var url = 'https://lcg2026.github.io/farmacia-alpha/?k=' + ACCESS_KEY + '&cfg=' + cfg;
-  // .bat que abre o Chrome com a URL de configuração automática
-  var bat = '@echo off\r\n'
-    + 'echo Configurando Agente Alpha para ' + v.nome + '...\r\n'
-    + 'start chrome --app="' + url + '"\r\n'
-    + 'echo Pronto! Feche esta janela.\r\n';
-  var blob = new Blob([bat], {type: 'text/plain'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'Instalar Agente Alpha - ' + v.nome + '.bat';
-  a.click();
-}
 
 // ── Atalhos e contador ORC ────────────────────────────────────
 function baixarAtalho() {
@@ -3640,7 +3391,6 @@ function initConfigPage() {
   var el2 = document.getElementById('last-orc-show');
   if(el) el.textContent = devId;
   if(el2) el2.textContent = seq > 0 ? 'ORC-'+devId+'-'+String(seq).padStart(4,'0') : '(nenhum ainda)';
-  renderVendedorasList();
 }
 // Atualizar painel de config quando a aba é selecionada
 document.addEventListener('DOMContentLoaded', function() {
@@ -3649,20 +3399,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // savePIN / clearPIN / saveVendedor removidos — substituídos pelo sistema multi-vendedoras
 
-function checkPIN() {
-  var entered = document.getElementById('pin-inp').value;
-  var stored = localStorage.getItem('alphaVendPIN');
-  if(entered === stored) {
-    sessionStorage.setItem('alphaUnlocked', '1');
-    document.getElementById('pin-overlay').style.display = 'none';
-    // Ocultar seção de API para vendedoras
-    document.getElementById('api-section').style.display = 'none';
-  } else {
-    document.getElementById('pin-err').textContent = 'Senha incorreta. Tente novamente.';
-    document.getElementById('pin-inp').value = '';
-    document.getElementById('pin-inp').focus();
-  }
-}
 
 function saveAPI() {
   var k = document.getElementById('ainp').value.trim();
