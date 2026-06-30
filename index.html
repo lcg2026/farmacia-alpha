@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.32</title>
+<title>Farmácia Alpha v5.33</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.32';
+  var VER = 'v5.33';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1637,6 +1637,11 @@ function calcRec(rec) {
     return s + doseToG(a.dose, a.unidade, a.nome);
   },0);
   if(totalGCheck > 10 && fml === 'capsulas') fml = 'sache';
+  // Regras Alpha §10.5 (aba 10, obs.): Glutamina de 1g a 15g por dose em "Outros" → reclassificar como Sachê
+  if(fml === 'outros' && /glutamina/.test(nomesAtivos) && totalGCheck >= 1 && totalGCheck <= 15) {
+    fml = 'sache';
+    avs.push('ℹ️ Glutamina (1g–15g/dose) reclassificada de "Outros" para Sachê (Regras Alpha §10)');
+  }
 
   // ── 4. Calcular ativos ──
   // Formas tópicas: NÃO multiplicar por qtd (dose = quantidade total da fórmula)
@@ -1810,7 +1815,11 @@ function calcRec(rec) {
 
   // ── 5A. CÁPSULAS ──
   var isCapSublingual = fml.indexOf('cap') >= 0 && fml.indexOf('sublingual') >= 0;
-  if(fml.indexOf('cap') >= 0) {
+  // Regras Alpha §10.2: 5-HIDROXI L TRIPTOFANO (38921) e Resveratrol (6637) em prescrição
+  // sublingual → calcular em TAPIOCAPS usando DESCARB CAPS como excipiente
+  var _is5HTPouResv = /5 hidroxi l triptofano|resveratrol/.test(nomesAtivos);
+  if(fml.indexOf('sublingual') >= 0 && _is5HTPouResv) isCapSublingual = true;
+  if(fml.indexOf('cap') >= 0 || isCapSublingual) {
     if(isCapSublingual) {
       // ── Cápsulas Sublinguais: TAPIOCAPS + DESCARB CAPS ──
       // Tabela TAPIOCAPS: [volumeMg, tamanho, preco]
@@ -1857,6 +1866,8 @@ function calcRec(rec) {
     var isEnterica = /enteric|enterica|gastro|gastric/.test(fmlNorm+' '+nomesAtivos+' '+_descNorm) || CAP_INS_ENTERICA.test(nomesAtivos);
     // Ajuste16 + planilha: vegetal por descrição ("vegetais" incluso) ou insumo listado
     var isVegetal = /vegetal|vegetais/.test(fmlNorm+' '+nomesAtivos) || CAP_INS_VEGETAL.test(nomesAtivos);
+    // Regras Alpha §9.4: Renata Alvarez Bagarolli (Nutricionista) → sempre Cápsulas Vegetais
+    if(/renata alvarez bagarolli/.test(prescritor)) isVegetal = true;
     // Ajuste17: n°4 vegetal não disponível — mínimo para cápsulas vegetais é n°3 (CGEL[1])
     // Ajustes100626: aviso removido — upgrade silencioso
     if((isVegetal || isOleosa) && cap[1] === '4') {
@@ -1932,15 +1943,15 @@ function calcRec(rec) {
       itens.push({n:basePN, dose:'', c:cBaseS});
     }
 
-    // Aroma obrigatório: 0,5g/sachê (item 24332)
-    var cAroma = 0.5 * qtd * 0.198; custo += cAroma;
+    // Aroma obrigatório: 0,5g/sachê (item 24332) — Regras Alpha §3.2
+    var cAroma = 0.5 * qtd * 0.19823; custo += cAroma;
     itens.push({n:'Aroma cotação pó 0,5g/sachê', dose:'', c:cAroma});
 
     // Celulosix Lacto em sachê: NÃO adicionar (só vale para Cápsula — Regras Alpha §3)
 
     // Escolher tamanho do sachê (peso total por dose = ativos + (base se houver) + aroma)
     var pesoTotalDose = totalGCheck + (isSemShake && !isAminoacido ? 0 : 4) + 0.5;
-    var SACHES=[{n:'7x7 P',cap:4,p:0.1166},{n:'7x9 M',cap:9,p:0.1314},{n:'7x17 G',cap:20,p:0.115}];
+    var SACHES=[{n:'7x7 P',cap:4,p:0.1599},{n:'7x9 M',cap:9,p:0.186},{n:'7x17 G',cap:20,p:0.2785}];
     var sache = SACHES[SACHES.length-1];
     for(var si=0;si<SACHES.length;si++){if(pesoTotalDose<=SACHES[si].cap){sache=SACHES[si];break;}}
     var cSache = sache.p * qtd; custo += cSache;
