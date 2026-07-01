@@ -3304,7 +3304,8 @@ function calcManual() {
     var nome = inps[0] ? inps[0].value.trim() : '';
     var dose = inps[1] ? parseFloat(inps[1].value) : 0;
     var unidade = sel ? sel.value : 'mg';
-    if(nome && dose > 0) ativos.push({nome:nome, dose:dose, unidade:unidade});
+    var isQsp = unidade.toLowerCase() === 'qsp';
+    if(nome && (dose > 0 || isQsp)) ativos.push({nome:nome, dose:dose||0, unidade:unidade});
   });
   if(!ativos.length) { alert('Adicione pelo menos um insumo!'); return; }
   window._currentOrcNum = getNextOrcNum(); // novo cálculo manual = novo ORC
