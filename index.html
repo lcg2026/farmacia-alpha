@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.33</title>
+<title>Farmácia Alpha v5.34</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -263,6 +263,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
         <div>
           <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Nº de doses</label>
           <input class="inp" id="m-qtd" type="number" value="60" min="1" max="999">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Freq./dia</label>
+          <input class="inp" id="m-freq" type="number" value="1" min="1" max="10" style="width:70px" title="Doses por dia (ex: 2 = duas vezes ao dia)">
         </div>
       </div>
       <div id="m-ativos">
@@ -1564,11 +1568,23 @@ function pickEmb(vol, tabela) {
 // ── Cálculo de receita ─────────────────────────────────────
 function calcRec(rec) {
   var qtd = parseInt(rec.qtd) || 60;
+  var freq = parseInt(rec.freq) || 1;
   var fm = (rec.forma || 'Capsulas');
   var fml = fm.toLowerCase();
   var custo = 0, itens = [], avs = [], nf = [], doseAlerts = [];
   var _simCap=null, _simCapPIdx=2, _simNCaps=1; // dados para calcSimQtd
   var prescritor = normStr(rec.prescritor||'');
+
+  // ── Regra: tratamento máximo 120 dias (somente cápsulas) ──
+  var _isCapsForm = /cap|sublingual|orotab/.test(fml);
+  if(_isCapsForm && freq > 0) {
+    var _diasTrat = Math.round(qtd / freq);
+    if(_diasTrat > 120) {
+      var _qtdMax = freq * 120;
+      avs.push('⚠️ Tratamento de ' + _diasTrat + ' dias excede o limite de 120 dias. Quantidade ajustada: ' + qtd + ' → ' + _qtdMax + ' cápsulas (' + freq + 'x/dia × 120 dias).');
+      qtd = _qtdMax;
+    }
+  }
 
   // ── 1. Auto-detectar hormônio ──
   var nomesAtivos = (rec.ativos||[]).map(function(a){return normStr(a.nome||'');}).join(' ');
@@ -3276,7 +3292,8 @@ function calcManual() {
     var lbl = row.querySelector('.dose-alerta-lbl');
     if(lbl) lbl.remove();
   });
-  var r = calcRec({paciente:pac, forma:forma, qtd:qtd, ativos:ativos});
+  var freq = parseInt(document.getElementById('m-freq').value) || 1;
+  var r = calcRec({paciente:pac, forma:forma, qtd:qtd, freq:freq, ativos:ativos});
   r.orc = window._currentOrcNum;
   var container = document.getElementById('rmanual');
   container.innerHTML = '';
