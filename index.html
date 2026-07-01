@@ -1928,6 +1928,7 @@ function calcRec(rec) {
     if(_qspCapAtivo) {
       // Calcula volume restante na cápsula e precifica o insumo qsp
       var _qspRemMm3 = cap[0] * nCaps - sumVolMm3;
+      avs.push('ℹ️ QSP detectado: ' + _qspCapNome + ' | cap=' + cap[0].toFixed(0) + 'mm³ | ativos=' + sumVolMm3.toFixed(0) + 'mm³ | resta=' + _qspRemMm3.toFixed(0) + 'mm³');
       if(_qspRemMm3 > 5) {
         var _qspDens = (_qspCapAtivo.d && _qspCapAtivo.d > 0) ? _qspCapAtivo.d : 1.0;
         var _qspGPerCap = _qspRemMm3 * _qspDens / 1000;
