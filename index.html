@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.35</title>
+<title>Farmácia Alpha v5.36</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.35';
+  var VER = 'v5.36';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1926,12 +1926,24 @@ function calcRec(rec) {
     }
     var jaTemExcipiente = /celulose|lactose|amido|avicel|excipiente|celulosix/.test(nomesAtivos) || !!_qspCapAtivo;
     if(_qspCapAtivo) {
-      // Calcula volume restante na cápsula e precifica o insumo qsp
-      var _qspRemMm3 = cap[0] * nCaps - sumVolMm3;
-      avs.push('ℹ️ QSP detectado: ' + _qspCapNome + ' | cap=' + cap[0].toFixed(0) + 'mm³ | ativos=' + sumVolMm3.toFixed(0) + 'mm³ | resta=' + _qspRemMm3.toFixed(0) + 'mm³');
-      if(_qspRemMm3 > 5) {
-        var _qspDens = (_qspCapAtivo.d && _qspCapAtivo.d > 0) ? _qspCapAtivo.d : 1.0;
-        var _qspGPerCap = _qspRemMm3 * _qspDens / 1000;
+      // Regras Alpha §2.3: insumo qsp completa a cápsula
+      // Se dose > 0 → representa o PESO TOTAL alvo da cápsula (ex: "qsp 500mg" = 500mg total)
+      // Se dose = 0 → usar volume restante da cápsula com densidade do insumo
+      var _qspGPerCap = 0;
+      if(_qspAtivoRec.dose > 0) {
+        // "qsp 500mg": alvo = 500mg, qsp = 500mg − soma ativos
+        var _targetG = _qspAtivoRec.dose / 1000; // dose em mg → g
+        _qspGPerCap = _targetG - sumAtivosG;
+        if(_qspGPerCap < 0) _qspGPerCap = 0;
+        avs.push('ℹ️ ' + _qspCapNome + ' qsp para ' + _qspAtivoRec.dose + 'mg: ativos=' + (sumAtivosG*1000).toFixed(0) + 'mg → qsp=' + (_qspGPerCap*1000).toFixed(0) + 'mg/cáp');
+      } else {
+        var _qspRemMm3 = cap[0] * nCaps - sumVolMm3;
+        if(_qspRemMm3 > 5) {
+          var _qspDens = (_qspCapAtivo.d && _qspCapAtivo.d > 0) ? _qspCapAtivo.d : 1.0;
+          _qspGPerCap = _qspRemMm3 * _qspDens / 1000;
+        }
+      }
+      if(_qspGPerCap > 0) {
         var _qspPreco = (_qspCapAtivo.pe || _qspCapAtivo.p) || 0.066;
         var _cQsp = _qspGPerCap * qtd * _qspPreco;
         custo += _cQsp;
