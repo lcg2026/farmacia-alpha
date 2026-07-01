@@ -12,7 +12,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Farmácia Alpha v5.34</title>
+<title>Farmácia Alpha v5.35</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231B5E20'/><text x='50' y='78' text-anchor='middle' font-size='72' font-family='Georgia,serif' fill='%23ffffff' font-weight='bold'>&#945;</text></svg>">
 <link rel="manifest" href="manifest.json">
@@ -1911,9 +1911,28 @@ function calcRec(rec) {
     var capLabel = 'Cápsulas n'+cap[1]+(capTipo?' '+capTipo:'')+(nCaps>1?' ('+nCaps+'×/dose, '+totalCaps+'un total)':'('+qtd+'un)')+'+Pote '+pt[0]+'ml';
     itens.push({n:capLabel, dose:'', c:cc+pt[2]});
 
-    // ── Excipiente ──
-    var jaTemExcipiente = /celulose|lactose|amido|avicel|excipiente|celulosix/.test(nomesAtivos);
-    if(!jaTemExcipiente) {
+    // ── Excipiente / QSP ──
+    // Regras Alpha §2.3: se houver insumo com unidade "qsp", usá-lo para completar a cápsula (sem excipiente padrão)
+    var _qspCapAtivo = null;
+    (rec.ativos||[]).forEach(function(a) {
+      if((a.unidade||'').toLowerCase() === 'qsp') {
+        var _ins = busIns(a.nome, fml);
+        if(_ins && (_ins.p || _ins.pe)) _qspCapAtivo = _ins;
+      }
+    });
+    var jaTemExcipiente = /celulose|lactose|amido|avicel|excipiente|celulosix/.test(nomesAtivos) || !!_qspCapAtivo;
+    if(_qspCapAtivo) {
+      // Calcula volume restante na cápsula e precifica o insumo qsp
+      var _qspRemMm3 = cap[0] * nCaps - sumVolMm3;
+      if(_qspRemMm3 > 5) {
+        var _qspDens = (_qspCapAtivo.d && _qspCapAtivo.d > 0) ? _qspCapAtivo.d : 1.0;
+        var _qspGPerCap = _qspRemMm3 * _qspDens / 1000;
+        var _qspPreco = _qspCapAtivo.pe || _qspCapAtivo.p;
+        var _cQsp = _qspGPerCap * qtd * _qspPreco;
+        custo += _cQsp;
+        itens.push({n: _qspCapAtivo.n + ' qsp (' + (_qspGPerCap*1000).toFixed(0) + 'mg/cáp)', dose:'', c:_cQsp});
+      }
+    } else if(!jaTemExcipiente) {
       var excipMg = cap[0] * nCaps - sumVolMm3;
       if(excipMg > 10) {
         var excipG = excipMg / 1000;
