@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.41';
+  var VER = 'v5.42';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1579,13 +1579,16 @@ function calcRec(rec) {
   var _simCap=null, _simCapPIdx=2, _simNCaps=1; // dados para calcSimQtd
   var prescritor = normStr(rec.prescritor||'');
 
-  // ── Regra: tratamento máximo 120 dias (somente cápsulas) ──
+  // ── Regra: tratamento máximo por forma (cápsulas: 120 dias; Minoxidil cápsula: 180 dias) ──
   var _isCapsForm = /cap|sublingual|orotab/.test(fml);
+  var _nomesAtivosEarly = rec.ativos ? rec.ativos.map(function(a){return normStr(a.nome||'');}).join(' ') : '';
+  var _isMinoxCapEarly = /minoxidil/.test(_nomesAtivosEarly) && fml.indexOf('cap') >= 0;
+  var _limDias = _isMinoxCapEarly ? 180 : 120;
   if(_isCapsForm && freq > 0) {
     var _diasTrat = Math.round(qtd / freq);
-    if(_diasTrat > 120) {
-      var _qtdMax = freq * 120;
-      avs.push('⚠️ Tratamento de ' + _diasTrat + ' dias excede o limite de 120 dias. Quantidade ajustada: ' + qtd + ' → ' + _qtdMax + ' cápsulas (' + freq + 'x/dia × 120 dias).');
+    if(_diasTrat > _limDias) {
+      var _qtdMax = freq * _limDias;
+      avs.push('⚠️ Tratamento de ' + _diasTrat + ' dias excede o limite de ' + _limDias + ' dias. Quantidade ajustada: ' + qtd + ' → ' + _qtdMax + ' cápsulas (' + freq + 'x/dia × ' + _limDias + ' dias).');
       qtd = _qtdMax;
     }
   }
