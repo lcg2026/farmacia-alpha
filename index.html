@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.51';
+  var VER = 'v5.52';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1128,7 +1128,7 @@ function normStr(s) {
 // que tem 'Acido hialuronico UI' / 'AC HIALURONICO UE'.
 function stripUEUI(s) {
   if(!s) return '';
-  return s.replace(/\s+(ue|ui)\s*$/i, '').trim();
+  return s.replace(/\s+(ue|ui|inn|tf)\s*$/i, '').trim();
 }
 
 // Aplica abreviações farmacêuticas comuns para casar com o banco.
@@ -1489,10 +1489,10 @@ function _pickBest(candidates, formaCtx) {
     // Preferir Taste Free para líquidos orais (xarope, gotas, etc.)
     if(isLiquido && /TASTE FREE|TASTE-FREE/.test(nl)) c._prefer = true;
     // UI/UE marker scoring
-    if(isUI && hasMarker(c, 'UI')) c._uiMatch = true;
+    if(isUI && (hasMarker(c, 'UI') || hasMarker(c, 'INN'))) c._uiMatch = true;
     if(isUE && hasMarker(c, 'UE')) c._ueMatch = true;
     if(isUI && hasMarker(c, 'UE')) c._mismatch = true;
-    if(isUE && hasMarker(c, 'UI')) c._mismatch = true;
+    if(isUE && (hasMarker(c, 'UI') || hasMarker(c, 'INN'))) c._mismatch = true;
   }
 
   var preferred = candidates.filter(function(c){return c._prefer;});
