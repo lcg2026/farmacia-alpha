@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.46';
+  var VER = 'v5.47';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -1947,10 +1947,11 @@ function calcRec(rec) {
         // Se dose_alvo < soma_ativos: excipiente é adicionado na dose especificada (não como target total)
         if(_targetG > sumAtivosG) {
           _qspGPerCap = _targetG - sumAtivosG;
+          avs.push('ℹ️ ' + _qspCapNome + ' qsp para ' + _qspAtivoRec.dose + 'mg: ativos=' + (sumAtivosG*1000).toFixed(0) + 'mg → excipiente=' + (_qspGPerCap*1000).toFixed(0) + 'mg/cáp');
         } else {
-          _qspGPerCap = _targetG; // excipiente fixo (ex: 30mg Aloe Vera além dos ativos)
+          _qspGPerCap = 0;
+          avs.push('⚠️ Ativos (' + (sumAtivosG*1000).toFixed(0) + 'mg) já excedem a dose qsp (' + (_targetG*1000).toFixed(0) + 'mg). Nenhum excipiente ' + _qspCapNome + ' adicionado.');
         }
-        avs.push('ℹ️ ' + _qspCapNome + ' qsp para ' + _qspAtivoRec.dose + 'mg: ativos=' + (sumAtivosG*1000).toFixed(0) + 'mg → qsp=' + (_qspGPerCap*1000).toFixed(0) + 'mg/cáp');
       } else {
         var _qspRemMm3 = cap[0] * nCaps - sumVolMm3;
         if(_qspRemMm3 > 5) {
