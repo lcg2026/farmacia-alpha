@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.60';
+  var VER = 'v5.61';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -3235,8 +3235,17 @@ function calcFoto() {
       return r.json();
     })
     .then(function(data){
+      if(!data.content||!data.content[0]) {
+        if(attempt < 2) {
+          console.warn('Resposta vazia tentativa '+attempt+', retentando...');
+          btn.textContent = '⏳ Retentando (' + attempt + '/2)...';
+          setTimeout(function(){ doFetch(attempt + 1); }, 2000);
+          return;
+        }
+        btn.disabled=false; btn.textContent='⚙ Calcular preço';
+        alert('Erro na API: ' + (data.error ? data.error.message : JSON.stringify(data).substring(0,300))); return;
+      }
       btn.disabled=false; btn.textContent='⚙ Calcular preço';
-      if(!data.content||!data.content[0]) { alert('Erro na API: ' + (data.error ? data.error.message : JSON.stringify(data).substring(0,300))); return; }
       // Diagnóstico: logar stop_reason e tamanho da resposta
       console.log('[AgteAlpha] stop_reason:', data.stop_reason, ' | tokens_usados:', data.usage && data.usage.output_tokens, ' | resp_chars:', (data.content[0].text||'').length);
       // Aviso se resposta foi cortada por limite de tokens
@@ -3310,14 +3319,19 @@ function calcFoto() {
         window._parsedRec = parsed;
         window._corrections = {}; // limpar correções anteriores ao carregar nova receita
         window._currentOrcNum = null; // nova receita → novo número de orçamento
-      } catch(e) { 
-        // Try to recover: if JSON looks truncated, show user-friendly message
+      } catch(e) {
+        if(attempt < 2) {
+          console.warn('JSON parse falhou tentativa '+attempt+', retentando:', e.message);
+          btn.disabled=true; btn.textContent = '⏳ Retentando (' + attempt + '/2)...';
+          setTimeout(function(){ doFetch(attempt + 1); }, 2000);
+          return;
+        }
         var msg = 'Erro ao interpretar receita: ' + e.message;
         if(e.message && e.message.indexOf('position') >= 0) {
-          msg += '\n\nA resposta da IA pode ter sido cortada (receita muito longa). Tente novamente ou divida a receita.';
+          msg += ' (resposta cortada — tente novamente)';
         }
-        // Log raw response for debugging
         console.error('JSON malformado recebido da API:', clean);
+        btn.disabled=false; btn.textContent='⚙ Calcular preço';
         alert(msg);
       }
     })
