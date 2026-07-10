@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.56';
+  var VER = 'v5.57';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -3240,7 +3240,18 @@ function calcFoto() {
       console.log('[AgteAlpha] stop_reason:', data.stop_reason, ' | tokens_usados:', data.usage && data.usage.output_tokens, ' | resp_chars:', (data.content[0].text||'').length);
       // Aviso se resposta foi cortada por limite de tokens
       if(data.stop_reason === 'max_tokens') {
-        alert('⚠️ Receita muito grande: a resposta foi cortada antes de terminar.\nAlgumas fórmulas podem estar incompletas.\nDica: divida o PDF em arquivos menores e processe em partes.');
+        var _diagMsg = '⚠️ Receita cortada (stop_reason=max_tokens)';
+        _diagMsg += '
+Tokens de saída usados: ' + (data.usage ? data.usage.output_tokens : '?');
+        _diagMsg += '
+Caracteres na resposta: ' + (data.content[0].text||'').length;
+        _diagMsg += '
+max_tokens configurado: 16000';
+        _diagMsg += '
+
+Trecho final da resposta:
+' + (data.content[0].text||'').slice(-300);
+        alert(_diagMsg);
       }
       var txt = data.content[0].text || '';
       var clean = txt.replace(/```json|```/g,'').trim();
