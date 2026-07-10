@@ -3237,9 +3237,7 @@ function calcFoto() {
       if(!data.content||!data.content[0]) { alert('Erro na API: ' + (data.error ? data.error.message : JSON.stringify(data).substring(0,300))); return; }
       // Aviso se resposta foi cortada por limite de tokens
       if(data.stop_reason === 'max_tokens') {
-        alert('⚠️ Receita muito grande: a resposta foi cortada antes de terminar.
-Algumas fórmulas podem estar incompletas.
-Dica: divida o PDF em arquivos menores e processe em partes.');
+        alert('⚠️ Receita muito grande: a resposta foi cortada antes de terminar.\nAlgumas fórmulas podem estar incompletas.\nDica: divida o PDF em arquivos menores e processe em partes.');
       }
       var txt = data.content[0].text || '';
       var clean = txt.replace(/```json|```/g,'').trim();
