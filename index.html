@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.61';
+  var VER = 'v5.62';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -2821,6 +2821,10 @@ function renderResult(r, container, idx) {
       var pk = /sach/.test(fk)?'Sache':/loca/.test(fk)?'Locao':/gel|creme/.test(fk)?'Creme':/xarope|solucao|solução/.test(fk)?'Xarope':'Capsulas';
       r.mkp = getMKP(r.custo, PROG[pk]||PROG.Capsulas);
       r.pv = Math.round(r.custo*r.mkp+CF); if(r.pv<PM) r.pv=PM;
+      if(window._activeResults && idx !== undefined) {
+        window._activeResults[idx].pv = r.pv;
+        window._activeResults[idx].custo = r.custo;
+      }
       renderResult(r, container, idx);
       updateResumo();
     }
