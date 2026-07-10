@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.53';
+  var VER = 'v5.54';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -3207,18 +3207,19 @@ function calcFoto() {
 
     var body = {
       model: 'claude-sonnet-4-6',
-      max_tokens: 16000,
+      max_tokens: 64000,
       system: prompt,
       messages: [{role:'user', content: contentBlocks}]
     };
 
+    function doFetch(attempt) {
     fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
       headers:{
         'Content-Type':'application/json',
         'x-api-key':k,
         'anthropic-version':'2023-06-01',
-        'anthropic-beta':'pdfs-2024-09-25',
+        'anthropic-beta':'pdfs-2024-09-25,output-128k-2025-02-19',
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify(body)
@@ -3312,6 +3313,12 @@ function calcFoto() {
       }
     })
     .catch(function(e){
+      if(attempt < 2) {
+        console.warn('Tentativa '+attempt+' falhou, retentando...', e.message);
+        btn.textContent = '⏳ Retentando (' + attempt + '/2)...';
+        setTimeout(function(){ doFetch(attempt + 1); }, 2000);
+        return;
+      }
       btn.disabled=false; btn.textContent='⚙ Calcular preço';
       var msg = e.message||'';
       if(msg.indexOf('HTTP 4')>=0||msg.indexOf('HTTP 5')>=0) {
@@ -3322,6 +3329,8 @@ function calcFoto() {
         alert('Erro: '+msg);
       }
     });
+    } // fim doFetch
+    doFetch(1);
   }); // fim readAllFiles
 }
 
