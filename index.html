@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.62';
+  var VER = 'v5.63';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -194,14 +194,21 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     if(badge) badge.textContent = VER + ' ✓';
     if(logo)  logo.textContent  = VER;
   });
-  var stored = localStorage.getItem('alphaVer');
-  if(stored && stored !== VER) {
-    localStorage.setItem('alphaVer', VER);
-    if(location.search.indexOf('nc=') < 0) {
-      location.replace(location.pathname + '?nc=' + VER.replace(/\./g,'') + '&_=' + Date.now());
-    }
-  } else {
-    localStorage.setItem('alphaVer', VER);
+  localStorage.setItem('alphaVer', VER);
+  // Verificação de atualização: faz fetch do HTML com cache-bust para checar se versão mudou
+  if(location.search.indexOf('nc=') < 0) {
+    setTimeout(function() {
+      fetch(location.pathname + '?_chk=' + Date.now(), {cache:'no-store'})
+        .then(function(r){ return r.text(); })
+        .then(function(html){
+          var m = html.match(/var VER = '(v[\d.]+)'/);
+          if(m && m[1] !== VER) {
+            if(confirm('Nova versão disponível (' + m[1] + '). Atualizar agora?')) {
+              location.replace(location.pathname + '?nc=' + m[1].replace(/\./g,'') + '&_=' + Date.now());
+            }
+          }
+        }).catch(function(){});
+    }, 3000);
   }
 })();
 </script>
