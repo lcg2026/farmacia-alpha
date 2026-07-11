@@ -186,7 +186,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <script>
 // Anti-cache: detecta versão antiga em localStorage e força recarga limpa
 (function(){
-  var VER = 'v5.63';
+  var VER = 'v5.64';
   // Atualizar badges de versão dinamicamente
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('ver-badge');
@@ -2821,7 +2821,17 @@ function renderResult(r, container, idx) {
         return;
       }
       var oldC = it.c;
-      var newC = it.topico ? it.g*(ni.pe||ni.p) : it.g*r.qtd*(ni.pe||ni.p);
+      // Recalcular g do zero a partir da dose original e teor do novo insumo
+      // (evita propagar erro de g da leitura inicial, inclusive teor diferente)
+      var _dp = (it.dose||'').split(' ');
+      var _dv = parseFloat(_dp[0]) || 0;
+      var _du = (_dp[1]||'mg').toLowerCase();
+      var _gRaw = doseToG(_dv, _du, ni.n);
+      var _dilF = (ni.dil && ni.dil !== 1000) ? ni.dil / 1000 : 1;
+      if(_dilF !== 1) _gRaw = _gRaw * _dilF;
+      if(ni.t && ni.t > 0 && ni.t < 1) _gRaw = _gRaw / ni.t;
+      it.g = _gRaw;
+      var newC = it.topico ? _gRaw*(ni.pe||ni.p) : _gRaw*r.qtd*(ni.pe||ni.p);
       r.custo = r.custo - oldC + newC;
       it.n = ni.n; it.c = newC;
       var fk = normStr(r.fm||'');
